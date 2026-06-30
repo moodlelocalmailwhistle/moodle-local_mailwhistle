@@ -1,0 +1,209 @@
+/**
+ * This file is part of Moodle - http://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * Local plugin "Mail Whistle" - Stylesheet.
+ *
+ * @package   local_mailwhistle
+ * @copyright 2024 Your Name/Organization
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * STYLE CONVENTIONS:
+ * - Namespace all selectors with .local-mailwhistle-* to prevent style conflicts
+ * - Use CSS custom properties for easy theme customization
+ * - Ensure mobile-first responsive design
+ * - Include focus states for accessibility (keyboard navigation)
+ * - Use relative units (rem, em) for better flexibility
+ * - Follow Moodle color scheme and spacing conventions
+ */
+
+/* ===== CSS CUSTOM PROPERTIES (THEME VARIABLES) ===== */
+:root {
+    --mail-whistle-border-color: #dee2e6;
+    --mail-whistle-bg-light: #f8f9fa;
+    --mail-whistle-bg-card: #ffffff;
+    --mail-whistle-text-color: #212529;
+    --mail-whistle-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --mail-whistle-primary-color: #007bff;
+    --mail-whistle-primary-dark: #0056b3;
+    --mail-whistle-border-radius: 0.25rem;
+}
+
+/* ===== MAIN CONTAINER STYLES ===== */
+
+/**
+ * Example container wrapper.
+ * Provides consistent spacing and acts as a BEM block container.
+ */
+.local-mailwhistle-example {
+    margin: 20px 0;
+    color: var(--mail-whistle-text-color);
+}
+
+/* ===== CARD COMPONENT STYLES ===== */
+
+/**
+ * Card container with subtle shadow for modern UI.
+ * Follows Bootstrap/Moodle card design patterns.
+ */
+.local-mailwhistle-example .card {
+    border: 1px solid var(--mail-whistle-border-color);
+    border-radius: var(--mail-whistle-border-radius);
+    box-shadow: var(--mail-whistle-shadow);
+    background-color: var(--mail-whistle-bg-card);
+}
+
+/**
+ * Card header section with distinct background.
+ * Typically contains the card title.
+ */
+.local-mailwhistle-example .card-header {
+    background-color: var(--mail-whistle-bg-light);
+    border-bottom: 1px solid var(--mail-whistle-border-color);
+    padding: 0.75rem 1.25rem;
+}
+
+/**
+ * Card title styling.
+ * Reset default margin/padding for consistency.
+ */
+.local-mailwhistle-example .card-title {
+    margin: 0;
+    padding: 0;
+    font-weight: 500;
+}
+
+/**
+ * Card body section.
+ * Main content area with generous padding.
+ */
+.local-mailwhistle-example .card-body {
+    padding: 1.25rem;
+}
+
+/**
+ * Individual list item within card.
+ * Provides separation between items.
+ */
+.local-mailwhistle-example .item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/**
+ * Remove border from last item for cleaner appearance.
+ */
+.local-mailwhistle-example .item:last-child {
+    border-bottom: none;
+}
+
+/**
+ * Card footer section.
+ * Typically contains action buttons.
+ */
+.local-mailwhistle-example .card-footer {
+    background-color: var(--mail-whistle-bg-light);
+    border-top: 1px solid var(--mail-whistle-border-color);
+    padding: 0.75rem 1.25rem;
+}
+
+/* ===== BUTTON COMPONENT STYLES ===== */
+
+/**
+ * Base button styles.
+ * Smooth transitions for interactive feedback.
+ */
+.local-mailwhistle-example .btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    border-radius: var(--mail-whistle-border-radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    font-weight: 500;
+}
+
+/**
+ * Primary button variant.
+ * Used for primary actions in the plugin.
+ */
+.local-mailwhistle-example .btn-primary {
+    background-color: var(--mail-whistle-primary-color);
+    color: white;
+    border-color: var(--mail-whistle-primary-color);
+}
+
+/**
+ * Primary button hover state.
+ * Provides visual feedback on interaction.
+ */
+.local-mailwhistle-example .btn-primary:hover {
+    background-color: var(--mail-whistle-primary-dark);
+    border-color: var(--mail-whistle-primary-dark);
+}
+
+/**
+ * Primary button focus state.
+ * Critical for keyboard navigation accessibility.
+ */
+.local-mailwhistle-example .btn-primary:focus {
+    outline: 2px solid var(--mail-whistle-primary-color);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/**
+ * Active state for pressed buttons.
+ * Provides tactile feedback.
+ */
+.local-mailwhistle-example .btn-primary:active {
+    background-color: #003d80;
+    border-color: #003d80;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/**
+ * Mobile-first: Adjustments for devices ≤ 768px width.
+ * Reduces spacing and expands buttons for touch interaction.
+ */
+@media (max-width: 768px) {
+    .local-mailwhistle-example {
+        margin: 10px 0;
+    }
+
+    .local-mailwhistle-example .card-header {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .local-mailwhistle-example .card-body {
+        padding: 0.75rem;
+    }
+
+    .local-mailwhistle-example .card-footer {
+        padding: 0.5rem 0.75rem;
+    }
+
+    /**
+     * Make buttons full-width on mobile for easier touch targets.
+     * Meets accessibility requirements for minimum touch target size (44x44px).
+     */
+    .local-mailwhistle-example .btn {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+    }
+}

@@ -1,0 +1,89 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Local plugin "Mail Whistle" - Language strings (English).
+ *
+ * @package   local_mailwhistle
+ * @copyright 2024 Your Name/Organization
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
+// ===== PLUGIN METADATA =====
+
+/**
+ * Plugin name and description strings.
+ */
+$string['pluginname']  = 'Mail Whistle';
+$string['plugindesc']  = 'A reusable boilerplate for creating Moodle local plugins on Moodle 5 LTS and above.';
+
+// ===== SETTINGS PAGE CONFIGURATION =====
+
+/**
+ * Main settings page heading and description.
+ */
+$string['setting_heading']      = 'Mail Whistle Settings';
+$string['setting_heading_desc']  = 'Configure the Mail Whistle plugin settings.';
+
+/**
+ * Feature toggle setting (checkbox configuration).
+ */
+$string['enable_feature']        = 'Enable Feature';
+$string['enable_feature_desc']   = 'Enable or disable the main feature of this plugin.';
+
+/**
+ * API Key setting (text input configuration).
+ */
+$string['api_key']               = 'API Key';
+$string['api_key_desc']          = 'Enter your API key for external service integration.';
+
+/**
+ * Select option setting (select menu configuration).
+ */
+$string['select_option']         = 'Select Option';
+$string['select_option_desc']    = 'Choose one of the available options.';
+$string['option1']               = 'Option 1';
+$string['option2']               = 'Option 2';
+$string['option3']               = 'Option 3';
+
+/**
+ * Description setting (textarea configuration).
+ */
+$string['description']           = 'Description';
+$string['description_desc']      = 'Enter a description for this plugin configuration.';
+
+// ===== PLUGIN CAPABILITIES =====
+
+/**
+ * Capability descriptions for role-based access control.
+ * Used in db/access.php to define permissions for different user roles.
+ */
+$string['mailwhistle:view']        = 'View Mail Whistle plugin';
+$string['mailwhistle:manage']      = 'Manage Mail Whistle plugin';
+$string['mailwhistle:configure']   = 'Configure Mail Whistle plugin settings';
+
+// ===== USER MESSAGES AND NOTIFICATIONS =====
+
+/**
+ * User-facing messages for operation feedback and error handling.
+ */
+$string['success_message']       = 'Operation completed successfully.';
+$string['error_message']         = 'An error occurred. Please try again.';
+
+// Event names
+$string['event_data_created']    = 'Data record created';
