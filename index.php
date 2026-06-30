@@ -301,7 +301,7 @@ switch ($tab) {
         );
         break;
     case 'resources':
-        echo local_mailwhistle_render_resources();
+        echo $OUTPUT->render(new \local_mailwhistle\output\resources());
         break;
 }
 

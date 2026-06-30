@@ -35,7 +35,7 @@
 function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
     global $DB;
 
-    if ($oldversion < 2026063003) {
+    if ($oldversion < 2026063004) {
         $dbman = $DB->get_manager();
 
         // Create local_mailwhistle_tag table.
@@ -77,7 +77,7 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
             $dbman->create_table($table);
         }
 
-        upgrade_plugin_savepoint(true, 2026063003, 'local', 'mailwhistle');
+        upgrade_plugin_savepoint(true, 2026063004, 'local', 'mailwhistle');
     }
 
     return true;
