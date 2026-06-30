@@ -1,0 +1,151 @@
+# Moodle Local Plugin - .gitignore
+# ===================================================
+# This .gitignore file prevents accidental commits of:
+# - Operating system files and IDE artifacts
+# - Build artifacts and compiled code
+# - Dependencies and package locks
+# - Local development and sensitive configuration
+# - Test coverage and temporary files
+
+# ===== OPERATING SYSTEM FILES =====
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Linux
+.directory
+
+# ===== IDE AND EDITOR FILES =====
+# VS Code
+.vscode/
+*.code-workspace
+
+# PhpStorm / IntelliJ IDEA
+.idea/
+.phpstorm.meta.php
+*.iml
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim / Vi
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Eclipse
+.project
+.buildpath
+.settings/
+
+# ===== BUILD AND COMPILATION =====
+# Composer
+/vendor/
+composer.lock
+
+# NPM and Yarn
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Grunt and build tools
+amd/build/
+*.min.js
+*.min.css
+.grunt/
+
+# Build artifacts
+/build/
+/dist/
+
+# ===== TESTING AND COVERAGE =====
+# PHPUnit and Codeception
+coverage/
+.phpunit.result.cache
+.phpunit.result.cache.* 
+junit.xml
+
+# Code coverage
+.coverage
+htmlcov/
+
+# ===== LOCAL DEVELOPMENT FILES =====
+# Environment configuration (never commit credentials)
+.env
+.env.local
+.env.*.local
+
+# Moodle local configuration
+local-config.php
+config.php
+
+# Database files
+*.sqlite
+*.db
+
+# ===== TEMPORARY AND CACHE FILES =====
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Log files
+*.log
+logs/
+
+# Cache directories
+cache/
+.cache/
+
+# OS-specific cache
+Thumbs.db
+.DS_Store
+
+# ===== MOODLE SPECIFIC FILES =====
+# Moodle generated files (if applicable)
+/moodledata/
+/data/
+
+# Version control system files (shouldn't be committed)
+.git/
+.gitmodules
+
+# Development documentation (if not needed in repo)
+# Uncomment if your project generates documentation locally:
+# /docs/generated/
+# /site/
+
+# ===== ADDITIONAL FILES TO CONSIDER IGNORING =====
+# If you use Docker:
+# docker-compose.override.yml
+# .dockerignore
+
+# If using CI/CD:
+# .travis.yml (use repository secrets instead)
+# .gitlab-ci.yml (use repository variables)
+
+# Machine-specific poetry/venv files:
+# .venv/
+# venv/
+# .Python
+
+# Compiled Python
+__pycache__/
+*.py[cod]
+*$py.class
