@@ -1,73 +1,114 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/mailwhistle/db" VERSION="20240101" COMMENT="Mail Whistle plugin database structure for Moodle 5.0+">
+<XMLDB PATH="local/mailwhistle/db" VERSION="2026063002" COMMENT="Mail Whistle plugin"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
   <TABLES>
-    <!-- Example: Simple data table for storing plugin records
-         
-         FIELD CONVENTIONS:
-         - id: AUTO_INCREMENT primary key (always first field)
-         - userid: Foreign key to mdl_user table (audits who created/owns record)
-         - title: Short identifier/label for the record
-         - description: Extended content field (use TEXT for variable length)
-         - status: State machine field - helps with soft deletes and filtering
-         - created: Unix timestamp of record creation
-         - modified: Unix timestamp of last modification
-         
-         PERFORMANCE NOTES:
-         - Indexes placed on frequently filtered columns (userid, status, creation)
-         - Foreign key constraint maintains data integrity
-         - TEXT field used efficiently (not bloat, just flexible)
-    -->
-    <TABLE NAME="local_mailwhistle_data" COMMENT="Data records for Mail Whistle plugin - stores user-generated content with audit trails">
+    <TABLE NAME="local_mailwhistle_campaigns" COMMENT="Email campaigns">
       <FIELDS>
-        <!-- Primary Key -->
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Auto-incrementing primary key"/>
-
-        <!-- Foreign Keys and Ownership -->
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="User ID - references mdl_user.id for record ownership"/>
-
-        <!-- Content Fields -->
-        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Record title/name - searchable identifier"/>
-        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Extended description/content - supports rich text"/>
-
-        <!-- State Management -->
-        <FIELD NAME="status" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="active" SEQUENCE="false" COMMENT="Record status: active|inactive|archived|deleted (enables soft deletes)"/>
-
-        <!-- Timestamps for Auditing -->
-        <FIELD NAME="created" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Unix timestamp - when record was created"/>
-        <FIELD NAME="modified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Unix timestamp - when record was last modified"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="subject" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="bodyhtml" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="bodytext" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="sendername" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="senderemail" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="draft" SEQUENCE="false"/>
+        <FIELD NAME="sendengine" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="moodle_smtp" SEQUENCE="false"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timescheduled" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timesent" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
-
-      <!-- Key Constraints -->
       <KEYS>
-        <!-- Primary Key - ensures unique identity -->
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        
-        <!-- Foreign Key - links to user table with cascade behavior
-             RESTRICT: Prevents deletion of user if record exists (safer for data integrity)
-             Uncomment ondelete attribute to customize cascade behavior:
-             ondelete="RESTRICT|CASCADE|SET NULL"
-        -->
-        <KEY NAME="userid_fk" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
       </KEYS>
-
-      <!-- Performance Indexes -->
-      <!-- INDEX STRATEGY:
-           - Created on columns frequently used in WHERE clauses
-           - Improves query performance for filtering operations
-           - Consider table size and query patterns when adding/removing indexes
-      -->
       <INDEXES>
-        <!-- Index for user-based queries (common: "show my records") -->
-        <INDEX NAME="userid_idx" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="createdby" UNIQUE="false" FIELDS="createdby"/>
+        <INDEX NAME="status" UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
 
-        <!-- Index for status-based filtering (common: "show active records") -->
-        <INDEX NAME="status_idx" UNIQUE="false" FIELDS="status"/>
+    <TABLE NAME="local_mailwhistle_audrules" COMMENT="Campaign audience selection rules">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="campaignid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="type" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="instanceid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="roleid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="campaignid" UNIQUE="false" FIELDS="campaignid"/>
+        <INDEX NAME="typeinstance" UNIQUE="false" FIELDS="type, instanceid"/>
+      </INDEXES>
+    </TABLE>
 
-        <!-- Composite index for user+status (optimizes common combined queries) -->
-        <INDEX NAME="userid_status_idx" UNIQUE="false" FIELDS="userid,status"/>
+    <TABLE NAME="local_mailwhistle_recipients" COMMENT="Campaign recipient snapshot and send state">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="campaignid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="email" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="firstname" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="lastname" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending" SEQUENCE="false"/>
+        <FIELD NAME="attempts" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timesent" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="error" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="campaignid" UNIQUE="false" FIELDS="campaignid"/>
+        <INDEX NAME="campaignuser" UNIQUE="true" FIELDS="campaignid, userid"/>
+        <INDEX NAME="status" UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
 
-        <!-- Index for date-based queries and sorting -->
-        <INDEX NAME="created_idx" UNIQUE="false" FIELDS="created"/>
+    <TABLE NAME="local_mailwhistle_sendlogs" COMMENT="Campaign send logs">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="campaignid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="recipientid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="level" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="info" SEQUENCE="false"/>
+        <FIELD NAME="message" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="datajson" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="campaignid" UNIQUE="false" FIELDS="campaignid"/>
+        <INDEX NAME="recipientid" UNIQUE="false" FIELDS="recipientid"/>
+        <INDEX NAME="level" UNIQUE="false" FIELDS="level"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_mailwhistle_unsubscribes" COMMENT="Email unsubscribe records">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="email" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="scope" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="global" SEQUENCE="false"/>
+        <FIELD NAME="scopeid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="email" UNIQUE="false" FIELDS="email"/>
+        <INDEX NAME="scope" UNIQUE="false" FIELDS="scope, scopeid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

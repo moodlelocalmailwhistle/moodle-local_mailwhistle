@@ -19,16 +19,12 @@ local/mailwhistle/
   lang/
     en/
       local_mailwhistle.php
-  templates/
-    example.mustache
-  amd/src/
-    example.js
   classes/
     helper.php
     event/
       data_created.php
-      privacy/
-         provider.php
+    privacy/
+      provider.php
   tests/
     helper_test.php
 ```
@@ -46,8 +42,6 @@ local/mailwhistle/
 | `classes/privacy/provider.php` | Privacy provider (export/delete personal data) | Optional (required if storing personal data) |
 | `db/install.xml` | Database schema if storing data | Conditional |
 | `db/upgrade.php` | Versioned upgrade steps for schema/data changes | Conditional |
-| `templates/example.mustache` | Output templates for rendering UI | Optional |
-| `amd/src/example.js` | AMD JavaScript modules for frontend interaction | Optional |
 | `styles.css` | Plugin-specific CSS | Optional |
 | `index.php` | Custom admin/user page | Optional |
 | `tests/` | PHPUnit test cases | Optional (recommended) |
