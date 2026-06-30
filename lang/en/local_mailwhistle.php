@@ -95,10 +95,16 @@ $string['templates_placeholder']    = 'Template management is coming soon.';
 $string['reports_placeholder']      = 'Reporting and analytics are coming soon.';
 
 // Privacy API metadata descriptions.
-$string['privacy:metadata:local_mailwhistle_data'] = 'Information about records created by users in the Mail Whistle plugin.';
-$string['privacy:metadata:local_mailwhistle_data:userid'] = 'The ID of the user who owns the record.';
-$string['privacy:metadata:local_mailwhistle_data:title'] = 'The title of the record.';
-$string['privacy:metadata:local_mailwhistle_data:description'] = 'The description content of the record.';
-$string['privacy:metadata:local_mailwhistle_data:status'] = 'The status of the record.';
-$string['privacy:metadata:local_mailwhistle_data:created'] = 'The time the record was created.';
-$string['privacy:metadata:local_mailwhistle_data:modified'] = 'The time the record was last modified.';
+$string['privacy:metadata:local_mailwhistle_recipients'] = 'Per-recipient delivery records for email campaigns.';
+$string['privacy:metadata:local_mailwhistle_recipients:userid'] = 'The ID of the recipient user.';
+$string['privacy:metadata:local_mailwhistle_recipients:email'] = 'The email address the campaign was sent to.';
+$string['privacy:metadata:local_mailwhistle_recipients:firstname'] = 'The recipient first name captured at send time.';
+$string['privacy:metadata:local_mailwhistle_recipients:lastname'] = 'The recipient last name captured at send time.';
+$string['privacy:metadata:local_mailwhistle_recipients:status'] = 'The delivery status for the recipient.';
+$string['privacy:metadata:local_mailwhistle_recipients:timesent'] = 'The time the campaign was sent to the recipient.';
+$string['privacy:metadata:local_mailwhistle_unsubscribes'] = 'Records of users who unsubscribed from campaigns.';
+$string['privacy:metadata:local_mailwhistle_unsubscribes:userid'] = 'The ID of the user who unsubscribed.';
+$string['privacy:metadata:local_mailwhistle_unsubscribes:email'] = 'The email address that unsubscribed.';
+$string['privacy:metadata:local_mailwhistle_unsubscribes:timecreated'] = 'The time the unsubscribe was recorded.';
+$string['privacy:metadata:local_mailwhistle_campaigns'] = 'Email campaigns created by users.';
+$string['privacy:metadata:local_mailwhistle_campaigns:createdby'] = 'The ID of the user who created the campaign.';

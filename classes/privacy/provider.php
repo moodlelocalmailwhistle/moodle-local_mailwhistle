@@ -25,15 +25,19 @@ use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\contextlist;
 use core_privacy\local\request\core_userlist_provider;
 use core_privacy\local\request\plugin\provider as request_provider;
+use core_privacy\local\request\transform;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
 /**
  * Privacy provider for the local_mailwhistle plugin.
  *
- * The plugin stores records in {local_mailwhistle_data}, each owned by a user
- * via the userid column, so this provider declares that table and implements
- * the export and delete operations required by the Moodle privacy API.
+ * The plugin stores per-recipient send state ({local_mailwhistle_recipients})
+ * and unsubscribe records ({local_mailwhistle_unsubscribes}), both keyed on the
+ * Moodle user id, and records the creator of each campaign
+ * ({local_mailwhistle_campaigns}.createdby). This provider declares that data
+ * and implements the export and delete operations required by the privacy API.
+ * All plugin data lives at the system context.
  *
  * @package   local_mailwhistle
  * @copyright 2024 Your Name/Organization
@@ -48,16 +52,34 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
      */
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table(
-            'local_mailwhistle_data',
+            'local_mailwhistle_recipients',
             [
-                'userid' => 'privacy:metadata:local_mailwhistle_data:userid',
-                'title' => 'privacy:metadata:local_mailwhistle_data:title',
-                'description' => 'privacy:metadata:local_mailwhistle_data:description',
-                'status' => 'privacy:metadata:local_mailwhistle_data:status',
-                'created' => 'privacy:metadata:local_mailwhistle_data:created',
-                'modified' => 'privacy:metadata:local_mailwhistle_data:modified',
+                'userid' => 'privacy:metadata:local_mailwhistle_recipients:userid',
+                'email' => 'privacy:metadata:local_mailwhistle_recipients:email',
+                'firstname' => 'privacy:metadata:local_mailwhistle_recipients:firstname',
+                'lastname' => 'privacy:metadata:local_mailwhistle_recipients:lastname',
+                'status' => 'privacy:metadata:local_mailwhistle_recipients:status',
+                'timesent' => 'privacy:metadata:local_mailwhistle_recipients:timesent',
             ],
-            'privacy:metadata:local_mailwhistle_data'
+            'privacy:metadata:local_mailwhistle_recipients'
+        );
+
+        $collection->add_database_table(
+            'local_mailwhistle_unsubscribes',
+            [
+                'userid' => 'privacy:metadata:local_mailwhistle_unsubscribes:userid',
+                'email' => 'privacy:metadata:local_mailwhistle_unsubscribes:email',
+                'timecreated' => 'privacy:metadata:local_mailwhistle_unsubscribes:timecreated',
+            ],
+            'privacy:metadata:local_mailwhistle_unsubscribes'
+        );
+
+        $collection->add_database_table(
+            'local_mailwhistle_campaigns',
+            [
+                'createdby' => 'privacy:metadata:local_mailwhistle_campaigns:createdby',
+            ],
+            'privacy:metadata:local_mailwhistle_campaigns'
         );
 
         return $collection;
@@ -65,9 +87,6 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
 
     /**
      * Return the contexts that contain personal data for the given user.
-     *
-     * All plugin data lives at the system context, so return that context when
-     * the user owns any record.
      *
      * @param int $userid The user to search.
      * @return contextlist The contexts containing the user's data.
@@ -77,7 +96,11 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
 
         $contextlist = new contextlist();
 
-        if ($DB->record_exists('local_mailwhistle_data', ['userid' => $userid])) {
+        $hasdata = $DB->record_exists('local_mailwhistle_recipients', ['userid' => $userid])
+            || $DB->record_exists('local_mailwhistle_unsubscribes', ['userid' => $userid])
+            || $DB->record_exists('local_mailwhistle_campaigns', ['createdby' => $userid]);
+
+        if ($hasdata) {
             $contextlist->add_system_context();
         }
 
@@ -96,7 +119,9 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
             return;
         }
 
-        $userlist->add_from_sql('userid', 'SELECT userid FROM {local_mailwhistle_data}', []);
+        $userlist->add_from_sql('userid', 'SELECT userid FROM {local_mailwhistle_recipients}', []);
+        $userlist->add_from_sql('userid', 'SELECT userid FROM {local_mailwhistle_unsubscribes}', []);
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_mailwhistle_campaigns}', []);
     }
 
     /**
@@ -118,19 +143,29 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                 continue;
             }
 
-            $records = $DB->get_records('local_mailwhistle_data', ['userid' => $user->id]);
-            foreach ($records as $record) {
-                $data = (object) [
-                    'title' => $record->title,
-                    'description' => $record->description,
-                    'status' => $record->status,
-                    'created' => \core_privacy\local\request\transform::datetime($record->created),
-                    'modified' => \core_privacy\local\request\transform::datetime($record->modified),
-                ];
-
+            $recipients = $DB->get_records('local_mailwhistle_recipients', ['userid' => $user->id]);
+            foreach ($recipients as $recipient) {
                 writer::with_context($context)->export_data(
-                    [get_string('pluginname', 'local_mailwhistle'), $record->id],
-                    $data
+                    [get_string('pluginname', 'local_mailwhistle'), 'recipients', $recipient->id],
+                    (object) [
+                        'email' => $recipient->email,
+                        'firstname' => $recipient->firstname,
+                        'lastname' => $recipient->lastname,
+                        'status' => $recipient->status,
+                        'timesent' => $recipient->timesent ? transform::datetime($recipient->timesent) : null,
+                    ]
+                );
+            }
+
+            $unsubscribes = $DB->get_records('local_mailwhistle_unsubscribes', ['userid' => $user->id]);
+            foreach ($unsubscribes as $unsubscribe) {
+                writer::with_context($context)->export_data(
+                    [get_string('pluginname', 'local_mailwhistle'), 'unsubscribes', $unsubscribe->id],
+                    (object) [
+                        'email' => $unsubscribe->email,
+                        'scope' => $unsubscribe->scope,
+                        'timecreated' => transform::datetime($unsubscribe->timecreated),
+                    ]
                 );
             }
         }
@@ -148,7 +183,8 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
             return;
         }
 
-        $DB->delete_records('local_mailwhistle_data');
+        $DB->delete_records('local_mailwhistle_recipients');
+        $DB->delete_records('local_mailwhistle_unsubscribes');
     }
 
     /**
@@ -166,7 +202,8 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                 continue;
             }
 
-            $DB->delete_records('local_mailwhistle_data', ['userid' => $user->id]);
+            $DB->delete_records('local_mailwhistle_recipients', ['userid' => $user->id]);
+            $DB->delete_records('local_mailwhistle_unsubscribes', ['userid' => $user->id]);
         }
     }
 
@@ -190,6 +227,7 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
         }
 
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
-        $DB->delete_records_select('local_mailwhistle_data', "userid {$insql}", $inparams);
+        $DB->delete_records_select('local_mailwhistle_recipients', "userid {$insql}", $inparams);
+        $DB->delete_records_select('local_mailwhistle_unsubscribes', "userid {$insql}", $inparams);
     }
 }
