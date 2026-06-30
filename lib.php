@@ -124,3 +124,223 @@ function local_mailwhistle_page_init(): void {
     // Example: Add custom CSS or JavaScript (uncomment to use)
     // $PAGE->requires->css(new moodle_url('/local/mailwhistle/styles.css'));
 }
+
+/**
+ * Render the "previously sent newsletters" history table.
+ *
+ * Builds a table from sample data so the send-newsletters tab has something
+ * to display before the real sending engine and data model land. Replace the
+ * data source in {@see local_mailwhistle_get_sample_sent_mails()} with a query
+ * against the mailings table once persistence is implemented.
+ *
+ * @return string Rendered HTML for the sent mails section.
+ */
+function local_mailwhistle_render_sent_mails(): string {
+    $rows = local_mailwhistle_get_sample_sent_mails();
+
+    $output = html_writer::tag(
+        'h3',
+        get_string('sentmails_heading', 'local_mailwhistle')
+    );
+
+    if (empty($rows)) {
+        return $output . html_writer::div(
+            get_string('nosentmails', 'local_mailwhistle'),
+            'alert alert-info'
+        );
+    }
+
+    $table = new html_table();
+    $table->head = [
+        get_string('col_subject', 'local_mailwhistle'),
+        get_string('col_audience', 'local_mailwhistle'),
+        get_string('col_recipients', 'local_mailwhistle'),
+        get_string('col_sentby', 'local_mailwhistle'),
+        get_string('col_sentat', 'local_mailwhistle'),
+        get_string('col_status', 'local_mailwhistle'),
+    ];
+    $table->attributes['class'] = 'generaltable local-mailwhistle-sentmails';
+
+    foreach ($rows as $row) {
+        $viewurl = new moodle_url('/local/mailwhistle/index.php', [
+            'tab' => 'send',
+            'view' => $row['id'],
+        ]);
+        $subjectlink = html_writer::link($viewurl, format_string($row['subject']));
+
+        $table->data[] = [
+            $subjectlink,
+            format_string($row['audience']),
+            number_format($row['recipients']),
+            format_string($row['sentby']),
+            userdate($row['sentat']),
+            local_mailwhistle_status_badge($row['status']),
+        ];
+    }
+
+    return $output . html_writer::table($table);
+}
+
+/**
+ * Render the detail view for a single sent newsletter.
+ *
+ * Shows the metadata and a preview of the rendered newsletter body. Falls back
+ * to a not-found notice and the list link when the id does not match a record.
+ *
+ * @param int $id The sample mail id to view.
+ * @return string Rendered HTML for the detail view.
+ */
+function local_mailwhistle_render_view_mail(int $id): string {
+    $mail = local_mailwhistle_get_sample_sent_mail($id);
+
+    $listurl = new moodle_url('/local/mailwhistle/index.php', ['tab' => 'send']);
+    $backlink = html_writer::div(
+        html_writer::link($listurl, get_string('backtolist', 'local_mailwhistle')),
+        'local-mailwhistle-back mb-3'
+    );
+
+    if ($mail === null) {
+        return $backlink . html_writer::div(
+            get_string('mailnotfound', 'local_mailwhistle'),
+            'alert alert-warning'
+        );
+    }
+
+    $output = $backlink;
+    $output .= html_writer::tag('h3', format_string($mail['subject']));
+
+    // Metadata summary table.
+    $meta = new html_table();
+    $meta->attributes['class'] = 'generaltable local-mailwhistle-mailmeta';
+    $meta->data = [
+        [get_string('col_audience', 'local_mailwhistle'), format_string($mail['audience'])],
+        [get_string('col_recipients', 'local_mailwhistle'), number_format($mail['recipients'])],
+        [get_string('col_sentby', 'local_mailwhistle'), format_string($mail['sentby'])],
+        [get_string('col_sentat', 'local_mailwhistle'), userdate($mail['sentat'])],
+        [get_string('col_status', 'local_mailwhistle'), local_mailwhistle_status_badge($mail['status'])],
+    ];
+    $output .= html_writer::table($meta);
+
+    // Newsletter body preview. Sample bodies are trusted plugin content, so the
+    // limited HTML is allowed through format_text() with no cleaning.
+    $output .= html_writer::tag('h4', get_string('mailpreview', 'local_mailwhistle'));
+    $bodyhtml = format_text($mail['body'], FORMAT_HTML, ['noclean' => true]);
+    $output .= html_writer::div($bodyhtml, 'local-mailwhistle-mailbody card card-body');
+
+    return $output;
+}
+
+/**
+ * Provide sample sent-newsletter rows for the placeholder history table.
+ *
+ * Each row mirrors the shape expected from the future mailings table so the
+ * rendering code does not need to change when real data is wired in.
+ *
+ * @return array<int, array<string, mixed>> List of sample sent mail records.
+ */
+function local_mailwhistle_get_sample_sent_mails(): array {
+    // Fixed timestamps (UTC) keep the sample output stable across requests.
+    return [
+        [
+            'id' => 1,
+            'subject' => 'Welcome to the Autumn term',
+            'audience' => 'All enrolled students',
+            'recipients' => 1248,
+            'sentby' => 'Admin User',
+            'sentat' => 1725192000, // 2024-09-01 12:00 UTC.
+            'status' => 'sent',
+            'body' => '<h1>Welcome back!</h1>'
+                . '<p>Dear student, the Autumn term starts on <strong>2 September</strong>. '
+                . 'Your courses are now visible on your dashboard.</p>'
+                . '<p>We wish you a great term ahead.</p>'
+                . '<p>Kind regards,<br>The Mailwhistle Team</p>',
+        ],
+        [
+            'id' => 2,
+            'subject' => 'New course catalogue available',
+            'audience' => 'Active learners',
+            'recipients' => 873,
+            'sentby' => 'Marketing Team',
+            'sentat' => 1727784000, // 2024-10-01 12:00 UTC.
+            'status' => 'sent',
+            'body' => '<h1>Fresh courses, just for you</h1>'
+                . '<p>Our new catalogue is live. Explore over 40 new courses across '
+                . 'science, languages and the arts.</p>'
+                . '<p><a href="#">Browse the catalogue &raquo;</a></p>',
+        ],
+        [
+            'id' => 3,
+            'subject' => 'Reminder: assignment deadline this Friday',
+            'audience' => 'Biology 101 cohort',
+            'recipients' => 64,
+            'sentby' => 'Jane Teacher',
+            'sentat' => 1730462400, // 2024-11-01 12:00 UTC.
+            'status' => 'sending',
+            'body' => '<h1>Deadline approaching</h1>'
+                . '<p>This is a friendly reminder that your <strong>Cell Biology essay</strong> '
+                . 'is due this Friday at 23:59.</p>'
+                . '<p>Submit via the assignment activity in your course.</p>',
+        ],
+        [
+            'id' => 4,
+            'subject' => 'December newsletter (draft)',
+            'audience' => 'Newsletter subscribers',
+            'recipients' => 2105,
+            'sentby' => 'Marketing Team',
+            'sentat' => 1733054400, // 2024-12-01 12:00 UTC.
+            'status' => 'scheduled',
+            'body' => '<h1>What happened in December</h1>'
+                . '<p>A round-up of the month: new features, community highlights and '
+                . 'upcoming events for the new year.</p>',
+        ],
+        [
+            'id' => 5,
+            'subject' => 'Platform maintenance notice',
+            'audience' => 'All users',
+            'recipients' => 3490,
+            'sentby' => 'Admin User',
+            'sentat' => 1735732800, // 2025-01-01 12:00 UTC.
+            'status' => 'failed',
+            'body' => '<h1>Scheduled maintenance</h1>'
+                . '<p>The platform will be unavailable on Sunday between 02:00 and 04:00 UTC '
+                . 'for scheduled maintenance.</p>'
+                . '<p>We apologise for any inconvenience.</p>',
+        ],
+    ];
+}
+
+/**
+ * Find a single sample sent-newsletter record by its id.
+ *
+ * @param int $id The sample mail id.
+ * @return array<string, mixed>|null The matching record, or null if not found.
+ */
+function local_mailwhistle_get_sample_sent_mail(int $id): ?array {
+    foreach (local_mailwhistle_get_sample_sent_mails() as $row) {
+        if ((int) $row['id'] === $id) {
+            return $row;
+        }
+    }
+    return null;
+}
+
+/**
+ * Render a coloured status badge for a sent newsletter.
+ *
+ * @param string $status One of: sent, sending, scheduled, failed.
+ * @return string Rendered badge HTML.
+ */
+function local_mailwhistle_status_badge(string $status): string {
+    $classes = [
+        'sent' => 'badge badge-success bg-success text-white',
+        'sending' => 'badge badge-info bg-info text-white',
+        'scheduled' => 'badge badge-secondary bg-secondary text-white',
+        'failed' => 'badge badge-danger bg-danger text-white',
+    ];
+    $class = $classes[$status] ?? 'badge badge-secondary bg-secondary text-white';
+
+    return html_writer::span(
+        get_string('status_' . $status, 'local_mailwhistle'),
+        $class
+    );
+}
