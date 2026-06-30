@@ -106,5 +106,3 @@ $string['privacy:metadata:local_mailwhistle_unsubscribes'] = 'Records of users w
 $string['privacy:metadata:local_mailwhistle_unsubscribes:userid'] = 'The ID of the user who unsubscribed.';
 $string['privacy:metadata:local_mailwhistle_unsubscribes:email'] = 'The email address that unsubscribed.';
 $string['privacy:metadata:local_mailwhistle_unsubscribes:timecreated'] = 'The time the unsubscribe was recorded.';
-$string['privacy:metadata:local_mailwhistle_campaigns'] = 'Email campaigns created by users.';
-$string['privacy:metadata:local_mailwhistle_campaigns:createdby'] = 'The ID of the user who created the campaign.';

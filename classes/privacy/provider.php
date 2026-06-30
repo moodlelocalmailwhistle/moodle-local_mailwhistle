@@ -34,10 +34,11 @@ use core_privacy\local\request\writer;
  *
  * The plugin stores per-recipient send state ({local_mailwhistle_recipients})
  * and unsubscribe records ({local_mailwhistle_unsubscribes}), both keyed on the
- * Moodle user id, and records the creator of each campaign
- * ({local_mailwhistle_campaigns}.createdby). This provider declares that data
- * and implements the export and delete operations required by the privacy API.
- * All plugin data lives at the system context.
+ * Moodle user id. This provider declares that data and implements the export
+ * and delete operations required by the privacy API. All plugin data lives at
+ * the system context. The campaigns table only records authorship via
+ * createdby, which is retained as an audit field and is not treated as
+ * deletable personal data.
  *
  * @package   local_mailwhistle
  * @copyright 2024 Your Name/Organization
@@ -74,14 +75,6 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
             'privacy:metadata:local_mailwhistle_unsubscribes'
         );
 
-        $collection->add_database_table(
-            'local_mailwhistle_campaigns',
-            [
-                'createdby' => 'privacy:metadata:local_mailwhistle_campaigns:createdby',
-            ],
-            'privacy:metadata:local_mailwhistle_campaigns'
-        );
-
         return $collection;
     }
 
@@ -97,8 +90,7 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
         $contextlist = new contextlist();
 
         $hasdata = $DB->record_exists('local_mailwhistle_recipients', ['userid' => $userid])
-            || $DB->record_exists('local_mailwhistle_unsubscribes', ['userid' => $userid])
-            || $DB->record_exists('local_mailwhistle_campaigns', ['createdby' => $userid]);
+            || $DB->record_exists('local_mailwhistle_unsubscribes', ['userid' => $userid]);
 
         if ($hasdata) {
             $contextlist->add_system_context();
@@ -121,7 +113,6 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
 
         $userlist->add_from_sql('userid', 'SELECT userid FROM {local_mailwhistle_recipients}', []);
         $userlist->add_from_sql('userid', 'SELECT userid FROM {local_mailwhistle_unsubscribes}', []);
-        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_mailwhistle_campaigns}', []);
     }
 
     /**
