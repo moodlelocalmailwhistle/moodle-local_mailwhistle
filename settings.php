@@ -79,4 +79,14 @@ if ($hassiteconfig) {
 
     // Register the settings page with the admin interface.
     $ADMIN->add('localplugins', $settingspage);
+
+    // Admin page for Mailwhistle.
+    $page = new admin_externalpage(
+        name: 'local_mailwhistle_mailings',
+        visiblename: get_string('pluginname', 'local_mailwhistle'),
+        url: new moodle_url('/local/mailwhistle/index.php'),
+        req_capability: 'moodle/site:config',
+        hidden: false,
+    );
+    $ADMIN->add('root', $page);
 }
