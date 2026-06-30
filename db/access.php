@@ -67,4 +67,14 @@ $capabilities = [
         ],
         'clonepermissionsfrom' => '',
     ],
+
+    // Capability: Manage audience tags (create, assign, unassign).
+    'local/mailwhistle:managetags' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,   // Only managers can manage tags.
+        ],
+        'clonepermissionsfrom' => 'local/mailwhistle:manage',
+    ],
 ];

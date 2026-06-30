@@ -37,13 +37,51 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
     global $DB;
 
-    // No upgrade steps yet. Add version-gated blocks here as the schema evolves, e.g.:
-    //
-    // if ($oldversion < 2025010100) {
-    //     $dbman = $DB->get_manager();
-    //     // Apply schema changes via $dbman, then record the savepoint.
-    //     upgrade_plugin_savepoint(true, 2025010100, 'local', 'mailwhistle');
-    // }
+    if ($oldversion < 2026063002) {
+        $dbman = $DB->get_manager();
+
+        // Create local_mailwhistle_tag table.
+        $table = new xmldb_table('local_mailwhistle_tag');
+
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('shortname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('description', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('usermodified_fk', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+
+        $table->add_index('shortname_uix', XMLDB_INDEX_UNIQUE, ['shortname']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Create local_mailwhistle_tag_assign table.
+        $table = new xmldb_table('local_mailwhistle_tag_assign');
+
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('tagid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('tagid_fk', XMLDB_KEY_FOREIGN, ['tagid'], 'local_mailwhistle_tag', ['id']);
+        $table->add_key('userid_fk', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+
+        $table->add_index('tagid_userid_uix', XMLDB_INDEX_UNIQUE, ['tagid', 'userid']);
+        $table->add_index('userid_ix', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026063002, 'local', 'mailwhistle');
+    }
 
     return true;
 }

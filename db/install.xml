@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/mailwhistle/db" VERSION="20240101" COMMENT="Mail Whistle plugin database structure for Moodle 5.0+">
+<XMLDB PATH="local/mailwhistle/db" VERSION="20260630" COMMENT="Mail Whistle plugin database structure for Moodle 5.0+">
   <TABLES>
     <!-- Example: Simple data table for storing plugin records
          
@@ -70,5 +70,44 @@
         <INDEX NAME="created_idx" UNIQUE="false" FIELDS="created"/>
       </INDEXES>
     </TABLE>
+
+    <TABLE NAME="local_mailwhistle_tag" COMMENT="Tag definitions for Mail Whistle audience segmentation">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Auto-incrementing primary key"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Display name of the tag (trimmed)"/>
+        <FIELD NAME="shortname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Normalized key (strtolower), unique, used for deduplication"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Optional notes about the tag"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User who created or last modified the tag"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Unix timestamp of tag creation"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Unix timestamp of last tag modification"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="usermodified_fk" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="shortname_uix" UNIQUE="true" FIELDS="shortname" COMMENT="Enforces case-insensitive uniqueness on normalized shortname"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_mailwhistle_tag_assign" COMMENT="Many-to-many user-to-tag assignments for Mail Whistle audience segmentation">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Auto-incrementing primary key"/>
+        <FIELD NAME="tagid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to local_mailwhistle_tag.id"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to user.id (the tagged user)"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User who created the assignment"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Unix timestamp of assignment creation"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="tagid_fk" TYPE="foreign" FIELDS="tagid" REFTABLE="local_mailwhistle_tag" REFFIELDS="id"/>
+        <KEY NAME="userid_fk" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="tagid_userid_uix" UNIQUE="true" FIELDS="tagid,userid" COMMENT="Prevents duplicate assignments; allows idempotent bulk re-apply"/>
+        <INDEX NAME="userid_ix" UNIQUE="false" FIELDS="userid" COMMENT="Supports per-user privacy export/delete and per-page tag fetch"/>
+      </INDEXES>
+    </TABLE>
+
   </TABLES>
 </XMLDB>

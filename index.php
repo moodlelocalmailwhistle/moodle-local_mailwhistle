@@ -24,6 +24,7 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once($CFG->libdir . '/tablelib.php');
 
 // Require user login.
 require_login();
@@ -37,6 +38,88 @@ $tab = optional_param('tab', 'send', PARAM_ALPHA);
 $validtabs = ['send', 'audience', 'templates', 'reports'];
 if (!in_array($tab, $validtabs, true)) {
     $tab = 'send';
+}
+
+// -------------------------------------------------------------------------
+// PART A: POST-only write handler for the audience tab.
+//
+// This block MUST run before echo $OUTPUT->header() so that redirect()
+// can send HTTP headers (PRG pattern — no resubmit on browser refresh).
+//
+// Only state-changing actions are handled here.  The 'removetag' action
+// is a GET that shows a confirmation page (rendered in PART B); the
+// actual delete fires via 'removetagconfirm' (POST) handled below.
+// -------------------------------------------------------------------------
+$action = optional_param('action', '', PARAM_ALPHA);
+$writeactions = ['applytag', 'createtag', 'removetagconfirm'];
+if ($tab === 'audience' && in_array($action, $writeactions, true)) {
+    // Assert POST method — prefetchers/scanners must not trigger writes.
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new \moodle_exception('invalidrequest');
+    }
+    require_sesskey();
+    require_capability('local/mailwhistle:managetags', $context);
+
+    $audienceurl = new moodle_url('/local/mailwhistle/index.php', ['tab' => 'audience']);
+
+    switch ($action) {
+        case 'applytag':
+            $userids    = optional_param_array('userids', [], PARAM_INT);
+            $applytagid = optional_param('applytagid', 0, PARAM_INT);
+            $newtagname = trim(optional_param('newtagname', '', PARAM_TEXT));
+
+            $tagid = 0;
+            if ($newtagname !== '') {
+                $tagid = \local_mailwhistle\manager\tag_manager::get_or_create_tag($newtagname);
+            } else if ($applytagid > 0) {
+                $tagid = $applytagid;
+            }
+
+            // Guard: both a valid tag and at least one selected user are required.
+            if ($tagid <= 0 || empty($userids)) {
+                redirect(
+                    $audienceurl,
+                    get_string('noselection', 'local_mailwhistle'),
+                    null,
+                    \core\output\notification::NOTIFY_WARNING
+                );
+            }
+
+            $n = \local_mailwhistle\manager\tag_manager::assign_tag_to_users($tagid, $userids);
+            redirect(
+                $audienceurl,
+                get_string('tag_assigned_n', 'local_mailwhistle', $n),
+                null,
+                \core\output\notification::NOTIFY_SUCCESS
+            );
+            break;
+
+        case 'removetagconfirm':
+            // Confirmed removal — POST, sesskey + capability already checked above.
+            $tagid  = required_param('tagid', PARAM_INT);
+            $userid = required_param('userid', PARAM_INT);
+            \local_mailwhistle\manager\tag_manager::unassign_tag($tagid, $userid);
+
+            redirect(
+                $audienceurl,
+                get_string('tag_removed', 'local_mailwhistle'),
+                null,
+                \core\output\notification::NOTIFY_SUCCESS
+            );
+            break;
+
+        case 'createtag':
+            $newtagname = required_param('newtagname', PARAM_TEXT);
+            \local_mailwhistle\manager\tag_manager::get_or_create_tag($newtagname);
+
+            redirect(
+                $audienceurl,
+                get_string('tag_created', 'local_mailwhistle'),
+                null,
+                \core\output\notification::NOTIFY_SUCCESS
+            );
+            break;
+    }
 }
 
 // Optional: a specific sent newsletter to view (0 means show the list).
@@ -67,7 +150,9 @@ foreach ($validtabs as $tabid) {
 echo $OUTPUT->header();
 echo $OUTPUT->tabtree($tabs, $tab);
 
-// Render the active tab's content.
+// -------------------------------------------------------------------------
+// PART B: Render the active tab's content.
+// -------------------------------------------------------------------------
 switch ($tab) {
     case 'send':
         if ($viewid > 0) {
@@ -76,18 +161,152 @@ switch ($tab) {
             echo local_mailwhistle_render_sent_mails();
         }
         break;
+
     case 'audience':
-        echo $OUTPUT->notification(
-            get_string('audience_placeholder', 'local_mailwhistle'),
-            \core\output\notification::NOTIFY_INFO
+        // --- Confirm page for per-row tag removal (GET → confirm → POST removetagconfirm) ---
+        // The remove link in col_tags is a GET link (safe to follow by scanners)
+        // that lands here.  We render a confirmation page and do NO write.
+        // The actual delete fires via 'removetagconfirm' (POST) handled in PART A.
+        if ($action === 'removetag') {
+            require_sesskey();
+            require_capability('local/mailwhistle:managetags', $context);
+
+            $tagid  = required_param('tagid', PARAM_INT);
+            $userid = required_param('userid', PARAM_INT);
+
+            $continue = new \single_button(
+                new moodle_url('/local/mailwhistle/index.php', [
+                    'tab'     => 'audience',
+                    'action'  => 'removetagconfirm',
+                    'tagid'   => $tagid,
+                    'userid'  => $userid,
+                    'sesskey' => sesskey(),
+                ]),
+                get_string('remove_tag', 'local_mailwhistle'),
+                'post'
+            );
+            $cancel = new moodle_url('/local/mailwhistle/index.php', ['tab' => 'audience']);
+
+            echo $OUTPUT->confirm(get_string('confirm_remove_tag', 'local_mailwhistle'), $continue, $cancel);
+            echo $OUTPUT->footer();
+            exit;
+        }
+
+        // Read filter values from GET params.  These thread into the table
+        // baseurl so pagination and sort links preserve the active filter.
+        $search       = optional_param('search', '', PARAM_TEXT);
+        $filtertagid  = optional_param('tagid', 0, PARAM_INT);
+        $suspended    = optional_param('suspended', 'any', PARAM_ALPHA);
+        $auth         = optional_param('auth', 'any', PARAM_PLUGIN);
+        $perpage      = min(max(optional_param('perpage', 25, PARAM_INT), 1), 100);
+
+        $canmanage = has_capability('local/mailwhistle:managetags', $context);
+
+        // Fetch tag definitions for the filter dropdown and apply select.
+        $tags = \local_mailwhistle\manager\tag_manager::get_all_tags();
+
+        // Build installed auth plugin list for the auth filter select.
+        $authplugins = [];
+        foreach (array_keys(core_component::get_plugin_list('auth')) as $authkey) {
+            $authplugins[$authkey] = $authkey;
+        }
+
+        // Base URL carrying active filter params — used by the table for
+        // pagination / sorting links so filter state is preserved.
+        $baseurl = new moodle_url('/local/mailwhistle/index.php', [
+            'tab'       => 'audience',
+            'search'    => $search,
+            'tagid'     => $filtertagid,
+            'suspended' => $suspended,
+            'auth'      => $auth,
+            'perpage'   => $perpage,
+        ]);
+
+        // --- FORM 1: GET filter form (sibling, never nested) ---
+        // moodleform(action, customdata, method, target, attributes, editable).
+        $filterform = new \local_mailwhistle\form\audience_filter_form(
+            $baseurl->out(false),
+            ['tags' => $tags, 'auths' => $authplugins],
+            'get'
         );
+        $filterform->set_data([
+            'search'    => $search,
+            'tagid'     => $filtertagid,
+            'suspended' => $suspended,
+            'auth'      => $auth,
+        ]);
+        $filterform->display();
+
+        // Build the table instance.
+        $table = new \local_mailwhistle\table\audience_table(
+            'local_mailwhistle_audience',
+            $baseurl,
+            [
+                'search'    => $search,
+                'tagid'     => $filtertagid,
+                'suspended' => $suspended,
+                'auth'      => $auth,
+            ],
+            $canmanage
+        );
+        $table->build_sql();
+
+        if ($canmanage) {
+            // --- FORM 2: POST apply-tag form (sibling, never nested inside Form 1) ---
+            // The audience_table output is rendered INSIDE this form so the
+            // row checkboxes submit together with the apply-tag controls.
+            echo html_writer::start_tag('form', [
+                'method' => 'post',
+                'action' => (new moodle_url('/local/mailwhistle/index.php', ['tab' => 'audience']))->out(false),
+            ]);
+            echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+            echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'applytag']);
+
+            // Apply-tag controls: choose existing tag OR type a new one.
+            $tagselectoptions = ['' => get_string('apply_tag_choose', 'local_mailwhistle')];
+            foreach ($tags as $tag) {
+                $tagselectoptions[(int) $tag->id] = format_string($tag->name);
+            }
+            echo html_writer::start_div('mw-apply-tag-controls mb-2');
+            echo html_writer::label(
+                get_string('apply_tag', 'local_mailwhistle'),
+                'applytagid',
+                true,
+                ['class' => 'mr-1']
+            );
+            echo html_writer::select($tagselectoptions, 'applytagid', '', false, ['id' => 'applytagid']);
+            echo ' ' . get_string('new_tag', 'local_mailwhistle') . ' ';
+            echo html_writer::empty_tag('input', [
+                'type'        => 'text',
+                'name'        => 'newtagname',
+                'id'          => 'newtagname',
+                'placeholder' => get_string('new_tag', 'local_mailwhistle'),
+                'class'       => 'mx-1',
+            ]);
+            echo html_writer::empty_tag('input', [
+                'type'  => 'submit',
+                'value' => get_string('applybtn', 'local_mailwhistle'),
+                'class' => 'btn btn-primary btn-sm',
+            ]);
+            echo html_writer::end_div();
+
+            // Table output inside the POST form — row checkboxes post here.
+            $table->out($perpage, true);
+
+            echo html_writer::end_tag('form');
+        } else {
+            // View-only: table with no checkboxes, no POST form.
+            $table->out($perpage, true);
+        }
         break;
+
     case 'templates':
         echo $OUTPUT->notification(
             get_string('templates_placeholder', 'local_mailwhistle'),
             \core\output\notification::NOTIFY_INFO
         );
         break;
+
     case 'reports':
         echo $OUTPUT->notification(
             get_string('reports_placeholder', 'local_mailwhistle'),
