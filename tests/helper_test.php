@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_mailwhistle\tests;
+namespace local_mailwhistle;
 
 /**
  * Unit tests for Mail Whistle plugin helper class.
@@ -27,7 +27,7 @@ namespace local_mailwhistle\tests;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\helper
  */
-class helper_test extends \advanced_testcase {
+final class helper_test extends \advanced_testcase {
     /**
      * Test: Helper class can be instantiated.
      */

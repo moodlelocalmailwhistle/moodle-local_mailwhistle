@@ -350,4 +350,3 @@ function local_mailwhistle_status_badge(string $status): string {
 function local_mailwhistle_render_resources(): string {
     return '';
 }
-
