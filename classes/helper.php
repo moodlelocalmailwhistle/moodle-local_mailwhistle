@@ -16,8 +16,6 @@
 
 namespace local_mailwhistle;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Helper class for Mail Whistle plugin utility functions.
  *
@@ -29,7 +27,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class helper {
-
     /**
      * Example: Process user data.
      *

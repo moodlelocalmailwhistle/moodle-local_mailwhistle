@@ -24,8 +24,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Plugin installation callback.
  *
@@ -77,12 +75,7 @@ function local_mailwhistle_uninstall(): bool {
  * @return void
  */
 function local_mailwhistle_extend_navigation(global_navigation $navigation): void {
-    // Example: Add plugin menu item (uncomment to use)
-    // if (has_capability('local/mailwhistle:view', context_system::instance())) {
-    //     $url = new moodle_url('/local/mailwhistle/index.php');
-    //     $node = $navigation->add(get_string('pluginname', 'local_mailwhistle'), $url);
-    //     $node->showinflatnavigation = true;
-    // }
+    // Add plugin navigation nodes here when required, after a capability check.
 }
 
 /**
@@ -121,8 +114,7 @@ function local_mailwhistle_extend_navigation_user(navigation_node $navigation, s
  */
 function local_mailwhistle_page_init(): void {
     global $PAGE;
-    // Example: Add custom CSS or JavaScript (uncomment to use)
-    // $PAGE->requires->css(new moodle_url('/local/mailwhistle/styles.css'));
+    // Add custom CSS or JavaScript requirements for plugin pages here when required.
 }
 
 /**
