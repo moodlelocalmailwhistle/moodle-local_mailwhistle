@@ -72,7 +72,6 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         $table->add_key('userid_fk', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
 
         $table->add_index('tagid_userid_uix', XMLDB_INDEX_UNIQUE, ['tagid', 'userid']);
-        $table->add_index('userid_ix', XMLDB_INDEX_NOTUNIQUE, ['userid']);
 
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);

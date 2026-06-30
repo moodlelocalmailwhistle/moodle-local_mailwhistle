@@ -147,7 +147,6 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="tagid_userid_uix" UNIQUE="true" FIELDS="tagid,userid" COMMENT="Prevents duplicate assignments; allows idempotent bulk re-apply"/>
-        <INDEX NAME="userid_ix" UNIQUE="false" FIELDS="userid" COMMENT="Supports per-user privacy export/delete and per-page tag fetch"/>
       </INDEXES>
     </TABLE>
 
