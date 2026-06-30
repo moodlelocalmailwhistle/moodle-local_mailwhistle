@@ -68,6 +68,7 @@ $string['tab_send']         = 'Send newsletters';
 $string['tab_audience']     = 'Audience';
 $string['tab_templates']    = 'Templates';
 $string['tab_reports']      = 'Reports';
+$string['tab_resources']      = 'Resources';
 
 // Headings and labels for the sent newsletters history table.
 $string['sentmails_heading']    = 'Previously sent newsletters';

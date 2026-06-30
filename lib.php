@@ -336,3 +336,18 @@ function local_mailwhistle_status_badge(string $status): string {
         $class
     );
 }
+
+/**
+ * Render the "previously sent newsletters" history table.
+ *
+ * Builds a table from sample data so the send-newsletters tab has something
+ * to display before the real sending engine and data model land. Replace the
+ * data source in {@see local_mailwhistle_get_sample_sent_mails()} with a query
+ * against the mailings table once persistence is implemented.
+ *
+ * @return string Rendered HTML for the sent mails section.
+ */
+function local_mailwhistle_render_resources(): string {
+    return '';
+}
+
