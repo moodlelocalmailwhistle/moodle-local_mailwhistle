@@ -280,4 +280,3 @@ function local_mailwhistle_status_badge(string $status): string {
         $class
     );
 }
-

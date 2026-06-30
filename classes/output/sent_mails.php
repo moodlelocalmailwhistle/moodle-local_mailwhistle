@@ -33,6 +33,15 @@ use core\output\templatable;
  * Output sent mails list
  */
 class sent_mails implements renderable, templatable {
+
+    /**
+     * Export this data so it can be used in a template.
+     *
+     * @param renderer_base $output
+     * @return array
+     * @throws \coding_exception
+     * @throws \core\exception\moodle_exception
+     */
     public function export_for_template(renderer_base $output) {
         $rows = local_mailwhistle_get_sample_sent_mails();
         if (!$rows) {
