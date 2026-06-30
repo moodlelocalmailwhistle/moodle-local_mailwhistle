@@ -93,3 +93,12 @@ $string['mailpreview']          = 'Newsletter preview';
 $string['audience_placeholder']     = 'Audience management is coming soon.';
 $string['templates_placeholder']    = 'Template management is coming soon.';
 $string['reports_placeholder']      = 'Reporting and analytics are coming soon.';
+
+// Privacy API metadata descriptions.
+$string['privacy:metadata:local_mailwhistle_data'] = 'Information about records created by users in the Mail Whistle plugin.';
+$string['privacy:metadata:local_mailwhistle_data:userid'] = 'The ID of the user who owns the record.';
+$string['privacy:metadata:local_mailwhistle_data:title'] = 'The title of the record.';
+$string['privacy:metadata:local_mailwhistle_data:description'] = 'The description content of the record.';
+$string['privacy:metadata:local_mailwhistle_data:status'] = 'The status of the record.';
+$string['privacy:metadata:local_mailwhistle_data:created'] = 'The time the record was created.';
+$string['privacy:metadata:local_mailwhistle_data:modified'] = 'The time the record was last modified.';
