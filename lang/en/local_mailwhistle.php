@@ -33,8 +33,8 @@ $string['setting_heading']      = 'Mail Whistle Settings';
 $string['setting_heading_desc']  = 'Configure the Mail Whistle plugin settings.';
 
 // Feature toggle setting (checkbox configuration).
-$string['enable_feature']        = 'Enable Feature';
-$string['enable_feature_desc']   = 'Enable or disable the main feature of this plugin.';
+$string['enable']        = 'Enable Feature';
+$string['enable_desc']   = 'Enable or disable the main feature of this plugin.';
 
 // API key setting (text input configuration).
 $string['api_key']               = 'API Key';
@@ -93,3 +93,5 @@ $string['mailpreview']          = 'Newsletter preview';
 $string['audience_placeholder']     = 'Audience management is coming soon.';
 $string['templates_placeholder']    = 'Template management is coming soon.';
 $string['reports_placeholder']      = 'Reporting and analytics are coming soon.';
+
+$string['settings'] = 'Settings';

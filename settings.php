@@ -25,68 +25,48 @@
 defined('MOODLE_INTERNAL') || die();
 
 // Only define settings if we're in the site administration context.
-if ($hassiteconfig) {
-    // Create the main settings page for this plugin.
-    $settingspage = new admin_settingpage(
-        'local_mailwhistle',
-        get_string('pluginname', 'local_mailwhistle')
-    );
+if (!$hassiteconfig) {
+    return;
+}
 
-    // Add a heading section to organize plugin settings.
-    $settingspage->add(new admin_setting_heading(
+// Category to hold all settings.
+$ADMIN->add('root', new admin_category('local_mailwhistle', get_string('pluginname', 'local_mailwhistle')));
+
+// Create the main settings page for this plugin.
+$settingspage = new admin_settingpage(
+    'local_mailwhistle_settings',
+    get_string('settings', 'local_mailwhistle')
+);
+$ADMIN->add('local_mailwhistle', $settingspage);
+
+// Main entry point for Mailwhistle.
+$page = new admin_externalpage(
+    name: 'local_mailwhistle_mailings',
+    visiblename: get_string('pluginname', 'local_mailwhistle'),
+    url: new moodle_url('/local/mailwhistle/index.php'),
+    req_capability: 'local/mailwhistle:view',
+);
+$ADMIN->add('local_mailwhistle', $page);
+
+if (!$ADMIN->fulltree) {
+    return;
+}
+
+// Add a heading section to organize plugin settings.
+$settingspage->add(
+    new admin_setting_heading(
         'local_mailwhistle_settings',
         get_string('setting_heading', 'local_mailwhistle'),
         get_string('setting_heading_desc', 'local_mailwhistle')
-    ));
+    )
+);
 
-    // Example: Boolean setting to enable/disable a feature.
-    $settingspage->add(new admin_setting_configcheckbox(
-        'local_mailwhistle/enable_feature',
-        get_string('enable_feature', 'local_mailwhistle'),
-        get_string('enable_feature_desc', 'local_mailwhistle'),
+// Example: Boolean setting to enable/disable a feature.
+$settingspage->add(
+    new admin_setting_configcheckbox(
+        'local_mailwhistle/enable',
+        get_string('enable', 'local_mailwhistle'),
+        get_string('enable_desc', 'local_mailwhistle'),
         1
-    ));
-
-    // Example: Text input setting with validation.
-    $settingspage->add(new admin_setting_configtext(
-        'local_mailwhistle/api_key',
-        get_string('api_key', 'local_mailwhistle'),
-        get_string('api_key_desc', 'local_mailwhistle'),
-        ''
-    ));
-
-    // Example: Dropdown selection setting.
-    $selectoptions = [
-        'option1' => get_string('option1', 'local_mailwhistle'),
-        'option2' => get_string('option2', 'local_mailwhistle'),
-        'option3' => get_string('option3', 'local_mailwhistle'),
-    ];
-    $settingspage->add(new admin_setting_configselect(
-        'local_mailwhistle/select_option',
-        get_string('select_option', 'local_mailwhistle'),
-        get_string('select_option_desc', 'local_mailwhistle'),
-        'option1',
-        $selectoptions
-    ));
-
-    // Example: Textarea for longer configuration text.
-    $settingspage->add(new admin_setting_configtextarea(
-        'local_mailwhistle/description',
-        get_string('description', 'local_mailwhistle'),
-        get_string('description_desc', 'local_mailwhistle'),
-        ''
-    ));
-
-    // Register the settings page with the admin interface.
-    $ADMIN->add('localplugins', $settingspage);
-
-    // Admin page for Mailwhistle.
-    $page = new admin_externalpage(
-        name: 'local_mailwhistle_mailings',
-        visiblename: get_string('pluginname', 'local_mailwhistle'),
-        url: new moodle_url('/local/mailwhistle/index.php'),
-        req_capability: 'moodle/site:config',
-        hidden: false,
-    );
-    $ADMIN->add('root', $page);
-}
+    )
+);

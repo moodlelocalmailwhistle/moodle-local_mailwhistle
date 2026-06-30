@@ -24,16 +24,13 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
+global $CFG;
+require_once($CFG->libdir . '/adminlib.php');
 
-// Require user login.
-require_login();
-
-// Get system context and check user capability.
-$context = context_system::instance();
-require_capability('local/mailwhistle:view', $context);
+$tab = optional_param('tab', 'send', PARAM_ALPHA);
+admin_externalpage_setup('local_mailwhistle_mailings', extraurlparams: ['tab' => $tab]);
 
 // Determine which tab is active (defaults to the send newsletters tab).
-$tab = optional_param('tab', 'send', PARAM_ALPHA);
 $validtabs = ['send', 'audience', 'templates', 'reports', 'resources'];
 if (!in_array($tab, $validtabs, true)) {
     $tab = 'send';
@@ -41,14 +38,6 @@ if (!in_array($tab, $validtabs, true)) {
 
 // Optional: a specific sent newsletter to view (0 means show the list).
 $viewid = optional_param('view', 0, PARAM_INT);
-
-// Configure the page (must be done before output).
-$pageurl = new moodle_url('/local/mailwhistle/index.php', ['tab' => $tab]);
-$PAGE->set_context($context);
-$PAGE->set_url($pageurl);
-$PAGE->set_pagelayout('standard');
-$PAGE->set_title(get_string('pluginname', 'local_mailwhistle'));
-$PAGE->set_heading(get_string('pluginname', 'local_mailwhistle'));
 
 // Add plugin assets.
 $PAGE->requires->css(new moodle_url('/local/mailwhistle/styles.css'));
@@ -73,7 +62,7 @@ switch ($tab) {
         if ($viewid > 0) {
             echo local_mailwhistle_render_view_mail($viewid);
         } else {
-            echo local_mailwhistle_render_sent_mails();
+            echo $OUTPUT->render(new \local_mailwhistle\output\sent_mails());
         }
         break;
     case 'audience':

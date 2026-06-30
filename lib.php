@@ -118,62 +118,6 @@ function local_mailwhistle_page_init(): void {
 }
 
 /**
- * Render the "previously sent newsletters" history table.
- *
- * Builds a table from sample data so the send-newsletters tab has something
- * to display before the real sending engine and data model land. Replace the
- * data source in {@see local_mailwhistle_get_sample_sent_mails()} with a query
- * against the mailings table once persistence is implemented.
- *
- * @return string Rendered HTML for the sent mails section.
- */
-function local_mailwhistle_render_sent_mails(): string {
-    $rows = local_mailwhistle_get_sample_sent_mails();
-
-    $output = html_writer::tag(
-        'h3',
-        get_string('sentmails_heading', 'local_mailwhistle')
-    );
-
-    if (empty($rows)) {
-        return $output . html_writer::div(
-            get_string('nosentmails', 'local_mailwhistle'),
-            'alert alert-info'
-        );
-    }
-
-    $table = new html_table();
-    $table->head = [
-        get_string('col_subject', 'local_mailwhistle'),
-        get_string('col_audience', 'local_mailwhistle'),
-        get_string('col_recipients', 'local_mailwhistle'),
-        get_string('col_sentby', 'local_mailwhistle'),
-        get_string('col_sentat', 'local_mailwhistle'),
-        get_string('col_status', 'local_mailwhistle'),
-    ];
-    $table->attributes['class'] = 'generaltable local-mailwhistle-sentmails';
-
-    foreach ($rows as $row) {
-        $viewurl = new moodle_url('/local/mailwhistle/index.php', [
-            'tab' => 'send',
-            'view' => $row['id'],
-        ]);
-        $subjectlink = html_writer::link($viewurl, format_string($row['subject']));
-
-        $table->data[] = [
-            $subjectlink,
-            format_string($row['audience']),
-            number_format($row['recipients']),
-            format_string($row['sentby']),
-            userdate($row['sentat']),
-            local_mailwhistle_status_badge($row['status']),
-        ];
-    }
-
-    return $output . html_writer::table($table);
-}
-
-/**
  * Render the detail view for a single sent newsletter.
  *
  * Shows the metadata and a preview of the rendered newsletter body. Falls back
