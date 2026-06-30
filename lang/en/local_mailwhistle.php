@@ -55,6 +55,7 @@ $string['description_desc']      = 'Enter a description for this plugin configur
 $string['mailwhistle:view']        = 'View Mail Whistle plugin';
 $string['mailwhistle:manage']      = 'Manage Mail Whistle plugin';
 $string['mailwhistle:configure']   = 'Configure Mail Whistle plugin settings';
+$string['mailwhistle:managetags']  = 'Manage audience tags (create, assign, unassign)';
 
 // User-facing messages for operation feedback and error handling.
 $string['success_message']       = 'Operation completed successfully.';
@@ -90,14 +91,75 @@ $string['mailnotfound']         = 'The requested newsletter could not be found.'
 $string['mailpreview']          = 'Newsletter preview';
 
 // Placeholder messages for tabs not yet implemented.
-$string['audience_placeholder']     = 'Audience management is coming soon.';
 $string['templates_placeholder']    = 'Template management is coming soon.';
 $string['reports_placeholder']      = 'Reporting and analytics are coming soon.';
 
 $string['settings'] = 'Settings';
 $string['resources'] = 'Resources';
 
-// Privacy API metadata descriptions.
+// Audience tab strings.
+
+// Table column headers.
+$string['col_user']             = 'Full name';
+$string['col_email']            = 'Email';
+$string['col_tags']             = 'Tags';
+
+// Filter form labels and options.
+$string['filter_search']        = 'Search name / email';
+$string['filter_tag']           = 'Tag';
+$string['filter_suspended']     = 'Status';
+$string['filter_auth']          = 'Authentication';
+$string['filter_any']           = 'Any';
+$string['filter_active']        = 'Active only';
+$string['filter_suspended_only'] = 'Suspended only';
+
+// Apply-tag form controls.
+$string['apply_tag']            = 'Apply tag';
+$string['apply_tag_choose']     = 'Choose a tag…';
+$string['new_tag']              = 'New tag name';
+$string['applybtn']             = 'Apply';
+
+// Per-row tag chip controls.
+$string['remove_tag']           = 'Remove';
+$string['confirm_remove_tag']   = 'Remove this tag from the user';
+$string['no_tags']              = 'No tags';
+
+// Action success / feedback messages.
+$string['tag_created']          = 'Tag created.';
+$string['tag_assigned_n']       = '{$a} user(s) tagged successfully.';
+$string['tag_removed']          = 'Tag removed.';
+$string['noselection']          = 'Select at least one user and a tag to apply.';
+
+// Empty state.
+$string['noaudience']           = 'No users match the current filter.';
+
+// Audience event strings.
+
+$string['event_tag_created']    = 'Audience tag created';
+$string['event_tag_assigned']   = 'Audience tag assigned to user';
+$string['event_tag_unassigned'] = 'Audience tag removed from user';
+
+// Privacy / GDPR metadata strings.
+
+// Table: local_mailwhistle_tag_assign.
+$string['privacy:metadata:local_mailwhistle_tag_assign']             = 'Stores which users have been assigned each audience tag, and who performed the assignment.';
+$string['privacy:metadata:local_mailwhistle_tag_assign:tagid']       = 'The ID of the audience tag that was assigned.';
+$string['privacy:metadata:local_mailwhistle_tag_assign:userid']      = 'The ID of the user who was tagged.';
+$string['privacy:metadata:local_mailwhistle_tag_assign:usermodified'] = 'The ID of the user who performed the tag assignment.';
+$string['privacy:metadata:local_mailwhistle_tag_assign:timecreated'] = 'The date and time when the tag was assigned.';
+
+// Table: local_mailwhistle_tag.
+$string['privacy:metadata:local_mailwhistle_tag']                    = 'Stores audience tag definitions; records who created or last modified each tag.';
+$string['privacy:metadata:local_mailwhistle_tag:name']               = 'The display name of the tag.';
+$string['privacy:metadata:local_mailwhistle_tag:usermodified']       = 'The ID of the user who created or last modified the tag definition.';
+$string['privacy:metadata:local_mailwhistle_tag:timecreated']        = 'The date and time when the tag definition was created.';
+$string['privacy:metadata:local_mailwhistle_tag:timemodified']       = 'The date and time when the tag definition was last modified.';
+
+// Export path labels (used by the privacy export writer).
+$string['privacy:path:tag_assignments']  = 'Audience tag assignments';
+$string['privacy:path:authored_tags']    = 'Authored tag definitions';
+
+// Privacy API metadata descriptions (campaign recipients and unsubscribes).
 $string['privacy:metadata:local_mailwhistle_recipients'] = 'Per-recipient delivery records for email campaigns.';
 $string['privacy:metadata:local_mailwhistle_recipients:userid'] = 'The ID of the recipient user.';
 $string['privacy:metadata:local_mailwhistle_recipients:email'] = 'The email address the campaign was sent to.';
