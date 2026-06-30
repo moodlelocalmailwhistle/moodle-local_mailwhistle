@@ -22,8 +22,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Upgrade callback for Mail Whistle plugin database schema.
  *
@@ -37,7 +35,7 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
     global $DB;
 
-    if ($oldversion < 2026063002) {
+    if ($oldversion < 2026063003) {
         $dbman = $DB->get_manager();
 
         // Create local_mailwhistle_tag table.
@@ -80,7 +78,7 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
             $dbman->create_table($table);
         }
 
-        upgrade_plugin_savepoint(true, 2026063002, 'local', 'mailwhistle');
+        upgrade_plugin_savepoint(true, 2026063003, 'local', 'mailwhistle');
     }
 
     return true;

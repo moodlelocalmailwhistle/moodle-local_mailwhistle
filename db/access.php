@@ -26,15 +26,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
- * Plugin capabilities.
- *
- * Define all capabilities required by this plugin.
- * Capabilities control what roles can perform specific actions.
- *
- * Capability naming convention: local/pluginname:capability
- * Types: 'read' (view only), 'write' (modify), 'admin' (configure)
- */
+// Plugin capabilities.
+//
+// Define all capabilities required by this plugin.
+// Capabilities control what roles can perform specific actions.
+//
+// Capability naming convention: local/pluginname:capability.
+// Types: 'read' (view only), 'write' (modify), 'admin' (configure).
 $capabilities = [
 
     // Capability: View plugin content and functionality.
@@ -42,8 +40,8 @@ $capabilities = [
         'captype' => 'read',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => [
-            'user' => CAP_ALLOW,      // All logged-in users can view.
-            'manager' => CAP_ALLOW,   // Site managers can view.
+            'user' => CAP_ALLOW, // All logged-in users can view.
+            'manager' => CAP_ALLOW, // Site managers can view.
         ],
         'clonepermissionsfrom' => '',
     ],
@@ -53,7 +51,7 @@ $capabilities = [
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => [
-            'manager' => CAP_ALLOW,   // Only managers can manage.
+            'manager' => CAP_ALLOW, // Only managers can manage.
         ],
         'clonepermissionsfrom' => '',
     ],
@@ -63,7 +61,7 @@ $capabilities = [
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => [
-            'manager' => CAP_ALLOW,   // Only managers can configure.
+            'manager' => CAP_ALLOW, // Only managers can configure.
         ],
         'clonepermissionsfrom' => '',
     ],

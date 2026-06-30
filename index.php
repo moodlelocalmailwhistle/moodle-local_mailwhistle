@@ -35,7 +35,7 @@ require_capability('local/mailwhistle:view', $context);
 
 // Determine which tab is active (defaults to the send newsletters tab).
 $tab = optional_param('tab', 'send', PARAM_ALPHA);
-$validtabs = ['send', 'audience', 'templates', 'reports'];
+$validtabs = ['send', 'audience', 'templates', 'reports', 'resources'];
 if (!in_array($tab, $validtabs, true)) {
     $tab = 'send';
 }
@@ -312,6 +312,9 @@ switch ($tab) {
             get_string('reports_placeholder', 'local_mailwhistle'),
             \core\output\notification::NOTIFY_INFO
         );
+        break;
+    case 'resources':
+        echo local_mailwhistle_render_resources();
         break;
 }
 

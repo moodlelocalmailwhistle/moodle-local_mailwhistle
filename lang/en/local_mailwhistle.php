@@ -24,69 +24,44 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// ===== PLUGIN METADATA =====
-
-/**
- * Plugin name and description strings.
- */
+// Plugin metadata.
 $string['pluginname']  = 'Mail Whistle';
 $string['plugindesc']  = 'A reusable boilerplate for creating Moodle local plugins on Moodle 5 LTS and above.';
 
-// ===== SETTINGS PAGE CONFIGURATION =====
-
-/**
- * Main settings page heading and description.
- */
+// Settings page heading and description.
 $string['setting_heading']      = 'Mail Whistle Settings';
 $string['setting_heading_desc']  = 'Configure the Mail Whistle plugin settings.';
 
-/**
- * Feature toggle setting (checkbox configuration).
- */
+// Feature toggle setting (checkbox configuration).
 $string['enable_feature']        = 'Enable Feature';
 $string['enable_feature_desc']   = 'Enable or disable the main feature of this plugin.';
 
-/**
- * API Key setting (text input configuration).
- */
+// API key setting (text input configuration).
 $string['api_key']               = 'API Key';
 $string['api_key_desc']          = 'Enter your API key for external service integration.';
 
-/**
- * Select option setting (select menu configuration).
- */
+// Select option setting (select menu configuration).
 $string['select_option']         = 'Select Option';
 $string['select_option_desc']    = 'Choose one of the available options.';
 $string['option1']               = 'Option 1';
 $string['option2']               = 'Option 2';
 $string['option3']               = 'Option 3';
 
-/**
- * Description setting (textarea configuration).
- */
+// Description setting (textarea configuration).
 $string['description']           = 'Description';
 $string['description_desc']      = 'Enter a description for this plugin configuration.';
 
-// ===== PLUGIN CAPABILITIES =====
-
-/**
- * Capability descriptions for role-based access control.
- * Used in db/access.php to define permissions for different user roles.
- */
+// Capability descriptions for role-based access control.
 $string['mailwhistle:view']        = 'View Mail Whistle plugin';
 $string['mailwhistle:manage']      = 'Manage Mail Whistle plugin';
 $string['mailwhistle:configure']   = 'Configure Mail Whistle plugin settings';
 $string['mailwhistle:managetags']  = 'Manage audience tags (create, assign, unassign)';
 
-// ===== USER MESSAGES AND NOTIFICATIONS =====
-
-/**
- * User-facing messages for operation feedback and error handling.
- */
+// User-facing messages for operation feedback and error handling.
 $string['success_message']       = 'Operation completed successfully.';
 $string['error_message']         = 'An error occurred. Please try again.';
 
-// Event names
+// Event names.
 $string['event_data_created']    = 'Data record created';
 
 // Tab labels for the main plugin page.
@@ -94,6 +69,7 @@ $string['tab_send']         = 'Send newsletters';
 $string['tab_audience']     = 'Audience';
 $string['tab_templates']    = 'Templates';
 $string['tab_reports']      = 'Reports';
+$string['tab_resources']      = 'Resources';
 
 // Headings and labels for the sent newsletters history table.
 $string['sentmails_heading']    = 'Previously sent newsletters';
@@ -179,3 +155,16 @@ $string['privacy:metadata:local_mailwhistle_tag:timemodified']       = 'The date
 // Export path labels (used by the privacy export writer).
 $string['privacy:path:tag_assignments']  = 'Audience tag assignments';
 $string['privacy:path:authored_tags']    = 'Authored tag definitions';
+
+// Privacy API metadata descriptions (campaign recipients and unsubscribes).
+$string['privacy:metadata:local_mailwhistle_recipients'] = 'Per-recipient delivery records for email campaigns.';
+$string['privacy:metadata:local_mailwhistle_recipients:userid'] = 'The ID of the recipient user.';
+$string['privacy:metadata:local_mailwhistle_recipients:email'] = 'The email address the campaign was sent to.';
+$string['privacy:metadata:local_mailwhistle_recipients:firstname'] = 'The recipient first name captured at send time.';
+$string['privacy:metadata:local_mailwhistle_recipients:lastname'] = 'The recipient last name captured at send time.';
+$string['privacy:metadata:local_mailwhistle_recipients:status'] = 'The delivery status for the recipient.';
+$string['privacy:metadata:local_mailwhistle_recipients:timesent'] = 'The time the campaign was sent to the recipient.';
+$string['privacy:metadata:local_mailwhistle_unsubscribes'] = 'Records of users who unsubscribed from campaigns.';
+$string['privacy:metadata:local_mailwhistle_unsubscribes:userid'] = 'The ID of the user who unsubscribed.';
+$string['privacy:metadata:local_mailwhistle_unsubscribes:email'] = 'The email address that unsubscribed.';
+$string['privacy:metadata:local_mailwhistle_unsubscribes:timecreated'] = 'The time the unsubscribe was recorded.';

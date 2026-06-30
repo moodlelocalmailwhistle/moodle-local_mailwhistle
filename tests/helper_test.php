@@ -14,9 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_mailwhistle\tests;
-
-defined('MOODLE_INTERNAL') || die();
+namespace local_mailwhistle;
 
 /**
  * Unit tests for Mail Whistle plugin helper class.
@@ -29,12 +27,9 @@ defined('MOODLE_INTERNAL') || die();
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\helper
  */
-class helper_test extends \advanced_testcase {
-
+final class helper_test extends \advanced_testcase {
     /**
      * Test: Helper class can be instantiated.
-     *
-     * @test
      */
     public function test_helper_instantiation(): void {
         $helper = new \local_mailwhistle\helper();
@@ -43,8 +38,6 @@ class helper_test extends \advanced_testcase {
 
     /**
      * Test: Can get configuration values.
-     *
-     * @test
      */
     public function test_get_config(): void {
         $this->resetAfterTest();
@@ -59,8 +52,6 @@ class helper_test extends \advanced_testcase {
 
     /**
      * Test: Returns default value when config not found.
-     *
-     * @test
      */
     public function test_get_config_with_default(): void {
         $this->resetAfterTest();
@@ -72,8 +63,6 @@ class helper_test extends \advanced_testcase {
 
     /**
      * Test: Can set configuration values.
-     *
-     * @test
      */
     public function test_set_config(): void {
         $this->resetAfterTest();
@@ -89,8 +78,6 @@ class helper_test extends \advanced_testcase {
 
     /**
      * Test: Can process data for valid user.
-     *
-     * @test
      */
     public function test_process_user_data_valid_user(): void {
         $this->resetAfterTest();
@@ -105,8 +92,6 @@ class helper_test extends \advanced_testcase {
 
     /**
      * Test: Returns false for non-existent user.
-     *
-     * @test
      */
     public function test_process_user_data_invalid_user(): void {
         $this->resetAfterTest();
