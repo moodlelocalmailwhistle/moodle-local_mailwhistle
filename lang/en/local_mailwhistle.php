@@ -96,7 +96,7 @@ $string['reports_placeholder']      = 'Reporting and analytics are coming soon.'
 
 $string['settings'] = 'Settings';
 
-// ===== AUDIENCE TAB =====
+// Audience tab strings.
 
 // Table column headers.
 $string['col_user']             = 'Full name';
@@ -132,22 +132,22 @@ $string['noselection']          = 'Select at least one user and a tag to apply.'
 // Empty state.
 $string['noaudience']           = 'No users match the current filter.';
 
-// ===== AUDIENCE EVENTS =====
+// Audience event strings.
 
 $string['event_tag_created']    = 'Audience tag created';
 $string['event_tag_assigned']   = 'Audience tag assigned to user';
 $string['event_tag_unassigned'] = 'Audience tag removed from user';
 
-// ===== PRIVACY / GDPR METADATA =====
+// Privacy / GDPR metadata strings.
 
-// Table: local_mailwhistle_tag_assign
+// Table: local_mailwhistle_tag_assign.
 $string['privacy:metadata:local_mailwhistle_tag_assign']             = 'Stores which users have been assigned each audience tag, and who performed the assignment.';
 $string['privacy:metadata:local_mailwhistle_tag_assign:tagid']       = 'The ID of the audience tag that was assigned.';
 $string['privacy:metadata:local_mailwhistle_tag_assign:userid']      = 'The ID of the user who was tagged.';
 $string['privacy:metadata:local_mailwhistle_tag_assign:usermodified'] = 'The ID of the user who performed the tag assignment.';
 $string['privacy:metadata:local_mailwhistle_tag_assign:timecreated'] = 'The date and time when the tag was assigned.';
 
-// Table: local_mailwhistle_tag
+// Table: local_mailwhistle_tag.
 $string['privacy:metadata:local_mailwhistle_tag']                    = 'Stores audience tag definitions; records who created or last modified each tag.';
 $string['privacy:metadata:local_mailwhistle_tag:name']               = 'The display name of the tag.';
 $string['privacy:metadata:local_mailwhistle_tag:usermodified']       = 'The ID of the user who created or last modified the tag definition.';

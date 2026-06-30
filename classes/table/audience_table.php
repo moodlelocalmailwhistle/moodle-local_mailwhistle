@@ -74,7 +74,7 @@ class audience_table extends \table_sql {
         if ($canmanage) {
             $this->define_columns(['select', 'fullname', 'email', 'tags']);
             $this->define_headers([
-                '',  // Checkbox column — no sortable header text needed.
+                '', // Checkbox column — no sortable header text needed.
                 get_string('col_user', 'local_mailwhistle'),
                 get_string('col_email', 'local_mailwhistle'),
                 get_string('col_tags', 'local_mailwhistle'),
@@ -134,7 +134,7 @@ class audience_table extends \table_sql {
         ];
         $params['guestid'] = $CFG->siteguest;
 
-        // --- Optional filter: name / email search ---
+        // Optional filter: name / email search.
         $search = trim($this->filters['search'] ?? '');
         if ($search !== '') {
             $whereclauses[] = '('
@@ -150,7 +150,7 @@ class audience_table extends \table_sql {
             $params['s3'] = $escaped;
         }
 
-        // --- Optional filter: tag (EXISTS subquery) ---
+        // Optional filter: tag (EXISTS subquery).
         $tagid = (int) ($this->filters['tagid'] ?? 0);
         if ($tagid > 0) {
             $whereclauses[] = 'EXISTS ('
@@ -162,7 +162,7 @@ class audience_table extends \table_sql {
             $params['filtertagid'] = $tagid;
         }
 
-        // --- Optional filter: suspended status ---
+        // Optional filter: suspended status.
         $suspended = $this->filters['suspended'] ?? '';
         if ($suspended === 'active') {
             $whereclauses[] = 'u.suspended = :susp';
@@ -172,7 +172,7 @@ class audience_table extends \table_sql {
             $params['susp'] = 1;
         }
 
-        // --- Optional filter: authentication plugin ---
+        // Optional filter: authentication plugin.
         $auth = $this->filters['auth'] ?? '';
         if ($auth !== '' && $auth !== 'any') {
             $whereclauses[] = 'u.auth = :auth';

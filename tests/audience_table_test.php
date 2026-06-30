@@ -16,8 +16,6 @@
 
 namespace local_mailwhistle\tests;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_mailwhistle\manager\tag_manager;
 use local_mailwhistle\table\audience_table;
 
@@ -36,7 +34,6 @@ use local_mailwhistle\table\audience_table;
  * @covers    \local_mailwhistle\table\audience_table
  */
 class audience_table_test extends \advanced_testcase {
-
     /**
      * Helper: return an array of user ids visible in the audience listing
      * using the same baseline WHERE as audience_table (deleted=0, not guest).

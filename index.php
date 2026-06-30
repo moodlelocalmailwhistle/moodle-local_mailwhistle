@@ -39,16 +39,14 @@ if (!in_array($tab, $validtabs, true)) {
     $tab = 'send';
 }
 
-// -------------------------------------------------------------------------
 // PART A: POST-only write handler for the audience tab.
 //
 // This block MUST run before echo $OUTPUT->header() so that redirect()
 // can send HTTP headers (PRG pattern — no resubmit on browser refresh).
 //
-// Only state-changing actions are handled here.  The 'removetag' action
+// Only state-changing actions are handled here. The 'removetag' action
 // is a GET that shows a confirmation page (rendered in PART B); the
 // actual delete fires via 'removetagconfirm' (POST) handled below.
-// -------------------------------------------------------------------------
 $action = optional_param('action', '', PARAM_ALPHA);
 $writeactions = ['applytag', 'createtag', 'removetagconfirm'];
 if ($tab === 'audience' && in_array($action, $writeactions, true)) {
@@ -141,9 +139,7 @@ foreach ($validtabs as $tabid) {
 echo $OUTPUT->header();
 echo $OUTPUT->tabtree($tabs, $tab);
 
-// -------------------------------------------------------------------------
 // PART B: Render the active tab's content.
-// -------------------------------------------------------------------------
 switch ($tab) {
     case 'send':
         if ($viewid > 0) {
@@ -154,7 +150,7 @@ switch ($tab) {
         break;
 
     case 'audience':
-        // --- Confirm page for per-row tag removal (GET → confirm → POST removetagconfirm) ---
+        // Confirm page for per-row tag removal (GET → confirm → POST removetagconfirm).
         // The remove link in col_tags is a GET link (safe to follow by scanners)
         // that lands here.  We render a confirmation page and do NO write.
         // The actual delete fires via 'removetagconfirm' (POST) handled in PART A.
@@ -213,7 +209,7 @@ switch ($tab) {
             'perpage'   => $perpage,
         ]);
 
-        // --- FORM 1: GET filter form (sibling, never nested) ---
+        // FORM 1: GET filter form (sibling, never nested).
         // moodleform(action, customdata, method, target, attributes, editable).
         $filterform = new \local_mailwhistle\form\audience_filter_form(
             $baseurl->out(false),
@@ -243,7 +239,7 @@ switch ($tab) {
         $table->build_sql();
 
         if ($canmanage) {
-            // --- FORM 2: POST apply-tag form (sibling, never nested inside Form 1) ---
+            // FORM 2: POST apply-tag form (sibling, never nested inside Form 1).
             // The audience_table output is rendered INSIDE this form so the
             // row checkboxes submit together with the apply-tag controls.
             echo html_writer::start_tag('form', [

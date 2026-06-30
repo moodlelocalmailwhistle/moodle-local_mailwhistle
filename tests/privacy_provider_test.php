@@ -16,8 +16,6 @@
 
 namespace local_mailwhistle\tests;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\userlist;
@@ -38,7 +36,6 @@ use local_mailwhistle\privacy\provider;
  * @covers    \local_mailwhistle\privacy\provider
  */
 class privacy_provider_test extends provider_testcase {
-
     /**
      * Test: get_metadata declares both plugin tables (collection non-empty).
      */
@@ -60,10 +57,16 @@ class privacy_provider_test extends provider_testcase {
             }
         }
 
-        $this->assertContains('local_mailwhistle_tag_assign', $tablenames,
-            'Metadata must declare local_mailwhistle_tag_assign.');
-        $this->assertContains('local_mailwhistle_tag', $tablenames,
-            'Metadata must declare local_mailwhistle_tag.');
+        $this->assertContains(
+            'local_mailwhistle_tag_assign',
+            $tablenames,
+            'Metadata must declare local_mailwhistle_tag_assign.'
+        );
+        $this->assertContains(
+            'local_mailwhistle_tag',
+            $tablenames,
+            'Metadata must declare local_mailwhistle_tag.'
+        );
     }
 
     /**
@@ -137,8 +140,8 @@ class privacy_provider_test extends provider_testcase {
         $this->setUser($actor);
 
         $tagid = tag_manager::create_tag('DelUser');
-        tag_manager::assign_tag($tagid, $subject->id); // actor assigns to subject.
-        tag_manager::assign_tag($tagid, $other->id);   // actor assigns to other.
+        tag_manager::assign_tag($tagid, $subject->id); // Actor assigns to subject.
+        tag_manager::assign_tag($tagid, $other->id); // Actor assigns to other.
 
         // Confirm 2 assignment rows exist before deletion.
         $this->assertSame(2, $DB->count_records('local_mailwhistle_tag_assign', ['tagid' => $tagid]));
@@ -185,18 +188,27 @@ class privacy_provider_test extends provider_testcase {
         provider::delete_data_for_all_users_in_context(\context_system::instance());
 
         // ALL assignment rows must be gone.
-        $this->assertSame(0, $DB->count_records('local_mailwhistle_tag_assign'),
-            'All tag assignment rows must be deleted.');
+        $this->assertSame(
+            0,
+            $DB->count_records('local_mailwhistle_tag_assign'),
+            'All tag assignment rows must be deleted.'
+        );
 
         // Tag DEFINITION row count must be unchanged (AC#16).
         $defsafterpurge = $DB->count_records('local_mailwhistle_tag');
-        $this->assertSame($defsbeforepurge, $defsafterpurge,
-            'Tag definition rows must survive delete_data_for_all_users_in_context (AC#16).');
+        $this->assertSame(
+            $defsbeforepurge,
+            $defsafterpurge,
+            'Tag definition rows must survive delete_data_for_all_users_in_context (AC#16).'
+        );
 
-        // usermodified must be anonymised to 0 on all tag definition rows.
+        // Usermodified must be anonymised to 0 on all tag definition rows.
         $nonzero = $DB->count_records_select('local_mailwhistle_tag', 'usermodified <> 0');
-        $this->assertSame(0, (int) $nonzero,
-            'All tag definition usermodified values must be anonymised to 0.');
+        $this->assertSame(
+            0,
+            (int) $nonzero,
+            'All tag definition usermodified values must be anonymised to 0.'
+        );
     }
 
     /**

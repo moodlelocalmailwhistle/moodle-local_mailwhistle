@@ -40,7 +40,7 @@ class audience_filter_form extends \moodleform {
     public function definition(): void {
         $mform = $this->_form;
 
-        // --- Name / email search ---
+        // Name / email search.
         $mform->addElement(
             'text',
             'search',
@@ -49,7 +49,7 @@ class audience_filter_form extends \moodleform {
         );
         $mform->setType('search', PARAM_TEXT);
 
-        // --- Tag filter ---
+        // Tag filter.
         $tagoptions = [0 => get_string('filter_any', 'local_mailwhistle')];
         $tags = $this->_customdata['tags'] ?? [];
         foreach ($tags as $tag) {
@@ -65,7 +65,7 @@ class audience_filter_form extends \moodleform {
         $mform->setType('tagid', PARAM_INT);
         $mform->setDefault('tagid', 0);
 
-        // --- Suspended status filter ---
+        // Suspended status filter.
         $suspendoptions = [
             'any'       => get_string('filter_any', 'local_mailwhistle'),
             'active'    => get_string('filter_active', 'local_mailwhistle'),
@@ -81,7 +81,7 @@ class audience_filter_form extends \moodleform {
         $mform->setType('suspended', PARAM_ALPHA);
         $mform->setDefault('suspended', 'any');
 
-        // --- Auth plugin filter ---
+        // Auth plugin filter.
         $authoptions = ['any' => get_string('filter_any', 'local_mailwhistle')];
         $auths = $this->_customdata['auths'] ?? [];
         foreach ($auths as $authkey => $authlabel) {
@@ -97,7 +97,7 @@ class audience_filter_form extends \moodleform {
         $mform->setType('auth', PARAM_PLUGIN);
         $mform->setDefault('auth', 'any');
 
-        // --- Rows per page ---
+        // Rows per page.
         $mform->addElement('hidden', 'tab', 'audience');
         $mform->setType('tab', PARAM_ALPHA);
 

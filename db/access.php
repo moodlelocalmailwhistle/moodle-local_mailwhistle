@@ -71,7 +71,7 @@ $capabilities = [
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => [
-            'manager' => CAP_ALLOW,   // Only managers can manage tags.
+            'manager' => CAP_ALLOW, // Only managers can manage tags.
         ],
         'clonepermissionsfrom' => 'local/mailwhistle:manage',
     ],

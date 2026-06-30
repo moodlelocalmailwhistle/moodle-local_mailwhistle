@@ -16,8 +16,6 @@
 
 namespace local_mailwhistle\tests;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_mailwhistle\manager\tag_manager;
 
 /**
@@ -32,7 +30,6 @@ use local_mailwhistle\manager\tag_manager;
  * @covers    \local_mailwhistle\observer
  */
 class observer_test extends \advanced_testcase {
-
     /**
      * Test: deleting a user via delete_user() triggers the user_deleted event,
      * which the observer catches to remove that user's tag-assign rows.

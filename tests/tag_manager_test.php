@@ -16,8 +16,6 @@
 
 namespace local_mailwhistle\tests;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_mailwhistle\manager\tag_manager;
 
 /**
@@ -177,15 +175,15 @@ class tag_manager_test extends \advanced_testcase {
 
         $map = tag_manager::get_tags_for_users([$user1->id, $user2->id, $user3->id]);
 
-        // user1 has two tags (Alpha, Beta — sorted).
+        // User1 has two tags (Alpha, Beta — sorted).
         $this->assertArrayHasKey($user1->id, $map);
         $this->assertEqualsCanonicalizing(['Alpha', 'Beta'], $map[$user1->id]);
 
-        // user2 has one tag.
+        // User2 has one tag.
         $this->assertArrayHasKey($user2->id, $map);
         $this->assertSame(['Alpha'], $map[$user2->id]);
 
-        // user3 (untagged) not present in map.
+        // User3 (untagged) not present in map.
         $this->assertArrayNotHasKey($user3->id, $map);
     }
 
