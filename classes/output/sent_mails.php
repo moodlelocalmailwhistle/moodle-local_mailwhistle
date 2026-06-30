@@ -33,7 +33,6 @@ use core\output\templatable;
  * Output sent mails list
  */
 class sent_mails implements renderable, templatable {
-
     /**
      * Export this data so it can be used in a template.
      *

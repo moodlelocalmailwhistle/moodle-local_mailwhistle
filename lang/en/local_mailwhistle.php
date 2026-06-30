@@ -95,6 +95,8 @@ $string['templates_placeholder']    = 'Template management is coming soon.';
 $string['reports_placeholder']      = 'Reporting and analytics are coming soon.';
 
 $string['settings'] = 'Settings';
+$string['resources'] = 'Resources';
+
 // Privacy API metadata descriptions.
 $string['privacy:metadata:local_mailwhistle_recipients'] = 'Per-recipient delivery records for email campaigns.';
 $string['privacy:metadata:local_mailwhistle_recipients:userid'] = 'The ID of the recipient user.';

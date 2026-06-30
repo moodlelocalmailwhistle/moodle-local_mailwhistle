@@ -15,20 +15,26 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Local plugin "Mail Whistle" - Version file.
+ * Form to pick resources
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2026 Synergy Learning
+ * @author    Davo Smith
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+namespace local_mailwhistle\form;
 
-$plugin->component = 'local_mailwhistle';
-$plugin->version = 2026063003;      // YYYYMMDDvv format.
-$plugin->release = '1.0.1';         // Semantic versioning.
-$plugin->requires = 2025041400;     // Moodle 5.0 LTS minimum.
-$plugin->maturity = MATURITY_ALPHA; // Development stability level.
-$plugin->supported = [500, 502];    // Supported branch range: Moodle 5.0 to 5.2.
-
-// Declare dependencies on other plugins via $plugin->dependencies when required.
+/**
+ * Form to pick resources
+ */
+class resources_form extends \moodleform {
+    /**
+     * Define the resources selection form.
+     */
+    protected function definition() {
+        $mform = $this->_form;
+        $mform->addElement('filemanager', 'resources', get_string('resources', 'local_mailwhistle'));
+        $this->add_action_buttons();
+    }
+}
