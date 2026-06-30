@@ -16,8 +16,6 @@
 
 namespace local_mailwhistle\event;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Example event class for Mail Whistle plugin.
  *
@@ -29,7 +27,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class data_created extends \core\event\base {
-
     /**
      * Initialize event metadata.
      *

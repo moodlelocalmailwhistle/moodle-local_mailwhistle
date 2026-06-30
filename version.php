@@ -31,7 +31,4 @@ $plugin->requires = 2025041400;     // Moodle 5.0 LTS minimum.
 $plugin->maturity = MATURITY_ALPHA; // Development stability level.
 $plugin->supported = [500, 502];    // Supported branch range: Moodle 5.0 to 5.2.
 
-// Optional: Declare dependencies on other plugins.
-// $plugin->dependencies = [
-//     'local_otherplugin' => 2024010100,
-// ];
+// Declare dependencies on other plugins via $plugin->dependencies when required.

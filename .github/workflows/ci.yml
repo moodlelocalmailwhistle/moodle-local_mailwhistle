@@ -1,0 +1,16 @@
+# Catalyst reusable Moodle plugin CI.
+# Wraps moodle-plugin-ci and derives the Moodle test matrix from
+# $plugin->supported / $plugin->requires in version.php.
+# See: https://github.com/catalyst/catalyst-moodle-workflows
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  ci:
+    uses: catalyst/catalyst-moodle-workflows/.github/workflows/ci.yml@main
+    with:
+      # Moodle 5.0 is the minimum supported branch, which requires PHP 8.2+.
+      min_php: '8.2'
+      # Fail the build on any phpcs (codechecker) warning, not just errors.
+      codechecker_max_warnings: 0

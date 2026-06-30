@@ -22,8 +22,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Upgrade callback for Mail Whistle plugin database schema.
  *
@@ -37,13 +35,9 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
     global $DB;
 
-    // No upgrade steps yet. Add version-gated blocks here as the schema evolves, e.g.:
-    //
-    // if ($oldversion < 2025010100) {
-    //     $dbman = $DB->get_manager();
-    //     // Apply schema changes via $dbman, then record the savepoint.
-    //     upgrade_plugin_savepoint(true, 2025010100, 'local', 'mailwhistle');
-    // }
+    // No upgrade steps yet. Add version-gated blocks here as the schema evolves,
+    // applying schema changes through the database manager and recording each
+    // change with upgrade_plugin_savepoint().
 
     return true;
 }

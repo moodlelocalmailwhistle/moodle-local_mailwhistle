@@ -16,8 +16,6 @@
 
 namespace local_mailwhistle\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\contextlist;
 use core_privacy\local\request\approved_contextlist;
@@ -35,11 +33,10 @@ use core_privacy\local\request\userlist;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements \core_privacy\local\metadata\provider, \core_privacy\local\request\plugin_provider {
-
     /**
      * Declare the metadata for data stored by this plugin.
      */
-    public static function get_metadata(collection $collection) : collection {
+    public static function get_metadata(collection $collection): collection {
         // Add data descriptions to $collection if plugin stores personal data.
         return $collection;
     }
@@ -47,35 +44,35 @@ class provider implements \core_privacy\local\metadata\provider, \core_privacy\l
     /**
      * Return contexts that contain user information for the provided user id.
      */
-    public static function get_contexts_for_userid(int $userid) : contextlist {
+    public static function get_contexts_for_userid(int $userid): contextlist {
         return new contextlist();
     }
 
     /**
      * Populate a userlist with users who have data in the given context.
      */
-    public static function get_users_in_context(userlist $userlist) : void {
-        // Use $userlist->add_user($userid) when applicable.
+    public static function get_users_in_context(userlist $userlist): void {
+        // Add matching users to the userlist when this plugin stores user data.
     }
 
     /**
      * Export user data for the approved contexts.
      */
-    public static function export_user_data(approved_contextlist $contextlist) : void {
+    public static function export_user_data(approved_contextlist $contextlist): void {
         // Implement export logic here if plugin stores personal data.
     }
 
     /**
      * Delete all user data for all users in the specified context.
      */
-    public static function delete_data_for_all_users_in_context(\context $context) : void {
+    public static function delete_data_for_all_users_in_context(\context $context): void {
         // Implement deletion logic if plugin stores personal data.
     }
 
     /**
      * Delete user data for the specified users/contexts.
      */
-    public static function delete_data_for_user(approved_contextlist $contextlist) : void {
+    public static function delete_data_for_user(approved_contextlist $contextlist): void {
         // Implement targeted deletion logic here.
     }
 }
