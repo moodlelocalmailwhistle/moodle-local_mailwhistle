@@ -33,6 +33,12 @@ use core\output\templatable;
  * File resources
  */
 class resources implements renderable, templatable {
+    /**
+     * Export the data for the resources template.
+     *
+     * @param renderer_base $output The renderer.
+     * @return array Template context.
+     */
     public function export_for_template(renderer_base $output) {
         $form = new \local_mailwhistle\form\resources_form();
         return ['form' => $form->render()];

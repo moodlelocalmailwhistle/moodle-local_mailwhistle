@@ -29,9 +29,8 @@ namespace local_mailwhistle\form;
  * Form to pick resources
  */
 class resources_form extends \moodleform {
-
     /**
-     * @inheritDoc
+     * Define the resources selection form.
      */
     protected function definition() {
         $mform = $this->_form;
