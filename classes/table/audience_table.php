@@ -257,10 +257,13 @@ class audience_table extends \table_sql {
     /**
      * Render the Full name cell.
      *
+     * Signature intentionally omits the parameter type hint and return type so
+     * it stays compatible with the untyped parent core_table\flexible_table::col_fullname($row).
+     *
      * @param \stdClass $row Current row.
      * @return string Formatted full name.
      */
-    public function col_fullname(\stdClass $row): string {
+    public function col_fullname($row) {
         return fullname($row);
     }
 
