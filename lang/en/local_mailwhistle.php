@@ -95,3 +95,4 @@ $string['templates_placeholder']    = 'Template management is coming soon.';
 $string['reports_placeholder']      = 'Reporting and analytics are coming soon.';
 
 $string['settings'] = 'Settings';
+$string['resources'] = 'Resources';
