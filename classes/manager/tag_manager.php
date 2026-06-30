@@ -312,7 +312,10 @@ class tag_manager {
 
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
 
-        $sql = "SELECT ta.userid, t.name
+        // Select ta.id first: get_records_sql() keys the returned array by the
+        // first column, so it must be unique. Keying by userid would collapse
+        // multiple tags per user (the second row would overwrite the first).
+        $sql = "SELECT ta.id, ta.userid, t.name
                   FROM {local_mailwhistle_tag_assign} ta
                   JOIN {local_mailwhistle_tag} t ON t.id = ta.tagid
                  WHERE ta.userid $insql
