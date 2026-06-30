@@ -87,3 +87,33 @@ $string['error_message']         = 'An error occurred. Please try again.';
 
 // Event names
 $string['event_data_created']    = 'Data record created';
+
+// Tab labels for the main plugin page.
+$string['tab_send']         = 'Send newsletters';
+$string['tab_audience']     = 'Audience';
+$string['tab_templates']    = 'Templates';
+$string['tab_reports']      = 'Reports';
+
+// Headings and labels for the sent newsletters history table.
+$string['sentmails_heading']    = 'Previously sent newsletters';
+$string['col_subject']          = 'Subject';
+$string['col_audience']         = 'Audience';
+$string['col_recipients']       = 'Recipients';
+$string['col_sentby']           = 'Sent by';
+$string['col_sentat']           = 'Sent at';
+$string['col_status']           = 'Status';
+$string['status_sent']          = 'Sent';
+$string['status_sending']       = 'Sending';
+$string['status_scheduled']     = 'Scheduled';
+$string['status_failed']        = 'Failed';
+$string['nosentmails']          = 'No newsletters have been sent yet.';
+
+// Sent newsletter detail view.
+$string['backtolist']           = '&laquo; Back to sent newsletters';
+$string['mailnotfound']         = 'The requested newsletter could not be found.';
+$string['mailpreview']          = 'Newsletter preview';
+
+// Placeholder messages for tabs not yet implemented.
+$string['audience_placeholder']     = 'Audience management is coming soon.';
+$string['templates_placeholder']    = 'Template management is coming soon.';
+$string['reports_placeholder']      = 'Reporting and analytics are coming soon.';

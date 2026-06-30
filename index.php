@@ -32,8 +32,18 @@ require_login();
 $context = context_system::instance();
 require_capability('local/mailwhistle:view', $context);
 
+// Determine which tab is active (defaults to the send newsletters tab).
+$tab = optional_param('tab', 'send', PARAM_ALPHA);
+$validtabs = ['send', 'audience', 'templates', 'reports'];
+if (!in_array($tab, $validtabs, true)) {
+    $tab = 'send';
+}
+
+// Optional: a specific sent newsletter to view (0 means show the list).
+$viewid = optional_param('view', 0, PARAM_INT);
+
 // Configure the page (must be done before output).
-$pageurl = new moodle_url('/local/mailwhistle/index.php');
+$pageurl = new moodle_url('/local/mailwhistle/index.php', ['tab' => $tab]);
 $PAGE->set_context($context);
 $PAGE->set_url($pageurl);
 $PAGE->set_pagelayout('standard');
@@ -42,30 +52,49 @@ $PAGE->set_heading(get_string('pluginname', 'local_mailwhistle'));
 
 // Add plugin assets.
 $PAGE->requires->css(new moodle_url('/local/mailwhistle/styles.css'));
-$PAGE->requires->js_call_amd('local_mailwhistle/example', 'init', ['.local-mailwhistle-example']);
+
+// Build the tab tree. Each tab links back to this page with its own tab param.
+$tabs = [];
+foreach ($validtabs as $tabid) {
+    $tabs[] = new tabobject(
+        $tabid,
+        new moodle_url('/local/mailwhistle/index.php', ['tab' => $tabid]),
+        get_string('tab_' . $tabid, 'local_mailwhistle')
+    );
+}
 
 // Start output.
 echo $OUTPUT->header();
+echo $OUTPUT->tabtree($tabs, $tab);
 
-// Prepare template data.
-$templatedata = [
-    'title' => get_string('pluginname', 'local_mailwhistle'),
-    'description' => get_string('plugindesc', 'local_mailwhistle'),
-    'items' => [
-        [
-            'name' => 'Feature 1',
-            'value' => 'Example feature description',
-        ],
-        [
-            'name' => 'Feature 2',
-            'value' => 'Another example feature',
-        ],
-    ],
-    'buttonlabel' => get_string('success_message', 'local_mailwhistle'),
-];
-
-// Render the template with data.
-echo $OUTPUT->render_from_template('local_mailwhistle/example', $templatedata);
+// Render the active tab's content.
+switch ($tab) {
+    case 'send':
+        if ($viewid > 0) {
+            echo local_mailwhistle_render_view_mail($viewid);
+        } else {
+            echo local_mailwhistle_render_sent_mails();
+        }
+        break;
+    case 'audience':
+        echo $OUTPUT->notification(
+            get_string('audience_placeholder', 'local_mailwhistle'),
+            \core\output\notification::NOTIFY_INFO
+        );
+        break;
+    case 'templates':
+        echo $OUTPUT->notification(
+            get_string('templates_placeholder', 'local_mailwhistle'),
+            \core\output\notification::NOTIFY_INFO
+        );
+        break;
+    case 'reports':
+        echo $OUTPUT->notification(
+            get_string('reports_placeholder', 'local_mailwhistle'),
+            \core\output\notification::NOTIFY_INFO
+        );
+        break;
+}
 
 // Output the page footer.
 echo $OUTPUT->footer();
