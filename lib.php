@@ -1050,6 +1050,93 @@ function local_mailwhistle_template_record_from_form(stdClass $data): stdClass {
 }
 
 /**
+ * Seed the default email template(s) bundled with the plugin.
+ *
+ * Reads every exported-template JSON file shipped under db/defaulttemplates and
+ * creates it when a template of the same name does not already exist. Safe to
+ * call from both db/install.php (fresh installs) and db/upgrade.php (existing
+ * sites); the name check keeps repeated calls idempotent.
+ *
+ * @return int Number of templates created.
+ */
+function local_mailwhistle_install_default_templates(): int {
+    global $CFG;
+
+    $created = 0;
+    $pattern = $CFG->dirroot . '/local/mailwhistle/db/defaulttemplates/*.json';
+    foreach ((array) glob($pattern) as $file) {
+        $json = file_get_contents($file);
+        if ($json !== false && local_mailwhistle_import_template_json($json) > 0) {
+            $created++;
+        }
+    }
+
+    return $created;
+}
+
+/**
+ * Create a template from an exported local_mailwhistle_template JSON document.
+ *
+ * The stored HTML is regenerated from the builder document so it always matches
+ * the current renderer and passes through the plugin's own sanitiser. Returns 0
+ * (skips creation) when the JSON is not a valid template export, or when a
+ * template with the same name already exists.
+ *
+ * @param string $json Exported template JSON.
+ * @return int New template id, or 0 when skipped.
+ */
+function local_mailwhistle_import_template_json(string $json): int {
+    global $DB;
+
+    $data = json_decode($json, true);
+    if (!is_array($data) || ($data['format'] ?? '') !== 'local_mailwhistle_template') {
+        return 0;
+    }
+
+    $template = $data['template'] ?? null;
+    if (!is_array($template)) {
+        return 0;
+    }
+
+    $name = trim((string) ($template['name'] ?? ''));
+    if ($name === '') {
+        return 0;
+    }
+
+    // Idempotency: never duplicate an existing template of the same name.
+    if ($DB->record_exists('local_mailwhistle_templates', ['name' => $name])) {
+        return 0;
+    }
+
+    $background = local_mailwhistle_normalise_template_background((string) ($template['background'] ?? '#ffffff'));
+    $editormode = local_mailwhistle_normalise_editor_mode((string) ($template['editormode'] ?? 'html'));
+    $builderjson = local_mailwhistle_normalise_builder_json(
+        json_encode($template['builder'] ?? ['blocks' => []])
+    );
+
+    if ($editormode === 'builder') {
+        $bodyhtml = local_mailwhistle_render_builder_html($builderjson, $background);
+    } else {
+        $bodyhtml = (string) ($template['html'] ?? '');
+    }
+
+    $now = time();
+    $record = (object) [
+        'name' => $name,
+        'previewtext' => trim((string) ($template['previewtext'] ?? '')),
+        'background' => $background,
+        'editormode' => $editormode,
+        'builderjson' => $builderjson,
+        'bodyhtml' => $bodyhtml,
+        'archived' => 0,
+        'timecreated' => $now,
+        'timemodified' => $now,
+    ];
+
+    return (int) $DB->insert_record('local_mailwhistle_templates', $record);
+}
+
+/**
  * Normalise the template-level email background.
  *
  * @param string $background Submitted background color.
