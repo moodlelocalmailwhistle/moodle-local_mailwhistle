@@ -40,7 +40,7 @@ use core_privacy\local\request\writer;
  *    audience tag, and who performed the assignment (usermodified).
  *  - {local_mailwhistle_tag}: tag definitions; usermodified records who created
  *    or last edited each definition.
- *  - {local_email_campaigns}: email campaigns, linked to the user who created
+ *  - {local_mailwhistle_campaigns}: email campaigns, linked to the user who created
  *    them via the `createdby` field.
  *
  * The campaigns table only records authorship via createdby, retained as an
@@ -107,15 +107,15 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
         );
 
         $collection->add_database_table(
-            'local_email_campaigns',
+            'local_mailwhistle_campaigns',
             [
-                'name' => 'privacy:metadata:local_email_campaigns:name',
-                'subject' => 'privacy:metadata:local_email_campaigns:subject',
-                'status' => 'privacy:metadata:local_email_campaigns:status',
-                'createdby' => 'privacy:metadata:local_email_campaigns:createdby',
-                'timecreated' => 'privacy:metadata:local_email_campaigns:timecreated',
+                'name' => 'privacy:metadata:local_mailwhistle_campaigns:name',
+                'subject' => 'privacy:metadata:local_mailwhistle_campaigns:subject',
+                'status' => 'privacy:metadata:local_mailwhistle_campaigns:status',
+                'createdby' => 'privacy:metadata:local_mailwhistle_campaigns:createdby',
+                'timecreated' => 'privacy:metadata:local_mailwhistle_campaigns:timecreated',
             ],
-            'privacy:metadata:local_email_campaigns'
+            'privacy:metadata:local_mailwhistle_campaigns'
         );
 
         return $collection;
@@ -145,7 +145,7 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                 ['userid' => $userid, 'usermodified' => $userid]
             )
             || $DB->record_exists('local_mailwhistle_tag', ['usermodified' => $userid])
-            || $DB->record_exists('local_email_campaigns', ['createdby' => $userid]);
+            || $DB->record_exists('local_mailwhistle_campaigns', ['createdby' => $userid]);
 
         if ($hasdata) {
             $contextlist->add_system_context();
@@ -189,7 +189,7 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
         );
 
         // Users who created email campaigns.
-        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_email_campaigns}', []);
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_mailwhistle_campaigns}', []);
     }
 
     /**
@@ -280,7 +280,7 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
             }
 
             // Export email campaigns created by this user.
-            $campaignrecords = $DB->get_records('local_email_campaigns', ['createdby' => $user->id]);
+            $campaignrecords = $DB->get_records('local_mailwhistle_campaigns', ['createdby' => $user->id]);
 
             $campaigns = [];
             foreach ($campaignrecords as $record) {
@@ -294,7 +294,7 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
 
             if ($campaigns) {
                 writer::with_context($context)->export_data(
-                    [get_string('privacy:metadata:local_email_campaigns', 'local_mailwhistle')],
+                    [get_string('privacy:metadata:local_mailwhistle_campaigns', 'local_mailwhistle')],
                     (object) ['campaigns' => $campaigns]
                 );
             }
@@ -329,7 +329,7 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
         $DB->set_field('local_mailwhistle_tag', 'usermodified', 0, []);
 
         // Remove all email campaigns.
-        $DB->delete_records('local_email_campaigns');
+        $DB->delete_records('local_mailwhistle_campaigns');
     }
 
     /**
@@ -364,7 +364,7 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
             $DB->set_field('local_mailwhistle_tag', 'usermodified', 0, ['usermodified' => $user->id]);
 
             // Delete email campaigns created by this user.
-            $DB->delete_records('local_email_campaigns', ['createdby' => $user->id]);
+            $DB->delete_records('local_mailwhistle_campaigns', ['createdby' => $user->id]);
         }
     }
 
@@ -402,6 +402,6 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
         $DB->set_field_select('local_mailwhistle_tag', 'usermodified', 0, "usermodified {$insql}", $inparams);
 
         // Delete email campaigns created by these users.
-        $DB->delete_records_select('local_email_campaigns', "createdby {$insql}", $inparams);
+        $DB->delete_records_select('local_mailwhistle_campaigns', "createdby {$insql}", $inparams);
     }
 }

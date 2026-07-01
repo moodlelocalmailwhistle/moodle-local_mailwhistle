@@ -38,7 +38,7 @@ final class create_campaign_form_test extends \advanced_testcase {
         $this->assertGreaterThan(0, $id);
 
         global $DB, $USER;
-        $rec = $DB->get_record('local_email_campaigns', ['id' => $id]);
+        $rec = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id]);
 
         $this->assertSame('My first campaign', $rec->name);
         $this->assertSame('draft', $rec->status);

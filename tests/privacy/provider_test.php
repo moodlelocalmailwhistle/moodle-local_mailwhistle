@@ -32,7 +32,7 @@ use core_privacy\local\request\approved_contextlist;
  */
 final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
-     * Test: get_metadata() describes the local_email_campaigns table.
+     * Test: get_metadata() describes the local_mailwhistle_campaigns table.
      */
     public function test_get_metadata(): void {
         $this->resetAfterTest();
@@ -45,12 +45,12 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $campaignfields = [];
         foreach ($items as $item) {
             $tablenames[] = $item->get_name();
-            if ($item->get_name() === 'local_email_campaigns') {
+            if ($item->get_name() === 'local_mailwhistle_campaigns') {
                 $campaignfields = array_keys($item->get_privacy_fields());
             }
         }
 
-        $this->assertContains('local_email_campaigns', $tablenames);
+        $this->assertContains('local_mailwhistle_campaigns', $tablenames);
         // Every exported field must be declared in the metadata.
         $this->assertContains('name', $campaignfields);
         $this->assertContains('subject', $campaignfields);
@@ -114,7 +114,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $approvedcontextlist = new approved_contextlist($USER, 'local_mailwhistle', [$context->id]);
         provider::delete_data_for_user($approvedcontextlist);
 
-        $this->assertEquals(0, $DB->count_records('local_email_campaigns', ['createdby' => $adminid]));
+        $this->assertEquals(0, $DB->count_records('local_mailwhistle_campaigns', ['createdby' => $adminid]));
     }
 
     /**
@@ -130,6 +130,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
 
         provider::delete_data_for_all_users_in_context(\context_system::instance());
 
-        $this->assertEquals(0, $DB->count_records('local_email_campaigns'));
+        $this->assertEquals(0, $DB->count_records('local_mailwhistle_campaigns'));
     }
 }

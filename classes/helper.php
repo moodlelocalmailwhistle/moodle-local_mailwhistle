@@ -140,7 +140,7 @@ class helper {
         $record->timecreated = $now;
         $record->timemodified = $now;
 
-        $campaignid = $DB->insert_record('local_email_campaigns', $record);
+        $campaignid = $DB->insert_record('local_mailwhistle_campaigns', $record);
 
         self::log_activity('campaign_created', 'Created campaign: ' . $name, $userid);
 

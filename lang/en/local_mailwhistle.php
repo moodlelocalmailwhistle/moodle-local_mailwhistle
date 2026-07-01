@@ -110,12 +110,12 @@ $string['col_name']                = 'Internal name';
 $string['col_created']             = 'Created';
 
 // Privacy (GDPR) metadata.
-$string['privacy:metadata:local_email_campaigns']             = 'Information about email campaigns created in the plugin.';
-$string['privacy:metadata:local_email_campaigns:name']        = 'The internal name of the campaign.';
-$string['privacy:metadata:local_email_campaigns:subject']     = 'The subject line of the campaign.';
-$string['privacy:metadata:local_email_campaigns:status']      = 'The delivery status of the campaign.';
-$string['privacy:metadata:local_email_campaigns:createdby']   = 'The ID of the user who created the campaign.';
-$string['privacy:metadata:local_email_campaigns:timecreated'] = 'The time the campaign was created.';
+$string['privacy:metadata:local_mailwhistle_campaigns']             = 'Information about email campaigns created in the plugin.';
+$string['privacy:metadata:local_mailwhistle_campaigns:name']        = 'The internal name of the campaign.';
+$string['privacy:metadata:local_mailwhistle_campaigns:subject']     = 'The subject line of the campaign.';
+$string['privacy:metadata:local_mailwhistle_campaigns:status']      = 'The delivery status of the campaign.';
+$string['privacy:metadata:local_mailwhistle_campaigns:createdby']   = 'The ID of the user who created the campaign.';
+$string['privacy:metadata:local_mailwhistle_campaigns:timecreated'] = 'The time the campaign was created.';
 
 $string['settings'] = 'Settings';
 $string['resources'] = 'Resources';

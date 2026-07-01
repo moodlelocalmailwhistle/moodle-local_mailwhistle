@@ -169,7 +169,7 @@ function local_mailwhistle_render_draft_campaigns(): string {
     global $DB;
 
     $drafts = $DB->get_records(
-        'local_email_campaigns',
+        'local_mailwhistle_campaigns',
         ['status' => 'draft'],
         'timecreated DESC',
         'id, name, status, timecreated',
