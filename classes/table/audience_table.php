@@ -314,9 +314,9 @@ class audience_table extends \table_sql {
                     $OUTPUT->pix_icon('t/delete', get_string('remove_tag', 'local_mailwhistle')),
                     ['class' => 'mw-tag-remove']
                 );
-                $parts[] = \html_writer::span($label . ' ' . $removelink, 'badge badge-secondary mw-tag-chip');
+                $parts[] = \html_writer::span($label . ' ' . $removelink, 'badge bg-secondary mw-tag-chip');
             } else {
-                $parts[] = \html_writer::span($label, 'badge badge-secondary mw-tag-chip');
+                $parts[] = \html_writer::span($label, 'badge bg-secondary mw-tag-chip');
             }
         }
 
