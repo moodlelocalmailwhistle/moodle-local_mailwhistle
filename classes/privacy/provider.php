@@ -75,6 +75,17 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
         );
 
         $collection->add_database_table(
+            'local_mailwhistle_tracking',
+            [
+                'recipientid' => 'privacy:metadata:local_mailwhistle_tracking:recipientid',
+                'eventtype' => 'privacy:metadata:local_mailwhistle_tracking:eventtype',
+                'targeturl' => 'privacy:metadata:local_mailwhistle_tracking:targeturl',
+                'timecreated' => 'privacy:metadata:local_mailwhistle_tracking:timecreated',
+            ],
+            'privacy:metadata:local_mailwhistle_tracking'
+        );
+
+        $collection->add_database_table(
             'local_mailwhistle_unsubscribes',
             [
                 'userid' => 'privacy:metadata:local_mailwhistle_unsubscribes:userid',
@@ -138,6 +149,13 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
         $contextlist = new contextlist();
 
         $hasdata = $DB->record_exists('local_mailwhistle_recipients', ['userid' => $userid])
+            || $DB->record_exists_sql(
+                "SELECT 1
+                   FROM {local_mailwhistle_tracking} t
+                   JOIN {local_mailwhistle_recipients} r ON r.id = t.recipientid
+                  WHERE r.userid = :userid",
+                ['userid' => $userid]
+            )
             || $DB->record_exists('local_mailwhistle_unsubscribes', ['userid' => $userid])
             || $DB->record_exists_select(
                 'local_mailwhistle_tag_assign',
@@ -223,6 +241,19 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                         'timesent' => $recipient->timesent ? transform::datetime($recipient->timesent) : null,
                     ]
                 );
+
+                // Tracking events recorded for this recipient (opens/clicks).
+                $events = $DB->get_records('local_mailwhistle_tracking', ['recipientid' => $recipient->id]);
+                foreach ($events as $event) {
+                    writer::with_context($context)->export_data(
+                        [get_string('pluginname', 'local_mailwhistle'), 'tracking', $event->id],
+                        (object) [
+                            'eventtype' => $event->eventtype,
+                            'targeturl' => $event->targeturl,
+                            'timecreated' => transform::datetime($event->timecreated),
+                        ]
+                    );
+                }
             }
 
             $unsubscribes = $DB->get_records('local_mailwhistle_unsubscribes', ['userid' => $user->id]);
@@ -319,6 +350,8 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
             return;
         }
 
+        // Tracking rows first (they reference recipients).
+        $DB->delete_records('local_mailwhistle_tracking');
         $DB->delete_records('local_mailwhistle_recipients');
         $DB->delete_records('local_mailwhistle_unsubscribes');
 
@@ -351,6 +384,12 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                 continue;
             }
 
+            // Delete tracking events for this user's recipient rows first.
+            $DB->delete_records_select(
+                'local_mailwhistle_tracking',
+                'recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid = :userid)',
+                ['userid' => $user->id]
+            );
             $DB->delete_records('local_mailwhistle_recipients', ['userid' => $user->id]);
             $DB->delete_records('local_mailwhistle_unsubscribes', ['userid' => $user->id]);
 
@@ -389,6 +428,12 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
 
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
 
+        // Delete tracking events for these users' recipient rows first.
+        $DB->delete_records_select(
+            'local_mailwhistle_tracking',
+            "recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid {$insql})",
+            $inparams
+        );
         $DB->delete_records_select('local_mailwhistle_recipients', "userid {$insql}", $inparams);
         $DB->delete_records_select('local_mailwhistle_unsubscribes', "userid {$insql}", $inparams);
 
