@@ -30,15 +30,15 @@ class data_created extends \core\event\base {
     /**
      * Initialize event metadata.
      *
-     * Sets the CRUD type (Create/Read/Update/Delete), education level,
-     * and the database table associated with this event.
+     * Sets the CRUD type (Create/Read/Update/Delete) and education level. This
+     * is a generic activity-log event that is not tied to a single database
+     * record, so no objecttable is declared (objectid is always 0).
      *
      * @return void
      */
     protected function init(): void {
-        $this->data['crud'] = 'c';                        // CRUD: Create operation.
-        $this->data['edulevel'] = self::LEVEL_OTHER;      // Education level.
-        $this->data['objecttable'] = 'local_mailwhistle_data'; // Associated table.
+        $this->data['crud'] = 'c';                   // CRUD: Create operation.
+        $this->data['edulevel'] = self::LEVEL_OTHER; // Education level.
     }
 
     /**
