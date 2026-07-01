@@ -660,6 +660,8 @@
     .local-mailwhistle-template-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+}
+
 /**
  * Create campaign page: constrain the form width for readability.
  */
