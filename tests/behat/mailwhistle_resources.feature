@@ -7,7 +7,6 @@ Feature: Using files as resources in mailwhistle
 
   Scenario: Upload files to mailwhistle
     When I log in as "admin"
-    And I navigate to "Mail Whistle" in site administration
-    And I click on "Mail Whistle" "link"
+    And I navigate to "General > Mail Whistle > Campaigns" in site administration
     And I follow "Resources"
     And I upload "local/mailwhistle/tests/fixtures/image_640x480px.jpg" file to "Resources" filemanager
