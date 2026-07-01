@@ -29,7 +29,7 @@ use local_mailwhistle\manager\tag_manager;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\observer
  */
-class observer_test extends \advanced_testcase {
+final class observer_test extends \advanced_testcase {
     /**
      * Test: deleting a user via delete_user() triggers the user_deleted event,
      * which the observer catches to remove that user's tag-assign rows.

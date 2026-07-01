@@ -35,7 +35,7 @@ use local_mailwhistle\privacy\provider;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\privacy\provider
  */
-class privacy_provider_test extends provider_testcase {
+final class privacy_provider_test extends provider_testcase {
     /**
      * Test: get_metadata declares both plugin tables (collection non-empty).
      */

@@ -33,9 +33,18 @@ use core\output\templatable;
  * File resources
  */
 class resources implements renderable, templatable {
+    /**
+     * The file area name.
+     */
     public const FILEAREA = 'resources';
 
+    /**
+     * The constructor.
+     *
+     * @param \local_mailwhistle\form\resources_form $form The form.
+     */
     public function __construct(
+        /** @var \local_mailwhistle\form\resources_form The resources form. */
         protected \local_mailwhistle\form\resources_form $form
     ) {
     }

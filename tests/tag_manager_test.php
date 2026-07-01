@@ -30,7 +30,7 @@ use local_mailwhistle\manager\tag_manager;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\manager\tag_manager
  */
-class tag_manager_test extends \advanced_testcase {
+final class tag_manager_test extends \advanced_testcase {
     /**
      * Test: create_tag normalises the name and stores a shortname.
      */
