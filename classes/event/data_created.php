@@ -46,7 +46,7 @@ class data_created extends \core\event\base {
      *
      * @return string Event description.
      */
-    public static function get_description(): string {
+    public function get_description(): string {
         return 'A data record was created in the Mail Whistle plugin.';
     }
 

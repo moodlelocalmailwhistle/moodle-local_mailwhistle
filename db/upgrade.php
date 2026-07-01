@@ -103,7 +103,7 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
             }
         }
 
-        upgrade_plugin_savepoint(true, 2026070101, 'local', 'mailwhistle');
+        upgrade_plugin_savepoint(true, 2026070102, 'local', 'mailwhistle');
     }
 
     return true;
