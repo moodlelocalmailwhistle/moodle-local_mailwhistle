@@ -80,7 +80,7 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026063004, 'local', 'mailwhistle');
     }
 
-    if ($oldversion < 2026070101) {
+    if ($oldversion < 2026070102) {
         $dbman = $DB->get_manager();
 
         // These tables are defined in db/install.xml but were only created on
