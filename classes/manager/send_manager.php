@@ -82,6 +82,13 @@ class send_manager {
             return;
         }
 
+        // Rewrite links and inject the open pixel for this specific recipient.
+        $bodyhtml = tracking_manager::prepare_body(
+            (string) $campaign->bodyhtml,
+            (int) $campaign->id,
+            (int) $recipient->id
+        );
+
         $message = new \core\message\message();
         $message->component = 'local_mailwhistle';
         $message->name = 'campaign';
@@ -90,7 +97,7 @@ class send_manager {
         $message->subject = format_string($campaign->subject);
         $message->fullmessage = (string) $campaign->bodytext;
         $message->fullmessageformat = FORMAT_HTML;
-        $message->fullmessagehtml = (string) $campaign->bodyhtml;
+        $message->fullmessagehtml = $bodyhtml;
         $message->smallmessage = '';
         $message->notification = 1;
 
