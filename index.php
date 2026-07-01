@@ -288,7 +288,7 @@ switch ($tab) {
             foreach ($tags as $tag) {
                 $tagselectoptions[(int) $tag->id] = format_string($tag->name);
             }
-            echo html_writer::start_div('mw-apply-tag-controls d-flex align-items-center mb-2');
+            echo html_writer::start_div('mw-apply-tag-controls d-flex align-items-center mb-3');
             echo html_writer::label(
                 get_string('apply_tag', 'local_mailwhistle'),
                 'applytagid',

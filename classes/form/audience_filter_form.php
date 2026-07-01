@@ -102,6 +102,6 @@ class audience_filter_form extends \moodleform {
         $mform->setType('tab', PARAM_ALPHA);
 
         // Submit button.
-        $mform->addElement('submit', 'submitbutton', get_string('applybtn', 'local_mailwhistle'));
+        $mform->addElement('submit', 'submitbutton', get_string('applybtn', 'local_mailwhistle'), ['class' => 'ms-0']);
     }
 }
