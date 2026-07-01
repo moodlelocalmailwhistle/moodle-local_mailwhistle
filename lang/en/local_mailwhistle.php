@@ -126,6 +126,15 @@ $string['body']                    = 'Email body';
 $string['sendername']              = 'Sender name';
 $string['senderemail']             = 'Sender email';
 
+// Sending.
+$string['col_actions']             = 'Actions';
+$string['sendnow']                 = 'Send now';
+$string['sendqueued']              = 'Campaign queued for sending.';
+$string['sendnotready']            = 'This campaign is not ready to send.';
+$string['sendbatchsize']           = 'Send batch size';
+$string['sendbatchsize_desc']      = 'How many recipients each send task run delivers before re-queueing. Keep within your mail server limits.';
+$string['task_requeue_stuck_sends'] = 'Resume stalled campaign sends';
+
 // Draft campaigns section (Option D2).
 $string['draftcampaigns_heading']  = 'Draft campaigns';
 $string['nodraftcampaigns']        = 'No draft campaigns yet.';
