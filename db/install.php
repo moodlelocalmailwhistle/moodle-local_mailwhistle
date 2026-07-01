@@ -15,20 +15,25 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Local plugin "Mail Whistle" - Version file.
+ * Local plugin "Mail Whistle" - Post-installation callback.
  *
  * @package   local_mailwhistle
  * @copyright 2024 Your Name/Organization
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Post-installation hook for a fresh Mail Whistle install.
+ *
+ * Seeds the bundled default email template so a brand-new site ships with a
+ * ready-to-use starting point.
+ *
+ * @return void
+ */
+function xmldb_local_mailwhistle_install(): void {
+    global $CFG;
 
-$plugin->component = 'local_mailwhistle';
-$plugin->version = 2026070113;      // YYYYMMDDvv format.
-$plugin->release = '1.2.1';         // Semantic versioning.
-$plugin->requires = 2025041400;     // Moodle 5.0 LTS minimum.
-$plugin->maturity = MATURITY_ALPHA; // Development stability level.
-$plugin->supported = [500, 502];    // Supported branch range: Moodle 5.0 to 5.2.
+    require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
 
-// Declare dependencies on other plugins via $plugin->dependencies when required.
+    local_mailwhistle_install_default_template();
+}

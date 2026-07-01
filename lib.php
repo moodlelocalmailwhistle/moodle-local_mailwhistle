@@ -1117,6 +1117,50 @@ function local_mailwhistle_create_template(stdClass $data): int {
 }
 
 /**
+ * Seed the bundled default email template.
+ *
+ * Called from db/install.php on a fresh install and from db/upgrade.php for
+ * existing installs so every site ships with one ready-to-use template. The
+ * operation is idempotent: it is a no-op when a template with the same name
+ * already exists, so it is safe to run repeatedly across upgrades.
+ *
+ * @return int|null New template id, or null when the default already exists.
+ */
+function local_mailwhistle_install_default_template(): ?int {
+    global $DB;
+
+    $name = get_string('template_default_name', 'local_mailwhistle');
+
+    if ($DB->record_exists('local_mailwhistle_templates', ['name' => $name])) {
+        return null;
+    }
+
+    $defaults = local_mailwhistle_builder_block_defaults();
+    $document = ['blocks' => [
+        $defaults['header'],
+        $defaults['text'],
+        $defaults['button'],
+        $defaults['footer'],
+    ]];
+    $builderjson = local_mailwhistle_normalise_builder_json(json_encode($document));
+    $background = '#ffffff';
+
+    $now = time();
+    $record = new stdClass();
+    $record->name = $name;
+    $record->previewtext = get_string('template_default_previewtext', 'local_mailwhistle');
+    $record->background = $background;
+    $record->editormode = 'builder';
+    $record->builderjson = $builderjson;
+    $record->bodyhtml = local_mailwhistle_render_builder_html($builderjson, $background);
+    $record->archived = 0;
+    $record->timecreated = $now;
+    $record->timemodified = $now;
+
+    return $DB->insert_record('local_mailwhistle_templates', $record);
+}
+
+/**
  * Update a template.
  *
  * @param int $id Template id.
