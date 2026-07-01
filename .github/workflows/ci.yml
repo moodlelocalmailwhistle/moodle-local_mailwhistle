@@ -14,3 +14,7 @@ jobs:
       min_php: '8.2'
       # Fail the build on any phpcs (codechecker) warning, not just errors.
       codechecker_max_warnings: 0
+      # Limit the test matrix to Moodle 5.2 for faster runs. The plugin still
+      # declares support for 5.0-5.2 in version.php ($plugin->supported); this
+      # only narrows which branches CI exercises.
+      moodle_branches: '502'
