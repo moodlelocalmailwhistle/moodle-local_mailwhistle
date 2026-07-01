@@ -225,7 +225,8 @@ define([], function() {
                 + '<p style="margin:0;color:inherit;">' + escapeHtml(block.subtitle) + '</p></div>';
         }
         if (block.type === 'text') {
-            return '<div style="padding:20px;font-size:15px;line-height:1.55;">' + escapeHtml(block.content).replace(/\n/g, '<br>') + '</div>';
+            return '<div style="padding:20px;font-size:15px;line-height:1.55;">'
+                + escapeHtml(block.content).replace(/\n/g, '<br>') + '</div>';
         }
         if (block.type === 'button') {
             return '<div style="padding:8px 20px 20px;text-align:center;"><span style="display:inline-block;padding:10px 16px;'
@@ -239,7 +240,8 @@ define([], function() {
             return '<div style="height:' + Math.max(8, Math.min(80, parseInt(block.height, 10) || 24)) + 'px;"></div>';
         }
         if (block.type === 'footer') {
-            return '<div style="padding:18px 20px;text-align:center;background:#f3f5f8;color:#52616f;font-size:12px;line-height:1.5;">'
+            return '<div style="padding:18px 20px;text-align:center;background:#f3f5f8;'
+                + 'color:#52616f;font-size:12px;line-height:1.5;">'
                 + escapeHtml(block.content).replace(/\n/g, '<br>') + '</div>';
         }
         return '';

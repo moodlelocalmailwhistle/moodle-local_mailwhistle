@@ -301,7 +301,7 @@ class tag_manager {
      * query_db() override.  Returns an empty array when $userids is empty.
      *
      * @param int[] $userids User ids visible on the current table page.
-     * @return array<int, string[]> Map of userid => array of tag name strings.
+     * @return array Map of userid => array of tag name strings.
      */
     public static function get_tags_for_users(array $userids): array {
         global $DB;
