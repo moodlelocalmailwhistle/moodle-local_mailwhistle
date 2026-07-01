@@ -15,7 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Local plugin "Mail Whistle" - Version file.
+ * Local plugin "Mail Whistle" - Event observer registration.
+ *
+ * Registers observers that react to core Moodle events relevant to
+ * the audience-tagging feature (e.g. cleaning up tag assignments when
+ * a user is deleted).
  *
  * @package   local_mailwhistle
  * @copyright 2024 Your Name/Organization
@@ -24,11 +28,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_mailwhistle';
-$plugin->version = 2026070100;      // YYYYMMDDvv format.
-$plugin->release = '1.0.1';         // Semantic versioning.
-$plugin->requires = 2025041400;     // Moodle 5.0 LTS minimum.
-$plugin->maturity = MATURITY_ALPHA; // Development stability level.
-$plugin->supported = [500, 502];    // Supported branch range: Moodle 5.0 to 5.2.
-
-// Declare dependencies on other plugins via $plugin->dependencies when required.
+$observers = [
+    [
+        'eventname' => '\core\event\user_deleted',
+        'callback'  => '\local_mailwhistle\observer::user_deleted',
+    ],
+];

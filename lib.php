@@ -118,51 +118,6 @@ function local_mailwhistle_page_init(): void {
 }
 
 /**
- * Render the "previously sent newsletters" history table.
- *
- * Builds a table from sample data so the send-newsletters tab has something
- * to display before the real sending engine and data model land. Replace the
- * data source in {@see local_mailwhistle_get_sample_sent_mails()} with a query
- * against the mailings table once persistence is implemented.
- *
- * @return string Rendered HTML for the sent mails section.
- */
-function local_mailwhistle_render_sent_mails(): string {
-    $mails = local_mailwhistle_get_sample_sent_mails();
-
-    $rows = [];
-    foreach ($mails as $mail) {
-        $viewurl = new moodle_url('/local/mailwhistle/index.php', [
-            'tab' => 'send',
-            'view' => $mail['id'],
-        ]);
-        $rows[] = [
-            html_writer::link($viewurl, format_string($mail['subject'])),
-            format_string($mail['audience']),
-            number_format($mail['recipients']),
-            format_string($mail['sentby']),
-            userdate($mail['sentat']),
-            local_mailwhistle_status_badge($mail['status']),
-        ];
-    }
-
-    return local_mailwhistle_render_campaign_table(
-        get_string('sentmails_heading', 'local_mailwhistle'),
-        get_string('nosentmails', 'local_mailwhistle'),
-        [
-            get_string('col_subject', 'local_mailwhistle'),
-            get_string('col_audience', 'local_mailwhistle'),
-            get_string('col_recipients', 'local_mailwhistle'),
-            get_string('col_sentby', 'local_mailwhistle'),
-            get_string('col_sentat', 'local_mailwhistle'),
-            get_string('col_status', 'local_mailwhistle'),
-        ],
-        $rows,
-        'local-mailwhistle-sentmails'
-    );
-}
-
-/**
  * Maximum number of draft campaigns shown in the send-tab draft section.
  */
 const LOCAL_MAILWHISTLE_DRAFT_LIMIT = 50;
@@ -409,18 +364,4 @@ function local_mailwhistle_status_badge(string $status): string {
         get_string('status_' . $status, 'local_mailwhistle'),
         $class
     );
-}
-
-/**
- * Render the "previously sent newsletters" history table.
- *
- * Builds a table from sample data so the send-newsletters tab has something
- * to display before the real sending engine and data model land. Replace the
- * data source in {@see local_mailwhistle_get_sample_sent_mails()} with a query
- * against the mailings table once persistence is implemented.
- *
- * @return string Rendered HTML for the sent mails section.
- */
-function local_mailwhistle_render_resources(): string {
-    return '';
 }

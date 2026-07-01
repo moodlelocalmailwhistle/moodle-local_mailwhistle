@@ -14,21 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_mailwhistle;
+
 /**
- * Local plugin "Mail Whistle" - Version file.
+ * Event observer for the local_mailwhistle plugin.
+ *
+ * Listens for core Moodle events and keeps plugin tables consistent.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'local_mailwhistle';
-$plugin->version = 2026070100;      // YYYYMMDDvv format.
-$plugin->release = '1.0.1';         // Semantic versioning.
-$plugin->requires = 2025041400;     // Moodle 5.0 LTS minimum.
-$plugin->maturity = MATURITY_ALPHA; // Development stability level.
-$plugin->supported = [500, 502];    // Supported branch range: Moodle 5.0 to 5.2.
-
-// Declare dependencies on other plugins via $plugin->dependencies when required.
+class observer {
+    /**
+     * Handle the core user_deleted event.
+     *
+     * Removes all audience tag assignments for the deleted user so that
+     * {local_mailwhistle_tag_assign} never accumulates orphaned rows.
+     *
+     * @param \core\event\user_deleted $event
+     * @return void
+     */
+    public static function user_deleted(\core\event\user_deleted $event): void {
+        global $DB;
+        $DB->delete_records('local_mailwhistle_tag_assign', ['userid' => $event->objectid]);
+    }
+}

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/emailcampaign/db" VERSION="2026063000" COMMENT="Email campaign plugin"
+<XMLDB PATH="local/mailwhistle/db" VERSION="2026063004" COMMENT="Mail Whistle plugin"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
+
   <TABLES>
-    <TABLE NAME="local_email_campaigns" COMMENT="Email campaigns">
+    <TABLE NAME="local_mailwhistle_campaigns" COMMENT="Email campaigns">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
@@ -30,7 +31,7 @@
       </INDEXES>
     </TABLE>
 
-    <TABLE NAME="local_email_audience_rules" COMMENT="Campaign audience selection rules">
+    <TABLE NAME="local_mailwhistle_audrules" COMMENT="Campaign audience selection rules">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="campaignid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
@@ -48,7 +49,7 @@
       </INDEXES>
     </TABLE>
 
-    <TABLE NAME="local_email_recipients" COMMENT="Campaign recipient snapshot and send state">
+    <TABLE NAME="local_mailwhistle_recipients" COMMENT="Campaign recipient snapshot and send state">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="campaignid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
@@ -73,7 +74,7 @@
       </INDEXES>
     </TABLE>
 
-    <TABLE NAME="local_email_send_logs" COMMENT="Campaign send logs">
+    <TABLE NAME="local_mailwhistle_sendlogs" COMMENT="Campaign send logs">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="campaignid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
@@ -93,7 +94,7 @@
       </INDEXES>
     </TABLE>
 
-    <TABLE NAME="local_email_unsubscribes" COMMENT="Email unsubscribe records">
+    <TABLE NAME="local_mailwhistle_unsubscribes" COMMENT="Email unsubscribe records">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
@@ -111,5 +112,43 @@
         <INDEX NAME="scope" UNIQUE="false" FIELDS="scope, scopeid"/>
       </INDEXES>
     </TABLE>
+
+    <TABLE NAME="local_mailwhistle_tag" COMMENT="Tag definitions for Mail Whistle audience segmentation">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Auto-incrementing primary key"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Display name of the tag (trimmed)"/>
+        <FIELD NAME="shortname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Normalized key (strtolower), unique, used for deduplication"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Optional notes about the tag"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User who created or last modified the tag"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Unix timestamp of tag creation"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Unix timestamp of last tag modification"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="usermodified_fk" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="shortname_uix" UNIQUE="true" FIELDS="shortname" COMMENT="Enforces case-insensitive uniqueness on normalized shortname"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_mailwhistle_tag_assign" COMMENT="Many-to-many user-to-tag assignments for Mail Whistle audience segmentation">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Auto-incrementing primary key"/>
+        <FIELD NAME="tagid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to local_mailwhistle_tag.id"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to user.id (the tagged user)"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User who created the assignment"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Unix timestamp of assignment creation"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="tagid_fk" TYPE="foreign" FIELDS="tagid" REFTABLE="local_mailwhistle_tag" REFFIELDS="id"/>
+        <KEY NAME="userid_fk" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="tagid_userid_uix" UNIQUE="true" FIELDS="tagid,userid" COMMENT="Prevents duplicate assignments; allows idempotent bulk re-apply"/>
+      </INDEXES>
+    </TABLE>
+
   </TABLES>
 </XMLDB>
