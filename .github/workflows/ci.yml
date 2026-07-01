@@ -17,4 +17,4 @@ jobs:
       # Limit the test matrix to Moodle 5.2 for faster runs. The plugin still
       # declares support for 5.0-5.2 in version.php ($plugin->supported); this
       # only narrows which branches CI exercises.
-      moodle_branches: '502'
+      moodle_branches: 'MOODLE_502_STABLE'
