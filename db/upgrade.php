@@ -33,7 +33,7 @@
  * @throws \Exception If upgrade fails.
  */
 function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
-    global $DB;
+    global $DB, $CFG;
 
     $dbman = $DB->get_manager();
 
@@ -177,6 +177,14 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         }
 
         upgrade_plugin_savepoint(true, 2026070106, 'local', 'mailwhistle');
+    }
+
+    if ($oldversion < 2026070110) {
+        // Seed the bundled default email template on existing installs.
+        require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
+        local_mailwhistle_install_default_templates();
+
+        upgrade_plugin_savepoint(true, 2026070110, 'local', 'mailwhistle');
     }
 
     if ($oldversion < 2026070111) {

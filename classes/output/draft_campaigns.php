@@ -29,12 +29,12 @@ use core\output\renderable;
 use core\output\renderer_base;
 use core\output\templatable;
 use core_reportbuilder\system_report_factory;
-use local_mailwhistle\reportbuilder\local\systemreports\campaigns;
+use local_mailwhistle\reportbuilder\local\systemreports\draft_campaigns as campaignsreport;
 
 /**
  * Output sent mails list
  */
-class sent_mails implements renderable, templatable {
+class draft_campaigns implements renderable, templatable {
     /**
      * Export this data so it can be used in a template.
      *
@@ -44,11 +44,16 @@ class sent_mails implements renderable, templatable {
      * @throws \core\exception\moodle_exception
      */
     public function export_for_template(renderer_base $output) {
-        $report = system_report_factory::create(campaigns::class, \context_system::instance());
-        $report->add_base_condition_simple(
-            'campaigns.status',
-            \local_mailwhistle\manager\campaign_manager::STATUS_SENT
+        $button = $output->single_button(
+            new \moodle_url('/local/mailwhistle/campaign_edit.php', ['sesskey' => sesskey()]),
+            get_string('createcampaign', 'local_mailwhistle'),
+            'get',
+            ['class' => 'mb-3']
         );
-        return ['table' => $report->output()];
+        $report = system_report_factory::create(campaignsreport::class, \context_system::instance());
+        return [
+            'button' => $button,
+            'table' => $report->output(),
+        ];
     }
 }

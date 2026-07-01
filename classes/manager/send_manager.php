@@ -127,6 +127,47 @@ class send_manager {
     }
 
     /**
+     * Send a one-off test copy of a campaign to a single user.
+     *
+     * Unlike a real send this creates no recipient row, writes no sendlog and
+     * injects no open/click tracking, so it never touches campaign statistics.
+     * The subject is prefixed so a test copy is obvious in the inbox. Delivery
+     * still goes through Moodle messaging so it honours the recipient's output
+     * preferences exactly like a live send would.
+     *
+     * @param int $campaignid The draft campaign to preview.
+     * @param \stdClass $to The user record to send the test copy to.
+     * @return bool True when message_send accepted the message.
+     */
+    public static function send_test(int $campaignid, \stdClass $to): bool {
+        global $DB;
+
+        $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
+
+        $subject = get_string('testmail_subjectprefix', 'local_mailwhistle') . ' ' . format_string($campaign->subject);
+
+        $message = new \core\message\message();
+        $message->component = 'local_mailwhistle';
+        $message->name = 'campaign';
+        $message->userfrom = self::get_from_user($campaign);
+        $message->userto = $to;
+        $message->subject = $subject;
+        $message->fullmessage = (string) $campaign->bodytext;
+        $message->fullmessageformat = FORMAT_HTML;
+        $message->fullmessagehtml = (string) $campaign->bodyhtml;
+        $message->smallmessage = '';
+        $message->notification = 1;
+
+        try {
+            $messageid = message_send($message);
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        return !empty($messageid);
+    }
+
+    /**
      * Resolve the "from" user for a campaign message.
      *
      * Uses the campaign creator when available, else the site support user, so

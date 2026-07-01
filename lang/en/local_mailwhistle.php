@@ -35,6 +35,7 @@ $string['pluginname']  = 'Mail Whistle';
 $string['plugindesc']  = 'A reusable boilerplate for creating Moodle local plugins on Moodle 5 LTS and above.';
 
 // Settings page heading and description.
+$string['report:actions'] = 'Actions';
 $string['report:audience'] = 'Audience';
 $string['report:name'] = 'Name';
 $string['report:recipients'] = 'Recipients';
@@ -42,6 +43,7 @@ $string['report:sentat'] = 'Sent at';
 $string['report:sentby'] = 'Sent by';
 $string['report:status'] = 'Status';
 $string['report:subject'] = 'Subject';
+$string['report:timecreated'] = 'Time created';
 $string['setting_heading']      = 'Mail Whistle Settings';
 $string['setting_heading_desc']  = 'Configure the Mail Whistle plugin settings.';
 
@@ -127,6 +129,10 @@ $string['editcampaign_notdraft']   = 'This campaign has left draft status and ca
 $string['editcampaign_completed']  = 'Campaign marked as ready.';
 $string['editcampaign_markcomplete'] = 'Mark campaign complete';
 $string['editcampaign_incomplete'] = 'Add a name, subject, body and at least one audience tag before this campaign can be completed.';
+$string['testmail_send']           = 'Send test email to me';
+$string['testmail_subjectprefix']  = '[Test]';
+$string['testmail_sent']           = 'A test email has been sent to {$a}.';
+$string['testmail_failed']         = 'The test email could not be sent. Please try again.';
 $string['campaignincomplete']      = 'The campaign is not complete yet.';
 $string['status_ready']            = 'Ready';
 $string['wizardstep_details']      = '1. Details';
