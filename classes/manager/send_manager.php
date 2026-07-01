@@ -82,9 +82,11 @@ class send_manager {
             return;
         }
 
-        // Rewrite links and inject the open pixel for this specific recipient.
+        // Fill {{firstname}} etc. with this recipient's snapshot data, then
+        // rewrite links and inject the open pixel for this specific recipient.
+        $personalisedhtml = placeholder_manager::apply((string) $campaign->bodyhtml, $recipient, true);
         $bodyhtml = tracking_manager::prepare_body(
-            (string) $campaign->bodyhtml,
+            $personalisedhtml,
             (int) $campaign->id,
             (int) $recipient->id
         );
@@ -94,8 +96,8 @@ class send_manager {
         $message->name = 'campaign';
         $message->userfrom = self::get_from_user($campaign);
         $message->userto = $to;
-        $message->subject = format_string($campaign->subject);
-        $message->fullmessage = (string) $campaign->bodytext;
+        $message->subject = format_string(placeholder_manager::apply((string) $campaign->subject, $recipient, false));
+        $message->fullmessage = placeholder_manager::apply((string) $campaign->bodytext, $recipient, false);
         $message->fullmessageformat = FORMAT_HTML;
         $message->fullmessagehtml = $bodyhtml;
         $message->smallmessage = '';
