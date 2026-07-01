@@ -32,10 +32,7 @@ use local_mailwhistle\reportbuilder\local\entities\campaign;
  * Report of campaigns
  */
 class sent_campaigns extends system_report {
-
-    /**
-     * @inheritDoc
-     */
+    #[\Override]
     protected function initialise(): void {
         $this->set_main_table('local_mailwhistle_campaigns', 'campaigns');
         $this->add_base_condition_simple(
@@ -51,6 +48,11 @@ class sent_campaigns extends system_report {
         $this->set_default_no_results_notice(new \lang_string('nosentmails', 'local_mailwhistle'));
     }
 
+    /**
+     * Add columns to the report.
+     *
+     * @return void
+     */
     protected function add_columns(): void {
         $this->add_column_from_entity('campaign:namelink');
         $this->add_column_from_entity('campaign:subject');
@@ -61,9 +63,7 @@ class sent_campaigns extends system_report {
         $this->add_column_from_entity('campaign:status');
     }
 
-    /**
-     * @inheritDoc
-     */
+    #[\Override]
     protected function can_view(): bool {
         return has_capability('local/mailwhistle:view', \context_system::instance());
     }

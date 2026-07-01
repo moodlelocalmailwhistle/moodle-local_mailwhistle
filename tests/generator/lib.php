@@ -26,6 +26,11 @@ class local_mailwhistle_generator extends \component_generator_base {
     /** @var int */
     protected int $campaignnum = 1;
 
+    /**
+     * Reset campaign number.
+     *
+     * @return void
+     */
     public function reset() {
         parent::reset();
         $this->campaignnum = 1;

@@ -34,10 +34,7 @@ use local_mailwhistle\reportbuilder\local\entities\campaign;
  * Report of campaigns
  */
 class draft_campaigns extends system_report {
-
-    /**
-     * @inheritDoc
-     */
+    #[\Override]
     protected function initialise(): void {
         $this->set_main_table('local_mailwhistle_campaigns', 'campaigns');
         $draft = database::generate_param_name();
@@ -58,6 +55,11 @@ class draft_campaigns extends system_report {
         $this->set_default_no_results_notice(new lang_string('nodraftcampaigns', 'local_mailwhistle'));
     }
 
+    /**
+     * Add columns to the report.
+     *
+     * @return void
+     */
     protected function add_columns(): void {
         $this->add_column_from_entity('campaign:namelink');
         $this->add_column_from_entity('campaign:status');
@@ -65,9 +67,7 @@ class draft_campaigns extends system_report {
         $this->add_column_from_entity('campaign:actions');
     }
 
-    /**
-     * @inheritDoc
-     */
+    #[\Override]
     protected function can_view(): bool {
         return has_capability('local/mailwhistle:view', \context_system::instance());
     }
