@@ -80,5 +80,31 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026063004, 'local', 'mailwhistle');
     }
 
+    if ($oldversion < 2026070101) {
+        $dbman = $DB->get_manager();
+
+        // These tables are defined in db/install.xml but were only created on
+        // fresh installs; existing installs never received them. Create any
+        // that are missing from the install.xml definitions so the schema
+        // matches for sites installed before these tables were added.
+        $installtables = [
+            'local_mailwhistle_campaigns',
+            'local_mailwhistle_audrules',
+            'local_mailwhistle_recipients',
+            'local_mailwhistle_sendlogs',
+            'local_mailwhistle_unsubscribes',
+        ];
+        foreach ($installtables as $tablename) {
+            if (!$dbman->table_exists($tablename)) {
+                $dbman->install_one_table_from_xmldb_file(
+                    __DIR__ . '/install.xml',
+                    $tablename
+                );
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026070101, 'local', 'mailwhistle');
+    }
+
     return true;
 }
