@@ -146,4 +146,33 @@ class helper {
 
         return $campaignid;
     }
+
+    /**
+     * Write a delivery log row for a campaign send.
+     *
+     * @param int $campaignid The campaign.
+     * @param int $recipientid The recipient row id (0 for campaign-level logs).
+     * @param string $level Log level (e.g. info, error).
+     * @param string $message Human-readable message.
+     * @param array $data Optional structured context stored as JSON.
+     * @return void
+     */
+    public static function log_send(
+        int $campaignid,
+        int $recipientid,
+        string $level,
+        string $message,
+        array $data = []
+    ): void {
+        global $DB;
+
+        $DB->insert_record('local_mailwhistle_sendlogs', (object) [
+            'campaignid' => $campaignid,
+            'recipientid' => $recipientid,
+            'level' => $level,
+            'message' => $message,
+            'datajson' => empty($data) ? null : json_encode($data),
+            'timecreated' => time(),
+        ]);
+    }
 }

@@ -126,6 +126,15 @@ $string['body']                    = 'Email body';
 $string['sendername']              = 'Sender name';
 $string['senderemail']             = 'Sender email';
 
+// Sending.
+$string['col_actions']             = 'Actions';
+$string['sendnow']                 = 'Send now';
+$string['sendqueued']              = 'Campaign queued for sending.';
+$string['sendnotready']            = 'This campaign is not ready to send.';
+$string['sendbatchsize']           = 'Send batch size';
+$string['sendbatchsize_desc']      = 'How many recipients each send task run delivers before re-queueing. Keep within your mail server limits.';
+$string['task_requeue_stuck_sends'] = 'Resume stalled campaign sends';
+
 // Draft campaigns section (Option D2).
 $string['draftcampaigns_heading']  = 'Draft campaigns';
 $string['nodraftcampaigns']        = 'No draft campaigns yet.';
@@ -213,6 +222,11 @@ $string['privacy:metadata:local_mailwhistle_recipients:firstname'] = 'The recipi
 $string['privacy:metadata:local_mailwhistle_recipients:lastname'] = 'The recipient last name captured at send time.';
 $string['privacy:metadata:local_mailwhistle_recipients:status'] = 'The delivery status for the recipient.';
 $string['privacy:metadata:local_mailwhistle_recipients:timesent'] = 'The time the campaign was sent to the recipient.';
+$string['privacy:metadata:local_mailwhistle_tracking'] = 'Open and click tracking events recorded for a recipient.';
+$string['privacy:metadata:local_mailwhistle_tracking:recipientid'] = 'The recipient the tracking event belongs to.';
+$string['privacy:metadata:local_mailwhistle_tracking:eventtype'] = 'The type of event (open or click).';
+$string['privacy:metadata:local_mailwhistle_tracking:targeturl'] = 'The URL that was clicked (for click events).';
+$string['privacy:metadata:local_mailwhistle_tracking:timecreated'] = 'The time the event was recorded.';
 $string['privacy:metadata:local_mailwhistle_unsubscribes'] = 'Records of users who unsubscribed from campaigns.';
 $string['privacy:metadata:local_mailwhistle_unsubscribes:userid'] = 'The ID of the user who unsubscribed.';
 $string['privacy:metadata:local_mailwhistle_unsubscribes:email'] = 'The email address that unsubscribed.';
