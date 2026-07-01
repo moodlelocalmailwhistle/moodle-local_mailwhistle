@@ -118,6 +118,108 @@ function local_mailwhistle_page_init(): void {
 }
 
 /**
+ * Maximum number of draft campaigns shown in the send-tab draft section.
+ */
+const LOCAL_MAILWHISTLE_DRAFT_LIMIT = 50;
+
+/**
+ * Render a heading plus a data table (or an empty-state notice) as one block.
+ *
+ * Shared scaffolding for the sent-newsletters and draft-campaigns sections so
+ * their heading, empty state and table markup stay consistent.
+ *
+ * @param string $heading Section heading text (already localised).
+ * @param string $emptymessage Empty-state message (already localised).
+ * @param array<int, string> $head Column header cells (already localised).
+ * @param array<int, array<int, string>> $rows Row data (each an array of cell HTML).
+ * @param string $tableclass Extra CSS class(es) for the table element.
+ * @return string Rendered HTML for the section.
+ */
+function local_mailwhistle_render_campaign_table(
+    string $heading,
+    string $emptymessage,
+    array $head,
+    array $rows,
+    string $tableclass
+): string {
+    $output = html_writer::tag('h3', $heading);
+
+    if (empty($rows)) {
+        return $output . html_writer::div($emptymessage, 'alert alert-info');
+    }
+
+    $table = new html_table();
+    $table->head = $head;
+    $table->attributes['class'] = 'generaltable ' . $tableclass;
+    $table->data = $rows;
+
+    return $output . html_writer::table($table);
+}
+
+/**
+ * Render the draft campaigns section for the send-newsletters tab.
+ *
+ * Lists the most recent draft campaigns so managers can see what has been
+ * created but not yet sent. Bounded to {@see LOCAL_MAILWHISTLE_DRAFT_LIMIT}
+ * rows and only the displayed columns to keep the default page fast.
+ *
+ * @return string Rendered HTML for the draft campaigns section.
+ */
+function local_mailwhistle_render_draft_campaigns(): string {
+    global $DB, $OUTPUT;
+
+    // Show campaigns still being prepared (draft) or ready to send (ready).
+    [$insql, $inparams] = $DB->get_in_or_equal(['draft', 'ready'], SQL_PARAMS_NAMED, 'st');
+    $drafts = $DB->get_records_select(
+        'local_mailwhistle_campaigns',
+        "status $insql",
+        $inparams,
+        'timecreated DESC',
+        'id, name, status, timecreated',
+        0,
+        LOCAL_MAILWHISTLE_DRAFT_LIMIT
+    );
+
+    $rows = [];
+    foreach ($drafts as $draft) {
+        $editurl = new moodle_url('/local/mailwhistle/campaign_edit.php', ['campaignid' => $draft->id]);
+
+        // A ready campaign gets a "Send now" button (POST, sesskey-guarded).
+        $action = '';
+        if ($draft->status === 'ready') {
+            $sendurl = new moodle_url('/local/mailwhistle/index.php', [
+                'tab' => 'send',
+                'action' => 'sendnow',
+                'campaignid' => $draft->id,
+            ]);
+            $action = $OUTPUT->single_button($sendurl, get_string('sendnow', 'local_mailwhistle'), 'post');
+        }
+
+        $rows[] = [
+            html_writer::link($editurl, format_string($draft->name)),
+            local_mailwhistle_status_badge($draft->status),
+            userdate($draft->timecreated),
+            $action,
+        ];
+    }
+
+    $section = local_mailwhistle_render_campaign_table(
+        get_string('draftcampaigns_heading', 'local_mailwhistle'),
+        get_string('nodraftcampaigns', 'local_mailwhistle'),
+        [
+            get_string('col_name', 'local_mailwhistle'),
+            get_string('col_status', 'local_mailwhistle'),
+            get_string('col_created', 'local_mailwhistle'),
+            get_string('col_actions', 'local_mailwhistle'),
+        ],
+        $rows,
+        'local-mailwhistle-drafts-table'
+    );
+
+    return html_writer::div($section, 'local-mailwhistle-drafts');
+}
+
+/**
  * Render the detail view for a single sent newsletter.
  *
  * Shows the metadata and a preview of the rendered newsletter body. Falls back
@@ -172,7 +274,7 @@ function local_mailwhistle_render_view_mail(int $id): string {
  * Each row mirrors the shape expected from the future mailings table so the
  * rendering code does not need to change when real data is wired in.
  *
- * @return array<int, array<string, mixed>> List of sample sent mail records.
+ * @return array List of sample sent mail records.
  */
 function local_mailwhistle_get_sample_sent_mails(): array {
     // Fixed timestamps (UTC) keep the sample output stable across requests.
@@ -249,7 +351,7 @@ function local_mailwhistle_get_sample_sent_mails(): array {
  * Find a single sample sent-newsletter record by its id.
  *
  * @param int $id The sample mail id.
- * @return array<string, mixed>|null The matching record, or null if not found.
+ * @return array|null The matching record, or null if not found.
  */
 function local_mailwhistle_get_sample_sent_mail(int $id): ?array {
     foreach (local_mailwhistle_get_sample_sent_mails() as $row) {
@@ -263,15 +365,17 @@ function local_mailwhistle_get_sample_sent_mail(int $id): ?array {
 /**
  * Render a coloured status badge for a sent newsletter.
  *
- * @param string $status One of: sent, sending, scheduled, failed.
+ * @param string $status One of: draft, sent, sending, scheduled, failed.
  * @return string Rendered badge HTML.
  */
 function local_mailwhistle_status_badge(string $status): string {
     $classes = [
-        'sent' => 'badge bg-success text-white',
-        'sending' => 'badge bg-info text-white',
-        'scheduled' => 'badge bg-secondary text-white',
-        'failed' => 'badge bg-danger text-white',
+        'draft' => 'badge badge-secondary bg-secondary text-white',
+        'ready' => 'badge badge-primary bg-primary text-white',
+        'sent' => 'badge badge-success bg-success text-white',
+        'sending' => 'badge badge-info bg-info text-white',
+        'scheduled' => 'badge badge-secondary bg-secondary text-white',
+        'failed' => 'badge badge-danger bg-danger text-white',
     ];
     $class = $classes[$status] ?? 'badge badge-secondary bg-secondary text-white';
 
@@ -898,7 +1002,7 @@ function local_mailwhistle_render_template_delete_confirmation(int $id): string 
  * Get templates ordered by most recently edited.
  *
  * @param string $filter Template visibility filter.
- * @return array<int, stdClass> Template records.
+ * @return array Template records.
  */
 function local_mailwhistle_get_templates(string $filter = 'active'): array {
     global $DB;
@@ -1154,7 +1258,7 @@ function local_mailwhistle_normalise_template_background(string $background): st
  * Placeholders are written directly in template text as {{name}}.
  *
  * @param stdClass|null $template Template record.
- * @return array<int, string> Unique placeholder names in first-seen order.
+ * @return array Unique placeholder names in first-seen order.
  */
 function local_mailwhistle_extract_template_placeholders(?stdClass $template): array {
     if (!$template) {
@@ -1170,7 +1274,7 @@ function local_mailwhistle_extract_template_placeholders(?stdClass $template): a
  * Extract placeholder names from text.
  *
  * @param string $text Text that may contain {{name}} placeholders.
- * @return array<int, string> Unique placeholder names in first-seen order.
+ * @return array Unique placeholder names in first-seen order.
  */
 function local_mailwhistle_extract_placeholders_from_text(string $text): array {
     if (!preg_match_all('/\{\{\s*([a-zA-Z][a-zA-Z0-9_]*)\s*\}\}/', $text, $matches)) {
@@ -1215,7 +1319,7 @@ function local_mailwhistle_get_default_builder_json(): string {
 /**
  * Get default values for all builder block types.
  *
- * @return array<string, array<string, mixed>> Builder defaults keyed by block type.
+ * @return array Builder defaults keyed by block type.
  */
 function local_mailwhistle_builder_block_defaults(): array {
     return [
@@ -1317,7 +1421,7 @@ function local_mailwhistle_builder_block_defaults(): array {
 /**
  * Provide localized strings for the builder JavaScript.
  *
- * @return array<string, string> Builder strings.
+ * @return array Builder strings.
  */
 function local_mailwhistle_get_builder_strings(): array {
     return [
@@ -1399,7 +1503,7 @@ function local_mailwhistle_normalise_builder_json(string $json): string {
  * Validate submitted builder JSON before saving.
  *
  * @param string $json Submitted builder JSON.
- * @return array<int, string> Validation error messages.
+ * @return array Validation error messages.
  */
 function local_mailwhistle_validate_builder_json(string $json): array {
     $builder = json_decode($json, true);
@@ -1487,8 +1591,8 @@ function local_mailwhistle_builder_is_valid_url(string $url): bool {
 /**
  * Normalise a single builder block.
  *
- * @param array<string, mixed> $block Submitted block.
- * @return array<string, mixed>|null Normalised block, or null when unsupported.
+ * @param array $block Submitted block.
+ * @return array|null Normalised block, or null when unsupported.
  */
 function local_mailwhistle_normalise_builder_block(array $block): ?array {
     $type = clean_param((string) ($block['type'] ?? ''), PARAM_ALPHA);
@@ -1553,7 +1657,7 @@ function local_mailwhistle_normalise_builder_block(array $block): ?array {
 /**
  * Email-safe font family options used by the builder.
  *
- * @return array<string, string>
+ * @return array
  */
 function local_mailwhistle_builder_font_families(): array {
     return [
@@ -1568,7 +1672,7 @@ function local_mailwhistle_builder_font_families(): array {
 /**
  * Get an email-safe font stack for a builder block.
  *
- * @param array<string, mixed> $block Builder block.
+ * @param array $block Builder block.
  * @return string Font stack.
  */
 function local_mailwhistle_builder_font_family(array $block): string {
@@ -1581,7 +1685,7 @@ function local_mailwhistle_builder_font_family(array $block): string {
 /**
  * Get a safe text alignment value for a builder block.
  *
- * @param array<string, mixed> $block Builder block.
+ * @param array $block Builder block.
  * @param string $default Default alignment.
  * @return string Alignment.
  */
@@ -1594,7 +1698,7 @@ function local_mailwhistle_builder_align(array $block, string $default = 'left')
 /**
  * Get a bounded integer option from a builder block.
  *
- * @param array<string, mixed> $block Builder block.
+ * @param array $block Builder block.
  * @param string $field Field name.
  * @param int $default Default value.
  * @param int $min Minimum value.
@@ -1640,7 +1744,7 @@ function local_mailwhistle_render_builder_html(string $json, string $background 
 /**
  * Render one builder block to HTML.
  *
- * @param array<string, mixed> $block Normalised block.
+ * @param array $block Normalised block.
  * @return string Rendered block HTML.
  */
 function local_mailwhistle_render_builder_block_html(array $block): string {

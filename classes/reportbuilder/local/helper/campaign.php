@@ -15,20 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Local plugin "Mail Whistle" - Version file.
+ * Helper for formatting campaign fields
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2026 Synergy Learning
+ * @author    Davo Smith
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+namespace local_mailwhistle\reportbuilder\local\helper;
 
-$plugin->component = 'local_mailwhistle';
-$plugin->version = 2026070111;      // YYYYMMDDvv format.
-$plugin->release = '1.2.0';         // Semantic versioning.
-$plugin->requires = 2025041400;     // Moodle 5.0 LTS minimum.
-$plugin->maturity = MATURITY_ALPHA; // Development stability level.
-$plugin->supported = [500, 502];    // Supported branch range: Moodle 5.0 to 5.2.
-
-// Declare dependencies on other plugins via $plugin->dependencies when required.
+/**
+ * Helper for formatting campaign fields
+ */
+class campaign {
+    public static function status(?string $status, \stdClass $row) {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
+        return local_mailwhistle_status_badge($status);
+    }
+}

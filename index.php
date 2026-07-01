@@ -128,6 +128,41 @@ if ($tab === 'resources') {
     }
 }
 
+// PART A2: POST-only "Send now" handler for the send tab.
+//
+// Runs before output so redirect() can send headers (PRG pattern). Flips the
+// campaign ready -> sending atomically (only one caller wins), snapshots its
+// recipients, and queues the delivery adhoc task.
+if ($tab === 'send' && $action === 'sendnow') {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new \moodle_exception('invalidrequest');
+    }
+    require_sesskey();
+    require_capability('local/mailwhistle:manage', $context);
+
+    $sendcampaignid = required_param('campaignid', PARAM_INT);
+    $sendurl = new moodle_url('/local/mailwhistle/index.php', ['tab' => 'send']);
+
+    if (\local_mailwhistle\manager\campaign_manager::begin_sending($sendcampaignid)) {
+        \local_mailwhistle\manager\recipient_manager::snapshot_recipients($sendcampaignid);
+        $task = new \local_mailwhistle\task\send_campaign();
+        $task->set_custom_data(['campaignid' => $sendcampaignid]);
+        \core\task\manager::queue_adhoc_task($task);
+        redirect(
+            $sendurl,
+            get_string('sendqueued', 'local_mailwhistle'),
+            null,
+            \core\output\notification::NOTIFY_SUCCESS
+        );
+    }
+    redirect(
+        $sendurl,
+        get_string('sendnotready', 'local_mailwhistle'),
+        null,
+        \core\output\notification::NOTIFY_WARNING
+    );
+}
+
 // Optional: a specific sent newsletter to view (0 means show the list).
 $viewid = optional_param('view', 0, PARAM_INT);
 $templateaction = optional_param('action', 'list', PARAM_ALPHA);
@@ -179,6 +214,14 @@ switch ($tab) {
         if ($viewid > 0) {
             echo local_mailwhistle_render_view_mail($viewid);
         } else {
+            if (has_capability('local/mailwhistle:manage', $context)) {
+                echo $OUTPUT->single_button(
+                    new moodle_url('/local/mailwhistle/campaign_edit.php', ['sesskey' => sesskey()]),
+                    get_string('createcampaign', 'local_mailwhistle'),
+                    'get'
+                );
+                echo local_mailwhistle_render_draft_campaigns();
+            }
             echo $OUTPUT->render(new \local_mailwhistle\output\sent_mails());
         }
         break;
@@ -288,7 +331,7 @@ switch ($tab) {
             foreach ($tags as $tag) {
                 $tagselectoptions[(int) $tag->id] = format_string($tag->name);
             }
-            echo html_writer::start_div('mw-apply-tag-controls d-flex align-items-center mb-2');
+            echo html_writer::start_div('mw-apply-tag-controls d-flex align-items-center mb-3');
             echo html_writer::label(
                 get_string('apply_tag', 'local_mailwhistle'),
                 'applytagid',

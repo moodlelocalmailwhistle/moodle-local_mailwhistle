@@ -40,11 +40,14 @@ use core_privacy\local\request\writer;
  *    audience tag, and who performed the assignment (usermodified).
  *  - {local_mailwhistle_tag}: tag definitions; usermodified records who created
  *    or last edited each definition.
+ *  - {local_mailwhistle_campaigns}: email campaigns, linked to the user who created
+ *    them via the `createdby` field.
  *
  * The campaigns table only records authorship via createdby, retained as an
- * audit field and not treated as deletable personal data. Tag definitions are
- * shared site-wide configuration and are never deleted: instead the author
- * identity (usermodified) is anonymised.
+ * audit field and not treated as deletable personal data beyond removing the
+ * campaign record itself. Tag definitions are shared site-wide configuration
+ * and are never deleted: instead the author identity (usermodified) is
+ * anonymised.
  *
  * @package   local_mailwhistle
  * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
@@ -69,6 +72,17 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                 'timesent' => 'privacy:metadata:local_mailwhistle_recipients:timesent',
             ],
             'privacy:metadata:local_mailwhistle_recipients'
+        );
+
+        $collection->add_database_table(
+            'local_mailwhistle_tracking',
+            [
+                'recipientid' => 'privacy:metadata:local_mailwhistle_tracking:recipientid',
+                'eventtype' => 'privacy:metadata:local_mailwhistle_tracking:eventtype',
+                'targeturl' => 'privacy:metadata:local_mailwhistle_tracking:targeturl',
+                'timecreated' => 'privacy:metadata:local_mailwhistle_tracking:timecreated',
+            ],
+            'privacy:metadata:local_mailwhistle_tracking'
         );
 
         $collection->add_database_table(
@@ -103,6 +117,18 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
             'privacy:metadata:local_mailwhistle_tag'
         );
 
+        $collection->add_database_table(
+            'local_mailwhistle_campaigns',
+            [
+                'name' => 'privacy:metadata:local_mailwhistle_campaigns:name',
+                'subject' => 'privacy:metadata:local_mailwhistle_campaigns:subject',
+                'status' => 'privacy:metadata:local_mailwhistle_campaigns:status',
+                'createdby' => 'privacy:metadata:local_mailwhistle_campaigns:createdby',
+                'timecreated' => 'privacy:metadata:local_mailwhistle_campaigns:timecreated',
+            ],
+            'privacy:metadata:local_mailwhistle_campaigns'
+        );
+
         return $collection;
     }
 
@@ -110,8 +136,9 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
      * Return the contexts that contain personal data for the given user.
      *
      * A user appears in the plugin's data if they are a campaign recipient, have
-     * an unsubscribe record, are tagged, performed a tag assignment, or authored
-     * a tag definition. All such data lives under the system context.
+     * an unsubscribe record, are tagged, performed a tag assignment, authored a
+     * tag definition, or created an email campaign. All such data lives under
+     * the system context.
      *
      * @param int $userid The user to search.
      * @return contextlist The contexts containing the user's data.
@@ -122,13 +149,21 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
         $contextlist = new contextlist();
 
         $hasdata = $DB->record_exists('local_mailwhistle_recipients', ['userid' => $userid])
+            || $DB->record_exists_sql(
+                "SELECT 1
+                   FROM {local_mailwhistle_tracking} t
+                   JOIN {local_mailwhistle_recipients} r ON r.id = t.recipientid
+                  WHERE r.userid = :userid",
+                ['userid' => $userid]
+            )
             || $DB->record_exists('local_mailwhistle_unsubscribes', ['userid' => $userid])
             || $DB->record_exists_select(
                 'local_mailwhistle_tag_assign',
                 'userid = :userid OR usermodified = :usermodified',
                 ['userid' => $userid, 'usermodified' => $userid]
             )
-            || $DB->record_exists('local_mailwhistle_tag', ['usermodified' => $userid]);
+            || $DB->record_exists('local_mailwhistle_tag', ['usermodified' => $userid])
+            || $DB->record_exists('local_mailwhistle_campaigns', ['createdby' => $userid]);
 
         if ($hasdata) {
             $contextlist->add_system_context();
@@ -170,6 +205,9 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
             'SELECT usermodified FROM {local_mailwhistle_tag} WHERE usermodified <> 0',
             []
         );
+
+        // Users who created email campaigns.
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_mailwhistle_campaigns}', []);
     }
 
     /**
@@ -203,6 +241,19 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                         'timesent' => $recipient->timesent ? transform::datetime($recipient->timesent) : null,
                     ]
                 );
+
+                // Tracking events recorded for this recipient (opens/clicks).
+                $events = $DB->get_records('local_mailwhistle_tracking', ['recipientid' => $recipient->id]);
+                foreach ($events as $event) {
+                    writer::with_context($context)->export_data(
+                        [get_string('pluginname', 'local_mailwhistle'), 'tracking', $event->id],
+                        (object) [
+                            'eventtype' => $event->eventtype,
+                            'targeturl' => $event->targeturl,
+                            'timecreated' => transform::datetime($event->timecreated),
+                        ]
+                    );
+                }
             }
 
             $unsubscribes = $DB->get_records('local_mailwhistle_unsubscribes', ['userid' => $user->id]);
@@ -258,17 +309,37 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                     (object) ['tags' => $data]
                 );
             }
+
+            // Export email campaigns created by this user.
+            $campaignrecords = $DB->get_records('local_mailwhistle_campaigns', ['createdby' => $user->id]);
+
+            $campaigns = [];
+            foreach ($campaignrecords as $record) {
+                $campaigns[] = (object) [
+                    'name' => $record->name,
+                    'subject' => $record->subject,
+                    'status' => $record->status,
+                    'timecreated' => transform::datetime($record->timecreated),
+                ];
+            }
+
+            if ($campaigns) {
+                writer::with_context($context)->export_data(
+                    [get_string('privacy:metadata:local_mailwhistle_campaigns', 'local_mailwhistle')],
+                    (object) ['campaigns' => $campaigns]
+                );
+            }
         }
     }
 
     /**
      * Delete all personal data for all users in the given context.
      *
-     * For the system context this deletes all recipient, unsubscribe, and tag
-     * assignment rows, and anonymises the usermodified author field on tag
-     * definitions. Tag definition rows are NEVER deleted — they are shared
-     * site-wide configuration; removing them would silently orphan data across
-     * all users.
+     * For the system context this deletes all recipient, unsubscribe, tag
+     * assignment, and email campaign rows, and anonymises the usermodified
+     * author field on tag definitions. Tag definition rows are NEVER deleted
+     * — they are shared site-wide configuration; removing them would silently
+     * orphan data across all users.
      *
      * @param context $context The context to delete data in.
      */
@@ -279,6 +350,8 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
             return;
         }
 
+        // Tracking rows first (they reference recipients).
+        $DB->delete_records('local_mailwhistle_tracking');
         $DB->delete_records('local_mailwhistle_recipients');
         $DB->delete_records('local_mailwhistle_unsubscribes');
 
@@ -287,14 +360,17 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
 
         // Anonymise author identity on tag definitions; the definitions themselves survive.
         $DB->set_field('local_mailwhistle_tag', 'usermodified', 0, []);
+
+        // Remove all email campaigns.
+        $DB->delete_records('local_mailwhistle_campaigns');
     }
 
     /**
      * Delete personal data for the user in the approved contexts.
      *
-     * Removes the user's recipient, unsubscribe, and tag-assignment rows, and
-     * anonymises any rows the user authored in the tag tables. Tag definitions
-     * are never deleted.
+     * Removes the user's recipient, unsubscribe, tag-assignment, and email
+     * campaign rows, and anonymises any rows the user authored in the tag
+     * tables. Tag definitions are never deleted.
      *
      * @param approved_contextlist $contextlist The approved contexts and target user.
      */
@@ -308,6 +384,12 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                 continue;
             }
 
+            // Delete tracking events for this user's recipient rows first.
+            $DB->delete_records_select(
+                'local_mailwhistle_tracking',
+                'recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid = :userid)',
+                ['userid' => $user->id]
+            );
             $DB->delete_records('local_mailwhistle_recipients', ['userid' => $user->id]);
             $DB->delete_records('local_mailwhistle_unsubscribes', ['userid' => $user->id]);
 
@@ -319,6 +401,9 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
 
             // Anonymise tag definitions this user authored.
             $DB->set_field('local_mailwhistle_tag', 'usermodified', 0, ['usermodified' => $user->id]);
+
+            // Delete email campaigns created by this user.
+            $DB->delete_records('local_mailwhistle_campaigns', ['createdby' => $user->id]);
         }
     }
 
@@ -343,6 +428,12 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
 
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
 
+        // Delete tracking events for these users' recipient rows first.
+        $DB->delete_records_select(
+            'local_mailwhistle_tracking',
+            "recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid {$insql})",
+            $inparams
+        );
         $DB->delete_records_select('local_mailwhistle_recipients', "userid {$insql}", $inparams);
         $DB->delete_records_select('local_mailwhistle_unsubscribes', "userid {$insql}", $inparams);
 
@@ -354,5 +445,8 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
 
         // Anonymise tag definitions these users authored.
         $DB->set_field_select('local_mailwhistle_tag', 'usermodified', 0, "usermodified {$insql}", $inparams);
+
+        // Delete email campaigns created by these users.
+        $DB->delete_records_select('local_mailwhistle_campaigns', "createdby {$insql}", $inparams);
     }
 }

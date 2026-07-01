@@ -18,12 +18,14 @@
  * Form to pick resources
  *
  * @package   local_mailwhistle
- * @copyright 2026 Synergy Learning
- * @author    Davo Smith
+ * @copyright 2026 Davo Smith
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace local_mailwhistle\form;
+
+global $CFG;
+require_once($CFG->libdir . '/formslib.php');
 
 /**
  * Form to pick resources

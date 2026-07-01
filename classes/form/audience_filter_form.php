@@ -16,6 +16,9 @@
 
 namespace local_mailwhistle\form;
 
+global $CFG;
+require_once($CFG->libdir . '/formslib.php');
+
 /**
  * GET filter form for the Mail Whistle audience listing.
  *
@@ -102,6 +105,6 @@ class audience_filter_form extends \moodleform {
         $mform->setType('tab', PARAM_ALPHA);
 
         // Submit button.
-        $mform->addElement('submit', 'submitbutton', get_string('applybtn', 'local_mailwhistle'));
+        $mform->addElement('submit', 'submitbutton', get_string('applybtn', 'local_mailwhistle'), ['class' => 'ms-0']);
     }
 }

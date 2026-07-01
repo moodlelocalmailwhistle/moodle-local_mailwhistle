@@ -301,7 +301,7 @@ class tag_manager {
      * query_db() override.  Returns an empty array when $userids is empty.
      *
      * @param int[] $userids User ids visible on the current table page.
-     * @return array<int, string[]> Map of userid => array of tag name strings.
+     * @return array Map of userid => array of tag name strings.
      */
     public static function get_tags_for_users(array $userids): array {
         global $DB;
@@ -334,5 +334,33 @@ class tag_manager {
         }
 
         return $map;
+    }
+
+    /**
+     * Resolve the distinct user ids assigned to any of the given tags.
+     *
+     * Used to turn a campaign's audience tags into its recipient user set.
+     * Returns an empty array for empty input or tag ids with no members.
+     *
+     * @param int[] $tagids Tag ids to resolve members for.
+     * @return int[] Distinct user ids (values only, re-indexed).
+     */
+    public static function get_userids_for_tags(array $tagids): array {
+        global $DB;
+
+        $tagids = array_values(array_filter(array_map('intval', $tagids)));
+        if (empty($tagids)) {
+            return [];
+        }
+
+        [$insql, $inparams] = $DB->get_in_or_equal($tagids, SQL_PARAMS_NAMED, 'tid');
+
+        $sql = "SELECT DISTINCT userid
+                  FROM {local_mailwhistle_tag_assign}
+                 WHERE tagid $insql";
+
+        $userids = $DB->get_fieldset_sql($sql, $inparams);
+
+        return array_values(array_map('intval', $userids));
     }
 }

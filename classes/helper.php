@@ -109,4 +109,70 @@ class helper {
         $event = \local_mailwhistle\event\data_created::create($eventdata);
         $event->trigger();
     }
+
+    /**
+     * Create a new draft email campaign.
+     *
+     * Inserts a minimal campaign record with sensible defaults so it can
+     * be edited further later. Logs the creation as plugin activity.
+     *
+     * @param string $name The internal campaign name.
+     * @param int|null $userid The creating user (uses current user if null).
+     * @return int The new campaign id.
+     */
+    public static function create_campaign(string $name, ?int $userid = null): int {
+        global $DB, $USER;
+
+        if ($userid === null) {
+            $userid = $USER->id;
+        }
+
+        // Only the NOT NULL columns without a schema default are set here; the
+        // remaining columns (status, sendengine, sendername, senderemail,
+        // timescheduled, timesent) take their db/install.xml DEFAULT values.
+        $now = time();
+        $record = new \stdClass();
+        $record->name = $name;
+        $record->subject = get_string('untitledcampaign', 'local_mailwhistle');
+        $record->bodyhtml = null;
+        $record->bodytext = null;
+        $record->createdby = $userid;
+        $record->timecreated = $now;
+        $record->timemodified = $now;
+
+        $campaignid = $DB->insert_record('local_mailwhistle_campaigns', $record);
+
+        self::log_activity('campaign_created', 'Created campaign: ' . $name, $userid);
+
+        return $campaignid;
+    }
+
+    /**
+     * Write a delivery log row for a campaign send.
+     *
+     * @param int $campaignid The campaign.
+     * @param int $recipientid The recipient row id (0 for campaign-level logs).
+     * @param string $level Log level (e.g. info, error).
+     * @param string $message Human-readable message.
+     * @param array $data Optional structured context stored as JSON.
+     * @return void
+     */
+    public static function log_send(
+        int $campaignid,
+        int $recipientid,
+        string $level,
+        string $message,
+        array $data = []
+    ): void {
+        global $DB;
+
+        $DB->insert_record('local_mailwhistle_sendlogs', (object) [
+            'campaignid' => $campaignid,
+            'recipientid' => $recipientid,
+            'level' => $level,
+            'message' => $message,
+            'datajson' => empty($data) ? null : json_encode($data),
+            'timecreated' => time(),
+        ]);
+    }
 }

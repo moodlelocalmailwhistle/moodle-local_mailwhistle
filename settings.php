@@ -42,7 +42,7 @@ $ADMIN->add('local_mailwhistle', $settingspage);
 // Main entry point for Mailwhistle.
 $page = new admin_externalpage(
     name: 'local_mailwhistle_mailings',
-    visiblename: get_string('pluginname', 'local_mailwhistle'),
+    visiblename: get_string('campaigns', 'local_mailwhistle'),
     url: new moodle_url('/local/mailwhistle/index.php'),
     req_capability: 'local/mailwhistle:view',
 );
@@ -68,5 +68,16 @@ $settingspage->add(
         get_string('enable', 'local_mailwhistle'),
         get_string('enable_desc', 'local_mailwhistle'),
         1
+    )
+);
+
+// Number of recipients delivered per send task run.
+$settingspage->add(
+    new admin_setting_configtext(
+        'local_mailwhistle/sendbatchsize',
+        get_string('sendbatchsize', 'local_mailwhistle'),
+        get_string('sendbatchsize_desc', 'local_mailwhistle'),
+        50,
+        PARAM_INT
     )
 );

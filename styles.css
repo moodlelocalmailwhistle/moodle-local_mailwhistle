@@ -35,7 +35,7 @@
 :root {
     --mail-whistle-border-color: #dee2e6;
     --mail-whistle-bg-light: #f8f9fa;
-    --mail-whistle-bg-card: #ffffff;
+    --mail-whistle-bg-card: #fff;
     --mail-whistle-text-color: #212529;
     --mail-whistle-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     --mail-whistle-primary-color: #007bff;
@@ -271,7 +271,7 @@
     min-height: 720px;
     padding: 1rem;
     overflow: hidden;
-    background: #ffffff;
+    background: #fff;
     box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
     transform: translateX(-50%) scale(0.34);
     transform-origin: top center;
@@ -283,8 +283,8 @@
 
 .local-mailwhistle-template-preview-canvas img {
     display: block;
-    max-width: 100% !important;
-    height: auto !important;
+    max-width: 100%;
+    height: auto;
 }
 
 .local-mailwhistle-template-preview-empty {
@@ -294,7 +294,7 @@
     min-height: 140px;
     color: #6c757d;
     border: 1px dashed var(--mail-whistle-border-color);
-    background: #ffffff;
+    background: #fff;
 }
 
 .local-mailwhistle-template-card-body {
@@ -370,7 +370,7 @@
     gap: 0.5rem;
     padding: 8px 14px;
     border-top: 1px solid #eef1f4;
-    background: #ffffff;
+    background: #fff;
 }
 
 .local-mailwhistle-template-actions-menu {
@@ -397,21 +397,21 @@
     overflow: hidden;
     border: 1px solid var(--mail-whistle-border-color);
     border-radius: var(--mail-whistle-border-radius);
-    background: #ffffff;
+    background: #fff;
     box-shadow: var(--mail-whistle-shadow);
 }
 
 .local-mailwhistle-email-preview img {
     display: block;
-    max-width: 100% !important;
-    height: auto !important;
+    max-width: 100%;
+    height: auto;
 }
 
 .local-mailwhistle-builder {
     margin: 1rem 0;
     border: 1px solid var(--mail-whistle-border-color);
     border-radius: var(--mail-whistle-border-radius);
-    background: #ffffff;
+    background: #fff;
 }
 
 .local-mailwhistle-builder-header {
@@ -438,7 +438,7 @@
     padding: 0.5rem 0.65rem;
     border: 1px solid var(--mail-whistle-border-color);
     border-radius: var(--mail-whistle-border-radius);
-    background: #ffffff;
+    background: #fff;
     white-space: nowrap;
 }
 
@@ -454,7 +454,7 @@
     padding: 0.12rem;
     border: 1px solid #8f98a3;
     border-radius: 0.2rem;
-    background: #ffffff;
+    background: #fff;
 }
 
 .local-mailwhistle-builder-toolbar {
@@ -478,7 +478,7 @@
     color: var(--mail-whistle-text-color);
     border: 1px solid var(--mail-whistle-border-color);
     border-radius: var(--mail-whistle-border-radius);
-    background: #ffffff;
+    background: #fff;
 }
 
 .local-mailwhistle-builder-element:hover,
@@ -512,7 +512,7 @@
 }
 
 .local-mailwhistle-icon-white {
-    fill: #ffffff;
+    fill: #fff;
 }
 
 .local-mailwhistle-builder-element-label {
@@ -543,7 +543,7 @@
     padding: 0.75rem;
     border: 1px solid var(--mail-whistle-border-color);
     border-radius: var(--mail-whistle-border-radius);
-    background: #ffffff;
+    background: #fff;
 }
 
 .local-mailwhistle-builder-block.is-dragging {
@@ -588,7 +588,7 @@
     padding: 0.25rem 0.45rem;
     border: 1px solid #8f98a3;
     border-radius: 0.2rem;
-    background: #ffffff;
+    background: #fff;
 }
 
 .local-mailwhistle-builder-field textarea {
@@ -616,14 +616,14 @@
     min-height: 300px;
     margin: 1rem auto;
     overflow: hidden;
-    background: #ffffff;
+    background: #fff;
     box-shadow: var(--mail-whistle-shadow);
 }
 
 .local-mailwhistle-builder-preview-inner img {
     display: block;
-    max-width: 100% !important;
-    height: auto !important;
+    max-width: 100%;
+    height: auto;
 }
 
 @media (max-width: 768px) {
@@ -660,4 +660,18 @@
     .local-mailwhistle-template-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+}
+
+/**
+ * Create campaign page: constrain the form width for readability.
+ */
+.local-mailwhistle-create .mform {
+    max-width: 640px;
+}
+
+/**
+ * Draft campaigns section spacing on the send-newsletters tab.
+ */
+.local-mailwhistle-drafts {
+    margin-bottom: 1.5rem;
 }
