@@ -65,7 +65,7 @@ $string['error_message']         = 'An error occurred. Please try again.';
 $string['event_data_created']    = 'Data record created';
 
 // Tab labels for the main plugin page.
-$string['tab_send']         = 'Send newsletters';
+$string['tab_send']         = 'Campaigns';
 $string['tab_audience']     = 'Audience';
 $string['tab_templates']    = 'Templates';
 $string['tab_reports']      = 'Reports';
