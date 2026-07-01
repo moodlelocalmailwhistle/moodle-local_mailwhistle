@@ -103,6 +103,7 @@ $string['untitledcampaign']        = 'Untitled campaign';
 // Campaign audience-tag selection (audience wizard step).
 $string['audiencetags_desc']       = 'The campaign will be sent to everyone tagged with any of the selected tags.';
 $string['audiencetags_label']      = 'Audience tags';
+$string['audiencetags_none']       = 'No tags selected';
 $string['audiencetags_submit']     = 'Save audience';
 $string['audiencetags_notags']     = 'No audience tags exist yet. Create tags first, then set the campaign audience.';
 $string['audiencetags_managetags'] = 'Manage audience tags';
