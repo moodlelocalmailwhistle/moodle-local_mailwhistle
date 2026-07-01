@@ -113,6 +113,24 @@ $string['audiencetags_saved']      = 'Audience saved.';
 $string['audiencetags_notags']     = 'No audience tags exist yet. Create tags first, then set the campaign audience.';
 $string['audiencetags_managetags'] = 'Manage audience tags';
 
+// Draft campaign edit wizard.
+$string['editcampaign']            = 'Edit campaign';
+$string['editcampaign_notdraft']   = 'This campaign has left draft status and can no longer be edited here.';
+$string['editcampaign_completed']  = 'Campaign marked as ready.';
+$string['editcampaign_markcomplete'] = 'Mark campaign complete';
+$string['editcampaign_incomplete'] = 'Add a name, subject, body and at least one audience tag before this campaign can be completed.';
+$string['campaignincomplete']      = 'The campaign is not complete yet.';
+$string['status_ready']            = 'Ready';
+$string['wizardstep_details']      = '1. Details';
+$string['wizardstep_content']      = '2. Content';
+$string['wizardstep_audience']     = '3. Audience';
+$string['wizardstep_review']       = '4. Review';
+$string['wizard_savecontinue']     = 'Save and continue';
+$string['subject']                 = 'Subject';
+$string['body']                    = 'Email body';
+$string['sendername']              = 'Sender name';
+$string['senderemail']             = 'Sender email';
+
 // Draft campaigns section (Option D2).
 $string['draftcampaigns_heading']  = 'Draft campaigns';
 $string['nodraftcampaigns']        = 'No draft campaigns yet.';

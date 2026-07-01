@@ -179,8 +179,9 @@ function local_mailwhistle_render_draft_campaigns(): string {
 
     $rows = [];
     foreach ($drafts as $draft) {
+        $editurl = new moodle_url('/local/mailwhistle/campaign_edit.php', ['campaignid' => $draft->id]);
         $rows[] = [
-            format_string($draft->name),
+            html_writer::link($editurl, format_string($draft->name)),
             local_mailwhistle_status_badge($draft->status),
             userdate($draft->timecreated),
         ];
