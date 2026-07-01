@@ -147,7 +147,7 @@ switch ($tab) {
         } else {
             if (has_capability('local/mailwhistle:manage', $context)) {
                 echo $OUTPUT->single_button(
-                    new moodle_url('/local/mailwhistle/create.php'),
+                    new moodle_url('/local/mailwhistle/campaign_edit.php', ['sesskey' => sesskey()]),
                     get_string('createcampaign', 'local_mailwhistle'),
                     'get'
                 );

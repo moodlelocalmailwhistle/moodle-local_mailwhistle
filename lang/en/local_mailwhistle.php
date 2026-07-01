@@ -97,19 +97,13 @@ $string['reports_placeholder']      = 'Reporting and analytics are coming soon.'
 
 // Campaign creation.
 $string['createcampaign']          = 'Create a campaign';
-$string['createcampaign_desc']     = 'Give your campaign an internal name. You can change everything else later.';
-$string['createcampaign_submit']   = 'Create campaign';
 $string['internalname']            = 'Internal email name';
-$string['campaigncreated']         = 'Campaign created.';
 $string['untitledcampaign']        = 'Untitled campaign';
 
-// Campaign audience-tag selection.
-$string['audiencetags_heading']    = 'Select audience';
-$string['audiencetags_for']        = 'Choose which audience tags campaign "{$a}" should target.';
+// Campaign audience-tag selection (audience wizard step).
 $string['audiencetags_desc']       = 'The campaign will be sent to everyone tagged with any of the selected tags.';
 $string['audiencetags_label']      = 'Audience tags';
 $string['audiencetags_submit']     = 'Save audience';
-$string['audiencetags_saved']      = 'Audience saved.';
 $string['audiencetags_notags']     = 'No audience tags exist yet. Create tags first, then set the campaign audience.';
 $string['audiencetags_managetags'] = 'Manage audience tags';
 

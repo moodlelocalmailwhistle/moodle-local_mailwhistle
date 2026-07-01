@@ -42,8 +42,17 @@ require_login();
 $context = context_system::instance();
 require_capability('local/mailwhistle:manage', $context);
 
-// The campaign being edited (must exist).
-$campaignid = required_param('campaignid', PARAM_INT);
+// The campaign being edited. With no id we are creating a new campaign: make an
+// empty draft and re-enter the wizard on it, so create and edit share one path.
+$campaignid = optional_param('campaignid', 0, PARAM_INT);
+if (empty($campaignid)) {
+    require_sesskey();
+    $campaignid = \local_mailwhistle\helper::create_campaign('');
+    redirect(new moodle_url('/local/mailwhistle/campaign_edit.php', [
+        'campaignid' => $campaignid,
+        'step' => 'details',
+    ]));
+}
 $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
 
 // Ordered wizard steps.
