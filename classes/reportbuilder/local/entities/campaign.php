@@ -35,7 +35,6 @@ use local_mailwhistle\reportbuilder\local\helper\campaign as campaignhelper;
  * Report entity for campaigns
  */
 class campaign extends base {
-
     /**
      * Get the list of tables used by this entity.
      */
@@ -52,6 +51,7 @@ class campaign extends base {
         return new lang_string('campaign', 'local_mailwhistle');
     }
 
+    #[\Override]
     protected function get_available_columns(): array {
         $campaignsalias = $this->get_table_alias('local_mailwhistle_campaigns');
 

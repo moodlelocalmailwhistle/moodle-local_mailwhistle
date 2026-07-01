@@ -113,7 +113,7 @@ class campaign_manager {
      * data can never set arbitrary columns (status, createdby, timesent, ...).
      *
      * @param int $campaignid The campaign to update.
-     * @param array<string, mixed> $fields Field => value map.
+     * @param array $fields Field => value map.
      * @return void
      */
     public static function update_fields(int $campaignid, array $fields): void {

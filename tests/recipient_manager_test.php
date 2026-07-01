@@ -31,7 +31,7 @@ use local_mailwhistle\manager\tag_manager;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\manager\recipient_manager
  */
-class recipient_manager_test extends \advanced_testcase {
+final class recipient_manager_test extends \advanced_testcase {
     /**
      * Insert a draft campaign and return its id.
      *

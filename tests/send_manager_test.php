@@ -30,7 +30,7 @@ use local_mailwhistle\manager\tag_manager;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\manager\send_manager
  */
-class send_manager_test extends \advanced_testcase {
+final class send_manager_test extends \advanced_testcase {
     /**
      * Build a complete, ready campaign with one tagged recipient.
      *

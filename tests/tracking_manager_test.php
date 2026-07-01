@@ -29,7 +29,7 @@ use local_mailwhistle\manager\tracking_manager;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\manager\tracking_manager
  */
-class tracking_manager_test extends \advanced_testcase {
+final class tracking_manager_test extends \advanced_testcase {
     /**
      * Insert a recipient row and return [campaignid, recipientid].
      *

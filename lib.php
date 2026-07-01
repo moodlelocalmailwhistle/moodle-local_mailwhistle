@@ -130,8 +130,8 @@ const LOCAL_MAILWHISTLE_DRAFT_LIMIT = 50;
  *
  * @param string $heading Section heading text (already localised).
  * @param string $emptymessage Empty-state message (already localised).
- * @param array<int, string> $head Column header cells (already localised).
- * @param array<int, array<int, string>> $rows Row data (each an array of cell HTML).
+ * @param array $head Column header cells (already localised).
+ * @param array $rows Row data (each an array of cell HTML).
  * @param string $tableclass Extra CSS class(es) for the table element.
  * @return string Rendered HTML for the section.
  */

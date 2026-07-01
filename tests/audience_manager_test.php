@@ -30,7 +30,7 @@ use local_mailwhistle\manager\tag_manager;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\manager\audience_manager
  */
-class audience_manager_test extends \advanced_testcase {
+final class audience_manager_test extends \advanced_testcase {
     /**
      * Insert a minimal campaign row and return its id.
      *
