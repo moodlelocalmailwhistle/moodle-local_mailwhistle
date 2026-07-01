@@ -15,20 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Local plugin "Mail Whistle" - Version file.
+ * Message provider definitions for local_mailwhistle.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_mailwhistle';
-$plugin->version = 2026070111;      // YYYYMMDDvv format.
-$plugin->release = '1.2.0';         // Semantic versioning.
-$plugin->requires = 2025041400;     // Moodle 5.0 LTS minimum.
-$plugin->maturity = MATURITY_ALPHA; // Development stability level.
-$plugin->supported = [500, 502];    // Supported branch range: Moodle 5.0 to 5.2.
-
-// Declare dependencies on other plugins via $plugin->dependencies when required.
+$messageproviders = [
+    // A campaign newsletter delivered to a recipient.
+    'campaign' => [
+        'defaults' => [
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'popup' => MESSAGE_PERMITTED,
+        ],
+    ],
+];

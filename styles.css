@@ -661,3 +661,17 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+/**
+ * Create campaign page: constrain the form width for readability.
+ */
+.local-mailwhistle-create .mform {
+    max-width: 640px;
+}
+
+/**
+ * Draft campaigns section spacing on the send-newsletters tab.
+ */
+.local-mailwhistle-drafts {
+    margin-bottom: 1.5rem;
+}

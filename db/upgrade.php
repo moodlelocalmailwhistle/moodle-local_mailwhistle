@@ -179,5 +179,17 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026070106, 'local', 'mailwhistle');
     }
 
+    if ($oldversion < 2026070111) {
+        $dbman = $DB->get_manager();
+
+        // Create the open/click tracking table if it is not already present.
+        $table = new xmldb_table('local_mailwhistle_tracking');
+        if (!$dbman->table_exists($table)) {
+            $dbman->install_one_table_from_xmldb_file(__DIR__ . '/install.xml', 'local_mailwhistle_tracking');
+        }
+
+        upgrade_plugin_savepoint(true, 2026070111, 'local', 'mailwhistle');
+    }
+
     return true;
 }
