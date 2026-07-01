@@ -34,6 +34,64 @@ class campaign_manager {
     /** @var string Status of a campaign that has all required parts and is ready. */
     public const STATUS_READY = 'ready';
 
+    /** @var string Status of a campaign currently being delivered. */
+    public const STATUS_SENDING = 'sending';
+
+    /** @var string Status of a campaign whose delivery batch has completed. */
+    public const STATUS_SENT = 'sent';
+
+    /**
+     * Atomically transition a campaign from ready to sending.
+     *
+     * Uses a conditional UPDATE so only one caller can win the transition; a
+     * second "Send now" click or a concurrent task cannot double-start the send.
+     * Returns true only for the caller that actually flipped the status.
+     *
+     * @param int $campaignid The campaign to start sending.
+     * @return bool True if this call transitioned ready -> sending.
+     */
+    public static function begin_sending(int $campaignid): bool {
+        global $DB;
+
+        // Serialize concurrent callers on the campaign row: the transaction plus
+        // the status re-check inside it means only the first transaction to
+        // observe 'ready' performs the flip; a second sees 'sending' and bails.
+        $transaction = $DB->start_delegated_transaction();
+
+        $status = $DB->get_field('local_mailwhistle_campaigns', 'status', ['id' => $campaignid], MUST_EXIST);
+        if ($status !== self::STATUS_READY) {
+            $transaction->allow_commit();
+            return false;
+        }
+
+        $DB->update_record('local_mailwhistle_campaigns', (object) [
+            'id' => $campaignid,
+            'status' => self::STATUS_SENDING,
+            'timemodified' => time(),
+        ]);
+
+        $transaction->allow_commit();
+        return true;
+    }
+
+    /**
+     * Mark a campaign as fully sent and stamp the send time.
+     *
+     * @param int $campaignid The campaign to finalise.
+     * @return void
+     */
+    public static function mark_sent(int $campaignid): void {
+        global $DB;
+
+        $now = time();
+        $DB->update_record('local_mailwhistle_campaigns', (object) [
+            'id' => $campaignid,
+            'status' => self::STATUS_SENT,
+            'timesent' => $now,
+            'timemodified' => $now,
+        ]);
+    }
+
     /**
      * Campaign columns that update_fields() is allowed to write.
      *
