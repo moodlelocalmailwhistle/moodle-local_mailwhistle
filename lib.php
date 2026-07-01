@@ -370,14 +370,14 @@ function local_mailwhistle_get_sample_sent_mail(int $id): ?array {
  */
 function local_mailwhistle_status_badge(string $status): string {
     $classes = [
-        'draft' => 'badge badge-secondary bg-secondary text-white',
-        'ready' => 'badge badge-primary bg-primary text-white',
-        'sent' => 'badge badge-success bg-success text-white',
-        'sending' => 'badge badge-info bg-info text-white',
-        'scheduled' => 'badge badge-secondary bg-secondary text-white',
-        'failed' => 'badge badge-danger bg-danger text-white',
+        'draft' => 'badge bg-secondary text-white',
+        'ready' => 'badge bg-primary text-white',
+        'sent' => 'badge bg-success text-white',
+        'sending' => 'badge bg-info text-white',
+        'scheduled' => 'badge bg-secondary text-white',
+        'failed' => 'badge bg-danger text-white',
     ];
-    $class = $classes[$status] ?? 'badge badge-secondary bg-secondary text-white';
+    $class = $classes[$status] ?? 'badge bg-secondary text-white';
 
     return html_writer::span(
         get_string('status_' . $status, 'local_mailwhistle'),
@@ -585,7 +585,7 @@ function local_mailwhistle_render_template_card(stdClass $template, bool $canman
     if (!empty($template->archived)) {
         $title .= ' ' . html_writer::span(
             get_string('template_archived_badge', 'local_mailwhistle'),
-            'badge badge-secondary'
+            'badge bg-secondary'
         );
     }
     $output .= html_writer::tag('h4', $title, ['class' => 'local-mailwhistle-template-title']);
