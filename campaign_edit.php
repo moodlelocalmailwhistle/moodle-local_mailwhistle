@@ -243,7 +243,7 @@ echo $rendertabs('review');
 
 // Summary table of the current values.
 $summary = new html_table();
-$summary->attributes['class'] = 'generaltable local-mailwhistle-review';
+$summary->attributes['class'] = 'generaltable table w-auto local-mailwhistle-review mb-3';
 $summary->data = [
     [get_string('internalname', 'local_mailwhistle'), format_string($campaign->name)],
     [get_string('subject', 'local_mailwhistle'), format_string($campaign->subject)],
