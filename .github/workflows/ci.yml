@@ -14,3 +14,12 @@ jobs:
       min_php: '8.2'
       # Fail the build on any phpcs (codechecker) warning, not just errors.
       codechecker_max_warnings: 0
+      # Limit the test matrix to Moodle 5.2 for faster runs. The plugin still
+      # declares support for 5.0-5.2 in version.php ($plugin->supported); this
+      # only narrows which branches CI exercises.
+      moodle_branches: 'MOODLE_502_STABLE'
+      # This runner has no Selenium/Chrome, so the behat step (hardcoded to
+      # --profile chrome) cannot run and fails with "Invalid profile passed:
+      # chrome". Behat coverage is exercised locally; disable it in CI. The
+      # plugin's behaviour is covered by PHPUnit here.
+      disable_behat: true

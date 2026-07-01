@@ -17,16 +17,17 @@
 namespace local_mailwhistle\form;
 
 /**
- * Form to create a new draft email campaign.
+ * Wizard step 2: campaign content (subject and body).
  *
- * Collects only the internal campaign name; everything else can be
- * configured later once the campaign exists as a draft record.
+ * Collects the email subject and the HTML body. The body uses a Moodle editor
+ * element; the controller stores the HTML in bodyhtml and a plain-text version
+ * in bodytext.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class create_campaign_form extends \moodleform {
+class campaign_content_form extends \moodleform {
     /**
      * Define the form fields.
      *
@@ -35,14 +36,18 @@ class create_campaign_form extends \moodleform {
     protected function definition(): void {
         $mform = $this->_form;
 
-        $mform->addElement('static', 'createdesc', '', get_string('createcampaign_desc', 'local_mailwhistle'));
+        $mform->addElement('hidden', 'campaignid');
+        $mform->setType('campaignid', PARAM_INT);
 
-        $mform->addElement('text', 'name', get_string('internalname', 'local_mailwhistle'), ['maxlength' => 255, 'size' => 50]);
-        $mform->setType('name', PARAM_TEXT);
-        $mform->addRule('name', get_string('required'), 'required', null, 'client');
-        $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
+        $mform->addElement('text', 'subject', get_string('subject', 'local_mailwhistle'), ['maxlength' => 255, 'size' => 50]);
+        $mform->setType('subject', PARAM_TEXT);
+        $mform->addRule('subject', get_string('required'), 'required', null, 'client');
 
-        $this->add_action_buttons(true, get_string('createcampaign_submit', 'local_mailwhistle'));
+        // Plain HTML editor; no file areas needed for the draft body preview.
+        $mform->addElement('editor', 'body', get_string('body', 'local_mailwhistle'), null, ['enable_filemanagement' => false]);
+        $mform->setType('body', PARAM_RAW);
+
+        $this->add_action_buttons(true, get_string('wizard_savecontinue', 'local_mailwhistle'));
     }
 
     /**
@@ -55,11 +60,8 @@ class create_campaign_form extends \moodleform {
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 
-        $name = trim($data['name'] ?? '');
-        if ($name === '') {
-            $errors['name'] = get_string('required');
-        } else if (\core_text::strlen($name) > 255) {
-            $errors['name'] = get_string('maximumchars', '', 255);
+        if (trim($data['subject'] ?? '') === '') {
+            $errors['subject'] = get_string('required');
         }
 
         return $errors;

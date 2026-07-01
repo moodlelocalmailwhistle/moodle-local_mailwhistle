@@ -166,11 +166,14 @@ function local_mailwhistle_render_campaign_table(
  * @return string Rendered HTML for the draft campaigns section.
  */
 function local_mailwhistle_render_draft_campaigns(): string {
-    global $DB;
+    global $DB, $OUTPUT;
 
-    $drafts = $DB->get_records(
+    // Show campaigns still being prepared (draft) or ready to send (ready).
+    [$insql, $inparams] = $DB->get_in_or_equal(['draft', 'ready'], SQL_PARAMS_NAMED, 'st');
+    $drafts = $DB->get_records_select(
         'local_mailwhistle_campaigns',
-        ['status' => 'draft'],
+        "status $insql",
+        $inparams,
         'timecreated DESC',
         'id, name, status, timecreated',
         0,
@@ -179,10 +182,24 @@ function local_mailwhistle_render_draft_campaigns(): string {
 
     $rows = [];
     foreach ($drafts as $draft) {
+        $editurl = new moodle_url('/local/mailwhistle/campaign_edit.php', ['campaignid' => $draft->id]);
+
+        // A ready campaign gets a "Send now" button (POST, sesskey-guarded).
+        $action = '';
+        if ($draft->status === 'ready') {
+            $sendurl = new moodle_url('/local/mailwhistle/index.php', [
+                'tab' => 'send',
+                'action' => 'sendnow',
+                'campaignid' => $draft->id,
+            ]);
+            $action = $OUTPUT->single_button($sendurl, get_string('sendnow', 'local_mailwhistle'), 'post');
+        }
+
         $rows[] = [
-            format_string($draft->name),
+            html_writer::link($editurl, format_string($draft->name)),
             local_mailwhistle_status_badge($draft->status),
             userdate($draft->timecreated),
+            $action,
         ];
     }
 
@@ -193,6 +210,7 @@ function local_mailwhistle_render_draft_campaigns(): string {
             get_string('col_name', 'local_mailwhistle'),
             get_string('col_status', 'local_mailwhistle'),
             get_string('col_created', 'local_mailwhistle'),
+            get_string('col_actions', 'local_mailwhistle'),
         ],
         $rows,
         'local-mailwhistle-drafts-table'

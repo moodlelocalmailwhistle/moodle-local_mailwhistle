@@ -97,21 +97,43 @@ $string['reports_placeholder']      = 'Reporting and analytics are coming soon.'
 
 // Campaign creation.
 $string['createcampaign']          = 'Create a campaign';
-$string['createcampaign_desc']     = 'Give your campaign an internal name. You can change everything else later.';
-$string['createcampaign_submit']   = 'Create campaign';
 $string['internalname']            = 'Internal email name';
-$string['campaigncreated']         = 'Campaign created.';
 $string['untitledcampaign']        = 'Untitled campaign';
 
-// Campaign audience-tag selection.
-$string['audiencetags_heading']    = 'Select audience';
-$string['audiencetags_for']        = 'Choose which audience tags campaign "{$a}" should target.';
+// Campaign audience-tag selection (audience wizard step).
 $string['audiencetags_desc']       = 'The campaign will be sent to everyone tagged with any of the selected tags.';
 $string['audiencetags_label']      = 'Audience tags';
+$string['audiencetags_none']       = 'No tags selected';
 $string['audiencetags_submit']     = 'Save audience';
-$string['audiencetags_saved']      = 'Audience saved.';
 $string['audiencetags_notags']     = 'No audience tags exist yet. Create tags first, then set the campaign audience.';
 $string['audiencetags_managetags'] = 'Manage audience tags';
+
+// Draft campaign edit wizard.
+$string['editcampaign']            = 'Edit campaign';
+$string['editcampaign_notdraft']   = 'This campaign has left draft status and can no longer be edited here.';
+$string['editcampaign_completed']  = 'Campaign marked as ready.';
+$string['editcampaign_markcomplete'] = 'Mark campaign complete';
+$string['editcampaign_incomplete'] = 'Add a name, subject, body and at least one audience tag before this campaign can be completed.';
+$string['campaignincomplete']      = 'The campaign is not complete yet.';
+$string['status_ready']            = 'Ready';
+$string['wizardstep_details']      = '1. Details';
+$string['wizardstep_content']      = '2. Content';
+$string['wizardstep_audience']     = '3. Audience';
+$string['wizardstep_review']       = '4. Review';
+$string['wizard_savecontinue']     = 'Save and continue';
+$string['subject']                 = 'Subject';
+$string['body']                    = 'Email body';
+$string['sendername']              = 'Sender name';
+$string['senderemail']             = 'Sender email';
+
+// Sending.
+$string['col_actions']             = 'Actions';
+$string['sendnow']                 = 'Send now';
+$string['sendqueued']              = 'Campaign queued for sending.';
+$string['sendnotready']            = 'This campaign is not ready to send.';
+$string['sendbatchsize']           = 'Send batch size';
+$string['sendbatchsize_desc']      = 'How many recipients each send task run delivers before re-queueing. Keep within your mail server limits.';
+$string['task_requeue_stuck_sends'] = 'Resume stalled campaign sends';
 
 // Draft campaigns section (Option D2).
 $string['draftcampaigns_heading']  = 'Draft campaigns';
@@ -200,6 +222,11 @@ $string['privacy:metadata:local_mailwhistle_recipients:firstname'] = 'The recipi
 $string['privacy:metadata:local_mailwhistle_recipients:lastname'] = 'The recipient last name captured at send time.';
 $string['privacy:metadata:local_mailwhistle_recipients:status'] = 'The delivery status for the recipient.';
 $string['privacy:metadata:local_mailwhistle_recipients:timesent'] = 'The time the campaign was sent to the recipient.';
+$string['privacy:metadata:local_mailwhistle_tracking'] = 'Open and click tracking events recorded for a recipient.';
+$string['privacy:metadata:local_mailwhistle_tracking:recipientid'] = 'The recipient the tracking event belongs to.';
+$string['privacy:metadata:local_mailwhistle_tracking:eventtype'] = 'The type of event (open or click).';
+$string['privacy:metadata:local_mailwhistle_tracking:targeturl'] = 'The URL that was clicked (for click events).';
+$string['privacy:metadata:local_mailwhistle_tracking:timecreated'] = 'The time the event was recorded.';
 $string['privacy:metadata:local_mailwhistle_unsubscribes'] = 'Records of users who unsubscribed from campaigns.';
 $string['privacy:metadata:local_mailwhistle_unsubscribes:userid'] = 'The ID of the user who unsubscribed.';
 $string['privacy:metadata:local_mailwhistle_unsubscribes:email'] = 'The email address that unsubscribed.';

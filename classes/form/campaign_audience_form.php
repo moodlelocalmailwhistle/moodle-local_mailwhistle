@@ -21,9 +21,9 @@ use local_mailwhistle\manager\tag_manager;
 /**
  * Form to choose the audience tags a campaign targets.
  *
- * Shown after a campaign is created. Each known tag is offered as a checkbox;
- * the selected tags become the campaign's tag-based audience rules. The tag
- * options are supplied by {@see tag_manager::get_all_tags()}.
+ * Tags are picked with a Moodle autocomplete element (multi-select), whose
+ * options come from {@see tag_manager::get_all_tags()}. The selected tags
+ * become the campaign's tag-based audience rules.
  *
  * @package   local_mailwhistle
  * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
@@ -43,61 +43,48 @@ class campaign_audience_form extends \moodleform {
 
         $mform->addElement('static', 'audiencedesc', '', get_string('audiencetags_desc', 'local_mailwhistle'));
 
-        // One checkbox per tag; grouped so the label appears once above them.
-        $checkboxes = [];
+        // Multi-select autocomplete of all known tags (id => name).
+        $options = [];
         foreach (tag_manager::get_all_tags() as $tag) {
-            $checkboxes[] = $mform->createElement(
-                'advcheckbox',
-                (int) $tag->id,
-                '',
-                format_string($tag->name),
-                ['group' => 1],
-                [0, 1]
-            );
+            $options[(int) $tag->id] = format_string($tag->name);
         }
-        $mform->addGroup(
-            $checkboxes,
+        $mform->addElement(
+            'autocomplete',
             'tagids',
             get_string('audiencetags_label', 'local_mailwhistle'),
-            '<br>',
-            false
+            $options,
+            [
+                'multiple' => true,
+                'noselectionstring' => get_string('audiencetags_none', 'local_mailwhistle'),
+            ]
         );
+        $mform->setType('tagids', PARAM_INT);
 
         $this->add_action_buttons(true, get_string('audiencetags_submit', 'local_mailwhistle'));
     }
 
     /**
-     * Pre-check the tags currently linked to the campaign.
+     * Pre-select the tags currently linked to the campaign.
      *
-     * @param int[] $selectedtagids Tag ids to mark as checked.
+     * @param int[] $selectedtagids Tag ids to mark as selected.
      * @return void
      */
     public function set_selected_tags(array $selectedtagids): void {
-        $mform = $this->_form;
-        $defaults = [];
-        foreach ($selectedtagids as $tagid) {
-            $defaults['tagids[' . (int) $tagid . ']'] = 1;
-        }
-        $mform->setDefaults($defaults);
+        $this->_form->setDefault('tagids', array_map('intval', $selectedtagids));
     }
 
     /**
-     * Extract the checked tag ids from submitted data.
+     * Extract the selected tag ids from submitted data.
      *
-     * The tagids group posts an id => 0|1 map; return only the ids set to 1.
+     * The autocomplete element posts a plain array of the selected ids.
      *
      * @param \stdClass $data Submitted form data.
-     * @return int[] Checked tag ids.
+     * @return int[] Selected tag ids.
      */
     public static function get_checked_tagids(\stdClass $data): array {
-        $tagids = [];
-        if (!empty($data->tagids) && is_array($data->tagids)) {
-            foreach ($data->tagids as $tagid => $checked) {
-                if ((int) $checked === 1) {
-                    $tagids[] = (int) $tagid;
-                }
-            }
+        if (empty($data->tagids) || !is_array($data->tagids)) {
+            return [];
         }
-        return $tagids;
+        return array_values(array_map('intval', $data->tagids));
     }
 }

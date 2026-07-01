@@ -70,3 +70,14 @@ $settingspage->add(
         1
     )
 );
+
+// Number of recipients delivered per send task run.
+$settingspage->add(
+    new admin_setting_configtext(
+        'local_mailwhistle/sendbatchsize',
+        get_string('sendbatchsize', 'local_mailwhistle'),
+        get_string('sendbatchsize_desc', 'local_mailwhistle'),
+        50,
+        PARAM_INT
+    )
+);
