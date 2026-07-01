@@ -59,7 +59,7 @@ class sent_mails implements renderable, templatable {
             get_string('col_sentat', 'local_mailwhistle'),
             get_string('col_status', 'local_mailwhistle'),
         ];
-        $table->attributes['class'] = 'table generaltable local-mailwhistle-sentmails table-striped table-hover';
+        $table->attributes['class'] = 'table generaltable local-mailwhistle-sentmails w-auto table-striped table-hover';
 
         foreach ($rows as $row) {
             $viewurl = new \moodle_url('/local/mailwhistle/index.php', [
