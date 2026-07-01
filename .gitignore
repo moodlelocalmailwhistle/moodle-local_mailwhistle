@@ -63,10 +63,9 @@ yarn-error.log
 package-lock.json
 yarn.lock
 
-# Grunt and build tools
-amd/build/
-*.min.js
-*.min.css
+# Grunt and build tools.
+# Note: Moodle requires compiled AMD modules (amd/build/*.min.js) to be
+# committed, so amd/build is intentionally NOT ignored.
 .grunt/
 
 # Build artifacts
