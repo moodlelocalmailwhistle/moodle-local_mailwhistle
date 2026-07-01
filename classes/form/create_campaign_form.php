@@ -16,6 +16,9 @@
 
 namespace local_mailwhistle\form;
 
+global $CFG;
+require_once($CFG->libdir . '/formslib.php');
+
 /**
  * Form to create a new draft email campaign.
  *
