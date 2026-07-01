@@ -218,7 +218,8 @@ switch ($tab) {
                 echo $OUTPUT->single_button(
                     new moodle_url('/local/mailwhistle/campaign_edit.php', ['sesskey' => sesskey()]),
                     get_string('createcampaign', 'local_mailwhistle'),
-                    'get'
+                    'get',
+                    ['class' => 'mb-3']
                 );
                 echo local_mailwhistle_render_draft_campaigns();
             }
