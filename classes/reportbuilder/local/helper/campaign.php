@@ -30,10 +30,8 @@ namespace local_mailwhistle\reportbuilder\local\helper;
  */
 class campaign {
     public static function status(?string $status, \stdClass $row) {
-        $identifier = 'status_' . $status;
-        if (get_string_manager()->string_exists($identifier, 'local_mailwhistle')) {
-            return get_string($identifier, 'local_mailwhistle');
-        }
-        return $status;
+        global $CFG;
+        require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
+        return local_mailwhistle_status_badge($status);
     }
 }
