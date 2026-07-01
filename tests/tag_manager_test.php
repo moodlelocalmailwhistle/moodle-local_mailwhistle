@@ -206,4 +206,39 @@ class tag_manager_test extends \advanced_testcase {
         $this->assertSame('region nl', tag_manager::normalize('  Region   NL  '));
         $this->assertSame('newsletter', tag_manager::normalize('NEWSLETTER'));
     }
+
+    /**
+     * Test: get_userids_for_tags returns distinct userids across tags.
+     */
+    public function test_get_userids_for_tags_distinct(): void {
+        $this->resetAfterTest();
+
+        $tag1  = tag_manager::create_tag('Alpha');
+        $tag2  = tag_manager::create_tag('Beta');
+        $user1 = $this->getDataGenerator()->create_user();
+        $user2 = $this->getDataGenerator()->create_user();
+        $user3 = $this->getDataGenerator()->create_user(); // Untagged.
+
+        // User1 is in both tags (must dedupe to one id).
+        tag_manager::assign_tag($tag1, $user1->id);
+        tag_manager::assign_tag($tag2, $user1->id);
+        tag_manager::assign_tag($tag2, $user2->id);
+
+        $userids = tag_manager::get_userids_for_tags([$tag1, $tag2]);
+
+        $this->assertEqualsCanonicalizing([(int) $user1->id, (int) $user2->id], $userids);
+        $this->assertNotContains((int) $user3->id, $userids);
+        // Distinct: user1 appears once despite two tag memberships.
+        $this->assertSame(count($userids), count(array_unique($userids)));
+    }
+
+    /**
+     * Test: get_userids_for_tags with empty input or unknown tags returns [].
+     */
+    public function test_get_userids_for_tags_empty(): void {
+        $this->resetAfterTest();
+
+        $this->assertSame([], tag_manager::get_userids_for_tags([]));
+        $this->assertSame([], tag_manager::get_userids_for_tags([999999]));
+    }
 }
