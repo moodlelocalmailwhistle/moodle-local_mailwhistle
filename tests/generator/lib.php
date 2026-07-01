@@ -23,6 +23,14 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class local_mailwhistle_generator extends \component_generator_base {
+    /** @var int */
+    protected int $campaignnum = 1;
+
+    public function reset() {
+        parent::reset();
+        $this->campaignnum = 1;
+    }
+
     /**
      * Create a campaign record and return it.
      *
@@ -39,8 +47,8 @@ class local_mailwhistle_generator extends \component_generator_base {
         $record = (array) $record;
         $now = time();
         $defaults = [
-            'name' => 'Test campaign',
-            'subject' => '',
+            'name' => "Test campaign {$this->campaignnum}",
+            'subject' => "Subject {$this->campaignnum}",
             'bodyhtml' => '',
             'bodytext' => '',
             'sendername' => '',
@@ -54,6 +62,7 @@ class local_mailwhistle_generator extends \component_generator_base {
             'timesent' => 0,
         ];
         $record = array_merge($defaults, $record);
+        $this->campaignnum++;
 
         $record['id'] = $DB->insert_record('local_mailwhistle_campaigns', (object) $record);
 

@@ -15,40 +15,28 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Output sent mails list
+ * Behat plugin generator
  *
  * @package   local_mailwhistle
+ * @category  test
  * @copyright 2026 Synergy Learning
  * @author    Davo Smith
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-namespace local_mailwhistle\output;
-
-use core\output\renderable;
-use core\output\renderer_base;
-use core\output\templatable;
-use core_reportbuilder\system_report_factory;
-use local_mailwhistle\reportbuilder\local\systemreports\campaigns;
-
-/**
- * Output sent mails list
- */
-class sent_mails implements renderable, templatable {
+class behat_local_mailwhistle_generator extends behat_generator_base {
     /**
-     * Export this data so it can be used in a template.
+     * Get list of items that can be generated.
      *
-     * @param renderer_base $output
      * @return array
-     * @throws \coding_exception
-     * @throws \core\exception\moodle_exception
      */
-    public function export_for_template(renderer_base $output) {
-        $report = system_report_factory::create(campaigns::class, \context_system::instance());
-        $report->add_base_condition_simple(
-            'campaigns.status',
-            \local_mailwhistle\manager\campaign_manager::STATUS_SENT
-        );
-        return ['table' => $report->output()];
+    protected function get_creatable_entities(): array {
+        return [
+            'campaigns' => [
+                'singular' => 'campaign',
+                'datagenerator' => 'campaign',
+                'required' => ['name', 'subject'],
+                'switchids' => [],
+            ],
+        ];
     }
 }
