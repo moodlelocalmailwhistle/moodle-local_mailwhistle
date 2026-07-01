@@ -29,9 +29,67 @@ namespace local_mailwhistle\reportbuilder\local\helper;
  * Helper for formatting campaign fields
  */
 class campaign {
-    public static function status(?string $status, \stdClass $row) {
+    /**
+     * Output the status
+     *
+     * @param string|null $status
+     * @param \stdClass $row
+     * @return string
+     */
+    public static function status(?string $status, \stdClass $row): string {
         global $CFG;
         require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
         return local_mailwhistle_status_badge($status);
+    }
+
+    /**
+     * Output the name, linked to the campaign
+     *
+     * @param string|null $name
+     * @param \stdClass $row
+     * @return string
+     */
+    public static function namelink(?string $name, \stdClass $row): string {
+        $url = null;
+        if (
+            in_array(
+                $row->status,
+                [
+                    \local_mailwhistle\manager\campaign_manager::STATUS_DRAFT,
+                    \local_mailwhistle\manager\campaign_manager::STATUS_READY,
+                ],
+                true
+            )
+        ) {
+            $url = new \moodle_url('/local/mailwhistle/campaign_edit.php', ['campaignid' => $row->id]);
+        } else if ($row->status === \local_mailwhistle\manager\campaign_manager::STATUS_SENT) {
+            $url = new \moodle_url('/local/mailwhistle/index.php', ['view' => $row->id, 'tab' => 'send']);
+        }
+        if ($url) {
+            return \html_writer::link($url, $name);
+        }
+        return $name;
+    }
+
+    /**
+     * Output action
+     *
+     * @param int|null $id
+     * @param \stdClass $row
+     * @return string
+     */
+    public static function actions(?int $id, \stdClass $row): string {
+        global $OUTPUT;
+
+        if ($row->status !== \local_mailwhistle\manager\campaign_manager::STATUS_READY) {
+            return '';
+        }
+
+        $sendurl = new \moodle_url('/local/mailwhistle/index.php', [
+            'tab' => 'send',
+            'action' => 'sendnow',
+            'campaignid' => $id,
+        ]);
+        return $OUTPUT->single_button($sendurl, get_string('sendnow', 'local_mailwhistle'), 'post');
     }
 }

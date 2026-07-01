@@ -31,22 +31,28 @@ use local_mailwhistle\reportbuilder\local\entities\campaign;
 /**
  * Report of campaigns
  */
-class campaigns extends system_report {
+class sent_campaigns extends system_report {
 
     /**
      * @inheritDoc
      */
     protected function initialise(): void {
         $this->set_main_table('local_mailwhistle_campaigns', 'campaigns');
+        $this->add_base_condition_simple(
+            'campaigns.status',
+            \local_mailwhistle\manager\campaign_manager::STATUS_SENT
+        );
 
         $entitycampaign = (new campaign())->set_table_alias('local_mailwhistle_campaigns', 'campaigns');
         $this->add_entity($entitycampaign);
 
         $this->add_columns();
+
+        $this->set_default_no_results_notice(new \lang_string('nosentmails', 'local_mailwhistle'));
     }
 
     protected function add_columns(): void {
-        $this->add_column_from_entity('campaign:name');
+        $this->add_column_from_entity('campaign:namelink');
         $this->add_column_from_entity('campaign:subject');
         $this->add_column_from_entity('campaign:audience');
         $this->add_column_from_entity('campaign:recipients');

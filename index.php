@@ -215,15 +215,9 @@ switch ($tab) {
             echo local_mailwhistle_render_view_mail($viewid);
         } else {
             if (has_capability('local/mailwhistle:manage', $context)) {
-                echo $OUTPUT->single_button(
-                    new moodle_url('/local/mailwhistle/campaign_edit.php', ['sesskey' => sesskey()]),
-                    get_string('createcampaign', 'local_mailwhistle'),
-                    'get',
-                    ['class' => 'mb-3']
-                );
-                echo local_mailwhistle_render_draft_campaigns();
+                echo $OUTPUT->render(new \local_mailwhistle\output\draft_campaigns());
             }
-            echo $OUTPUT->render(new \local_mailwhistle\output\sent_mails());
+            echo $OUTPUT->render(new \local_mailwhistle\output\sent_campaigns());
         }
         break;
 

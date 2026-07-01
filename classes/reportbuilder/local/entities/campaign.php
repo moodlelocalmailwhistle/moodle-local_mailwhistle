@@ -66,6 +66,18 @@ class campaign extends base {
             ->add_joins($this->get_joins())
             ->add_field("$campaignsalias.name");
 
+        // Name link.
+        $columns[] = (new column(
+            'namelink',
+            new lang_string('report:name', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_field("$campaignsalias.name")
+            ->add_field("$campaignsalias.id")
+            ->add_field("$campaignsalias.status")
+            ->add_callback([campaignhelper::class, 'namelink']);
+
         // Subject.
         $columns[] = (new column(
             'subject',
@@ -116,6 +128,17 @@ class campaign extends base {
             ->set_type(column::TYPE_INTEGER)
             ->add_callback([format::class, 'userdate']);
 
+        // Time created.
+        $columns[] = (new column(
+            'timecreated',
+            new lang_string('report:timecreated', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_field("$campaignsalias.timecreated")
+            ->set_type(column::TYPE_INTEGER)
+            ->add_callback([format::class, 'userdate']);
+
         // Status.
         $columns[] = (new column(
             'status',
@@ -125,6 +148,18 @@ class campaign extends base {
             ->add_joins($this->get_joins())
             ->add_field("$campaignsalias.status")
             ->add_callback([campaignhelper::class, 'status']);
+
+        // Actions.
+        $columns[] = (new column(
+            'actions',
+            new lang_string('report:actions', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_INTEGER)
+            ->add_field("$campaignsalias.id")
+            ->add_field("$campaignsalias.status")
+            ->add_callback([campaignhelper::class, 'actions']);
 
         return $columns;
     }

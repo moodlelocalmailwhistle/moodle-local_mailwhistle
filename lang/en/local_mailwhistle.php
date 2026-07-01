@@ -35,6 +35,7 @@ $string['pluginname']  = 'Mail Whistle';
 $string['plugindesc']  = 'A reusable boilerplate for creating Moodle local plugins on Moodle 5 LTS and above.';
 
 // Settings page heading and description.
+$string['report:actions'] = 'Actions';
 $string['report:audience'] = 'Audience';
 $string['report:name'] = 'Name';
 $string['report:recipients'] = 'Recipients';
@@ -42,6 +43,7 @@ $string['report:sentat'] = 'Sent at';
 $string['report:sentby'] = 'Sent by';
 $string['report:status'] = 'Status';
 $string['report:subject'] = 'Subject';
+$string['report:timecreated'] = 'Time created';
 $string['setting_heading']      = 'Mail Whistle Settings';
 $string['setting_heading_desc']  = 'Configure the Mail Whistle plugin settings.';
 
