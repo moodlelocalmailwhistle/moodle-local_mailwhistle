@@ -280,3 +280,34 @@ function local_mailwhistle_status_badge(string $status): string {
         $class
     );
 }
+
+function local_mailwhistle_pluginfile(
+    $course,
+    $cm,
+    $context,
+    $filearea,
+    $args,
+    $forcedownload,
+    array $options = []
+): bool {
+    if ($context->contextlevel != CONTEXT_SYSTEM) {
+        return false;
+    }
+    if ($filearea !== \local_mailwhistle\output\resources::FILEAREA) {
+        return false;
+    }
+    $filename = array_pop($args);
+    if ($args) {
+        $filepath = '/' . implode('/', $args);
+    } else {
+        $filepath = '/';
+    }
+
+    $fs = get_file_storage();
+    if (!$file = $fs->get_file($context->id, 'local_mailwhistle', $filearea, 0, $filepath, $filename)) {
+        return false;
+    }
+
+    send_stored_file($file, null, 0, $forcedownload);
+    return true;
+}

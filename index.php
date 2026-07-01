@@ -119,6 +119,15 @@ if ($tab === 'audience' && in_array($action, $writeactions, true)) {
     }
 }
 
+// Handle processing the 'resources' form.
+$resourcesform = null;
+if ($tab === 'resources') {
+    $resourcesform = new local_mailwhistle\form\resources_form($PAGE->url);
+    if ($resourcesform->process()) {
+        redirect($PAGE->url);
+    }
+}
+
 // Optional: a specific sent newsletter to view (0 means show the list).
 $viewid = optional_param('view', 0, PARAM_INT);
 
@@ -301,7 +310,7 @@ switch ($tab) {
         );
         break;
     case 'resources':
-        echo $OUTPUT->render(new \local_mailwhistle\output\resources());
+        echo $OUTPUT->render(new \local_mailwhistle\output\resources($resourcesform));
         break;
 }
 

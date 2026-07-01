@@ -33,6 +33,42 @@ use core\output\templatable;
  * File resources
  */
 class resources implements renderable, templatable {
+    public const FILEAREA = 'resources';
+
+    public function __construct(
+        protected \local_mailwhistle\form\resources_form $form
+    ) {
+    }
+
+    /**
+     * Get a list of available resources.
+     *
+     * @return string[] $filename => $url
+     */
+    public static function get_available_files(): array {
+        $fs = get_file_storage();
+        $files = $fs->get_area_files(
+            \context_system::instance()->id,
+            'local_mailwhistle',
+            self::FILEAREA,
+            false,
+            false
+        );
+        $ret = [];
+        foreach ($files as $file) {
+            $filename = $file->get_filename();
+            $ret[$filename] = \moodle_url::make_pluginfile_url(
+                $file->get_contextid(),
+                $file->get_component(),
+                $file->get_filearea(),
+                $file->get_itemid(),
+                $file->get_filepath(),
+                $filename
+            );
+        }
+        return $ret;
+    }
+
     /**
      * Export the data for the resources template.
      *
@@ -40,7 +76,6 @@ class resources implements renderable, templatable {
      * @return array Template context.
      */
     public function export_for_template(renderer_base $output) {
-        $form = new \local_mailwhistle\form\resources_form();
-        return ['form' => $form->render()];
+        return ['form' => $this->form->render()];
     }
 }
