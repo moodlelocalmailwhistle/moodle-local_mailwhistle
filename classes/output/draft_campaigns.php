@@ -47,7 +47,8 @@ class draft_campaigns implements renderable, templatable {
         $button = $output->single_button(
             new \moodle_url('/local/mailwhistle/campaign_edit.php', ['sesskey' => sesskey()]),
             get_string('createcampaign', 'local_mailwhistle'),
-            'get'
+            'get',
+            ['class' => 'mb-3']
         );
         $report = system_report_factory::create(campaignsreport::class, \context_system::instance());
         return [
