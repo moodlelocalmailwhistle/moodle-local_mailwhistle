@@ -49,8 +49,10 @@ $mform = new \local_mailwhistle\form\create_campaign_form();
 if ($mform->is_cancelled()) {
     redirect($returnurl);
 } else if ($data = $mform->get_data()) {
-    \local_mailwhistle\helper::create_campaign($data->name);
-    redirect($returnurl, get_string('campaigncreated', 'local_mailwhistle'), null, \core\output\notification::NOTIFY_SUCCESS);
+    $campaignid = \local_mailwhistle\helper::create_campaign($data->name);
+    // Send the user straight to the audience-tag selection for the new campaign.
+    $audienceurl = new moodle_url('/local/mailwhistle/campaign_audience.php', ['campaignid' => $campaignid]);
+    redirect($audienceurl, get_string('campaigncreated', 'local_mailwhistle'), null, \core\output\notification::NOTIFY_SUCCESS);
 } else {
     echo $OUTPUT->header();
     echo $OUTPUT->heading(get_string('createcampaign', 'local_mailwhistle'));

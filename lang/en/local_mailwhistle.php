@@ -103,6 +103,16 @@ $string['internalname']            = 'Internal email name';
 $string['campaigncreated']         = 'Campaign created.';
 $string['untitledcampaign']        = 'Untitled campaign';
 
+// Campaign audience-tag selection.
+$string['audiencetags_heading']    = 'Select audience';
+$string['audiencetags_for']        = 'Choose which audience tags campaign "{$a}" should target.';
+$string['audiencetags_desc']       = 'The campaign will be sent to everyone tagged with any of the selected tags.';
+$string['audiencetags_label']      = 'Audience tags';
+$string['audiencetags_submit']     = 'Save audience';
+$string['audiencetags_saved']      = 'Audience saved.';
+$string['audiencetags_notags']     = 'No audience tags exist yet. Create tags first, then set the campaign audience.';
+$string['audiencetags_managetags'] = 'Manage audience tags';
+
 // Draft campaigns section (Option D2).
 $string['draftcampaigns_heading']  = 'Draft campaigns';
 $string['nodraftcampaigns']        = 'No draft campaigns yet.';
