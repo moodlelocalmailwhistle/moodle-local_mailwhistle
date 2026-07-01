@@ -147,7 +147,7 @@ function local_mailwhistle_render_view_mail(int $id): string {
 
     // Metadata summary table.
     $meta = new html_table();
-    $meta->attributes['class'] = 'generaltable local-mailwhistle-mailmeta';
+    $meta->attributes['class'] = 'table generaltable w-auto local-mailwhistle-mailmeta mb-3';
     $meta->data = [
         [get_string('col_audience', 'local_mailwhistle'), format_string($mail['audience'])],
         [get_string('col_recipients', 'local_mailwhistle'), number_format($mail['recipients'])],
@@ -268,10 +268,10 @@ function local_mailwhistle_get_sample_sent_mail(int $id): ?array {
  */
 function local_mailwhistle_status_badge(string $status): string {
     $classes = [
-        'sent' => 'badge badge-success bg-success text-white',
-        'sending' => 'badge badge-info bg-info text-white',
-        'scheduled' => 'badge badge-secondary bg-secondary text-white',
-        'failed' => 'badge badge-danger bg-danger text-white',
+        'sent' => 'badge bg-success text-white',
+        'sending' => 'badge bg-info text-white',
+        'scheduled' => 'badge bg-secondary text-white',
+        'failed' => 'badge bg-danger text-white',
     ];
     $class = $classes[$status] ?? 'badge badge-secondary bg-secondary text-white';
 
@@ -281,6 +281,19 @@ function local_mailwhistle_status_badge(string $status): string {
     );
 }
 
+/**
+ * Handle file requests for the plugin's resources.
+ *
+ * @param stdClass $course
+ * @param stdClass $cm
+ * @param context $context
+ * @param string $filearea
+ * @param array $args
+ * @param bool $forcedownload
+ * @param array $options
+ * @return bool
+ * @throws coding_exception
+ */
 function local_mailwhistle_pluginfile(
     $course,
     $cm,

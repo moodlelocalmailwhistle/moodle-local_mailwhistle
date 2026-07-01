@@ -263,26 +263,26 @@ switch ($tab) {
             foreach ($tags as $tag) {
                 $tagselectoptions[(int) $tag->id] = format_string($tag->name);
             }
-            echo html_writer::start_div('mw-apply-tag-controls mb-2');
+            echo html_writer::start_div('mw-apply-tag-controls d-flex align-items-center mb-2');
             echo html_writer::label(
                 get_string('apply_tag', 'local_mailwhistle'),
                 'applytagid',
                 true,
-                ['class' => 'mr-1']
+                ['class' => 'me-1']
             );
-            echo html_writer::select($tagselectoptions, 'applytagid', '', false, ['id' => 'applytagid']);
+            echo html_writer::select($tagselectoptions, 'applytagid', '', false, ['id' => 'applytagid', 'class' => 'me-1']);
             echo ' ' . get_string('new_tag', 'local_mailwhistle') . ' ';
             echo html_writer::empty_tag('input', [
                 'type'        => 'text',
                 'name'        => 'newtagname',
                 'id'          => 'newtagname',
                 'placeholder' => get_string('new_tag', 'local_mailwhistle'),
-                'class'       => 'mx-1',
+                'class'       => 'mx-1 form-control',
             ]);
             echo html_writer::empty_tag('input', [
                 'type'  => 'submit',
                 'value' => get_string('applybtn', 'local_mailwhistle'),
-                'class' => 'btn btn-primary btn-sm',
+                'class' => 'btn btn-primary',
             ]);
             echo html_writer::end_div();
 

@@ -33,7 +33,7 @@ use local_mailwhistle\table\audience_table;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\table\audience_table
  */
-class audience_table_test extends \advanced_testcase {
+final class audience_table_test extends \advanced_testcase {
     /**
      * Helper: return an array of user ids visible in the audience listing
      * using the same baseline WHERE as audience_table (deleted=0, not guest).
