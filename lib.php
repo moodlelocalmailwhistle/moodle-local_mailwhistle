@@ -2044,3 +2044,52 @@ function local_mailwhistle_normalise_preview_html(string $html): string {
 
     return trim($html ?? '');
 }
+
+/**
+ * Render the "use a template" picker shown above the campaign content step.
+ *
+ * Submits via GET back to the content step with a templateid, so the controller
+ * can prefill the body editor from the chosen template (copy semantics). Returns
+ * an empty string when no active templates exist.
+ *
+ * @param moodle_url $baseurl The campaign edit base URL (carries campaignid).
+ * @param int $campaignid The campaign being edited.
+ * @param int $selectedid Currently selected template id, if any.
+ * @return string Rendered picker HTML.
+ */
+function local_mailwhistle_render_campaign_template_picker(moodle_url $baseurl, int $campaignid, int $selectedid = 0): string {
+    $templates = local_mailwhistle_get_templates('active');
+    if (empty($templates)) {
+        return '';
+    }
+
+    $options = ['' => get_string('campaign_template_choose', 'local_mailwhistle')];
+    foreach ($templates as $template) {
+        $options[(int) $template->id] = format_string($template->name);
+    }
+
+    $out  = html_writer::start_tag('form', [
+        'method' => 'get',
+        'action' => (new moodle_url('/local/mailwhistle/campaign_edit.php'))->out(false),
+        'class'  => 'local-mailwhistle-campaign-template-picker d-flex align-items-end mb-3',
+    ]);
+    $out .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'campaignid', 'value' => $campaignid]);
+    $out .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'step', 'value' => 'content']);
+    $out .= html_writer::start_div('me-2');
+    $out .= html_writer::label(
+        get_string('campaign_usetemplate', 'local_mailwhistle'),
+        'mw-campaign-templateid',
+        true,
+        ['class' => 'd-block']
+    );
+    $out .= html_writer::select($options, 'templateid', $selectedid, false, ['id' => 'mw-campaign-templateid']);
+    $out .= html_writer::end_div();
+    $out .= html_writer::empty_tag('input', [
+        'type'  => 'submit',
+        'value' => get_string('campaign_template_load', 'local_mailwhistle'),
+        'class' => 'btn btn-secondary',
+    ]);
+    $out .= html_writer::end_tag('form');
+
+    return $out;
+}

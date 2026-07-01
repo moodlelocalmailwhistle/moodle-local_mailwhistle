@@ -340,3 +340,8 @@ $string['template_builder_button_default'] = 'Learn more';
 $string['template_builder_loading'] = 'Template builder is loading. If this message stays visible, purge Moodle caches and reload the page.';
 $string['template_builder_image_placeholder'] = 'Image placeholder';
 $string['template_builder_logo_placeholder'] = 'Logo placeholder';
+
+// Campaign: use an email template for the content.
+$string['campaign_usetemplate'] = 'Use a template';
+$string['campaign_template_choose'] = 'Choose a template…';
+$string['campaign_template_load'] = 'Load into body';

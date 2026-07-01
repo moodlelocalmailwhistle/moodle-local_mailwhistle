@@ -244,7 +244,7 @@
 .local-mailwhistle-template-card {
     display: flex;
     flex-direction: column;
-    height: 460px;
+    height: auto;
     min-width: 0;
     border: 1px solid var(--mail-whistle-border-color);
     border-radius: var(--mail-whistle-border-radius);
@@ -355,7 +355,19 @@
 }
 
 .local-mailwhistle-template-meta-date {
-    margin-top: auto;
+    margin-top: 0;
+}
+
+.local-mailwhistle-template-meta-date .local-mailwhistle-template-label,
+.local-mailwhistle-template-meta-date .local-mailwhistle-template-value {
+    display: inline;
+    font-size: 11px;
+    line-height: 15px;
+}
+
+.local-mailwhistle-template-meta-date .local-mailwhistle-template-label {
+    margin-bottom: 0;
+    margin-right: 4px;
 }
 
 .local-mailwhistle-template-meta-date .local-mailwhistle-template-value {

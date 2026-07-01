@@ -147,6 +147,11 @@ if ($step === 'details') {
 
 // Step: content (subject + body).
 if ($step === 'content') {
+    require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
+
+    // When a template is chosen in the picker below, its HTML prefills the body.
+    $templateid = optional_param('templateid', 0, PARAM_INT);
+
     $mform = new campaign_content_form(local_mailwhistle_step_url($baseurl, 'content')->out(false));
 
     if ($mform->is_cancelled()) {
@@ -160,16 +165,30 @@ if ($step === 'content') {
         ]);
         redirect(local_mailwhistle_step_url($baseurl, $next('content')));
     } else {
+        // Default to the campaign's saved content; if a template was picked,
+        // copy its HTML into the body (and its name into an empty subject).
+        $prefillsubject = (string) $campaign->subject;
+        $prefillbody = (string) $campaign->bodyhtml;
+        if ($templateid) {
+            $template = local_mailwhistle_get_template($templateid);
+            if ($template) {
+                $prefillbody = (string) $template->bodyhtml;
+                if (trim($prefillsubject) === '') {
+                    $prefillsubject = (string) $template->name;
+                }
+            }
+        }
         $mform->set_data([
             'campaignid' => $campaignid,
-            'subject' => $campaign->subject,
-            'body' => ['text' => (string) $campaign->bodyhtml, 'format' => FORMAT_HTML],
+            'subject' => $prefillsubject,
+            'body' => ['text' => $prefillbody, 'format' => FORMAT_HTML],
         ]);
     }
 
     echo $OUTPUT->header();
     echo $OUTPUT->heading(get_string('editcampaign', 'local_mailwhistle'));
     echo $rendertabs('content');
+    echo local_mailwhistle_render_campaign_template_picker($baseurl, $campaignid, $templateid);
     $mform->display();
     echo $OUTPUT->footer();
     die;
