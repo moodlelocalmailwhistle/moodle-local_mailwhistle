@@ -37,4 +37,32 @@ class resources_form extends \moodleform {
         $mform->addElement('filemanager', 'resources', get_string('resources', 'local_mailwhistle'));
         $this->add_action_buttons();
     }
+
+    /**
+     * Save any submitted files.
+     *
+     * @return bool true if we should reload the page.
+     */
+    public function process(): bool {
+        if ($data = $this->get_data()) {
+            file_save_draft_area_files(
+                $data->resources,
+                \context_system::instance()->id,
+                'local_mailwhistle',
+                \local_mailwhistle\output\resources::FILEAREA,
+                0
+            );
+            return true;
+        }
+        $draftid = file_get_submitted_draft_itemid('resources');
+        file_prepare_draft_area(
+            $draftid,
+            \context_system::instance()->id,
+            'local_mailwhistle',
+            \local_mailwhistle\output\resources::FILEAREA,
+            0
+        );
+        $this->set_data((object)['resources' => $draftid]);
+        return false;
+    }
 }
