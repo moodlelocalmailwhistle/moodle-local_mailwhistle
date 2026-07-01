@@ -71,7 +71,9 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         \local_mailwhistle\helper::create_campaign('X');
 
         $contextlist = provider::get_contexts_for_userid((int) $USER->id);
-        $this->assertContains(\context_system::instance()->id, $contextlist->get_contextids());
+        // The get_contextids() method returns context ids as strings; assertContains
+        // is strict, so compare against the string form of the system context id.
+        $this->assertContains((string) \context_system::instance()->id, $contextlist->get_contextids());
 
         // A user with no campaigns should yield an empty contextlist.
         $otheruser = $this->getDataGenerator()->create_user();
