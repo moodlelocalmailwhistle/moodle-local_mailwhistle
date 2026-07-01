@@ -281,6 +281,18 @@ function local_mailwhistle_status_badge(string $status): string {
     );
 }
 
+/**
+ * Serve files stored in the plugin's resources file area.
+ *
+ * @param stdClass $course Course object (unused; system-context plugin).
+ * @param stdClass $cm Course module object (unused).
+ * @param context $context The context the file was requested in.
+ * @param string $filearea The requested file area.
+ * @param array $args The remaining file path arguments.
+ * @param bool $forcedownload Whether to force download.
+ * @param array $options Additional options for file serving.
+ * @return bool False if the file cannot be served, otherwise sends the file and exits.
+ */
 function local_mailwhistle_pluginfile(
     $course,
     $cm,
@@ -668,7 +680,9 @@ function local_mailwhistle_render_template_form(int $id = 0): string {
         ]);
     }
 
-    $heading = $id > 0 ? get_string('template_edit_heading', 'local_mailwhistle') : get_string('template_create_heading', 'local_mailwhistle');
+    $heading = $id > 0
+        ? get_string('template_edit_heading', 'local_mailwhistle')
+        : get_string('template_create_heading', 'local_mailwhistle');
 
     return html_writer::tag('h3', $heading) . $mform->render();
 }
@@ -1335,7 +1349,10 @@ function local_mailwhistle_validate_builder_json(string $json): array {
             }
         }
 
-        if (isset($block['fontfamily']) && !array_key_exists((string) $block['fontfamily'], local_mailwhistle_builder_font_families())) {
+        if (
+            isset($block['fontfamily'])
+                && !array_key_exists((string) $block['fontfamily'], local_mailwhistle_builder_font_families())
+        ) {
             $errors[] = get_string('template_builder_invalid_font', 'local_mailwhistle', $index + 1);
         }
 
@@ -1708,7 +1725,8 @@ function local_mailwhistle_render_builder_block_html(array $block): string {
             $right = html_writer::tag('strong', format_string($block['righttitle'] ?? ''), [
                 'style' => 'display:block;margin-bottom:6px;',
             ]) . nl2br(s(format_string($block['rightcontent'] ?? '')));
-            $row = html_writer::tag('tr',
+            $row = html_writer::tag(
+                'tr',
                 html_writer::tag('td', $left, ['width' => '50%', 'style' => $cellstyle])
                     . html_writer::tag('td', $right, ['width' => '50%', 'style' => $cellstyle])
             );
