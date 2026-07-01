@@ -130,9 +130,34 @@ if ($tab === 'resources') {
 
 // Optional: a specific sent newsletter to view (0 means show the list).
 $viewid = optional_param('view', 0, PARAM_INT);
+$templateaction = optional_param('action', 'list', PARAM_ALPHA);
+$templateid = optional_param('id', 0, PARAM_INT);
+$templatefilter = optional_param('filter', 'active', PARAM_ALPHA);
+
+// Configure the page (must be done before output).
+$pageparams = ['tab' => $tab];
+if ($tab === 'templates' && $templateaction !== 'list') {
+    $pageparams['action'] = $templateaction;
+    if ($templateid > 0) {
+        $pageparams['id'] = $templateid;
+    }
+} else if ($tab === 'templates' && $templatefilter !== 'active') {
+    $pageparams['filter'] = $templatefilter;
+}
+$pageurl = new moodle_url('/local/mailwhistle/index.php', $pageparams);
+$PAGE->set_context($context);
+$PAGE->set_url($pageurl);
+$PAGE->set_pagelayout('standard');
+$PAGE->set_title(get_string('pluginname', 'local_mailwhistle'));
+$PAGE->set_heading(get_string('pluginname', 'local_mailwhistle'));
 
 // Add plugin assets.
 $PAGE->requires->css(new moodle_url('/local/mailwhistle/styles.css'));
+
+$templatescontent = null;
+if ($tab === 'templates') {
+    $templatescontent = local_mailwhistle_render_templates_page($templateaction, $templateid);
+}
 
 // Build the tab tree. Each tab links back to this page with its own tab param.
 $tabs = [];
@@ -297,10 +322,7 @@ switch ($tab) {
         break;
 
     case 'templates':
-        echo $OUTPUT->notification(
-            get_string('templates_placeholder', 'local_mailwhistle'),
-            \core\output\notification::NOTIFY_INFO
-        );
+        echo $templatescontent;
         break;
 
     case 'reports':

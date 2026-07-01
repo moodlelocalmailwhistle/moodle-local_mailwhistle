@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/mailwhistle/db" VERSION="2026063004" COMMENT="Mail Whistle plugin"
+<XMLDB PATH="local/mailwhistle/db" VERSION="2026070109" COMMENT="Mail Whistle plugin"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -147,6 +147,29 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="tagid_userid_uix" UNIQUE="true" FIELDS="tagid,userid" COMMENT="Prevents duplicate assignments; allows idempotent bulk re-apply"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_mailwhistle_templates" COMMENT="Reusable email templates">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="previewtext" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="background" TYPE="char" LENGTH="7" NOTNULL="true" DEFAULT="#ffffff" SEQUENCE="false"/>
+        <FIELD NAME="editormode" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="html" SEQUENCE="false"/>
+        <FIELD NAME="builderjson" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="bodyhtml" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="archived" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="name" UNIQUE="false" FIELDS="name"/>
+        <INDEX NAME="archived" UNIQUE="false" FIELDS="archived"/>
+        <INDEX NAME="timemodified" UNIQUE="false" FIELDS="timemodified"/>
       </INDEXES>
     </TABLE>
 

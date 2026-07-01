@@ -35,9 +35,49 @@
 function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
     global $DB;
 
-    if ($oldversion < 2026063004) {
-        $dbman = $DB->get_manager();
+    $dbman = $DB->get_manager();
 
+    if ($oldversion < 2026063002) {
+        // Create local_mailwhistle_templates table.
+        $table = new xmldb_table('local_mailwhistle_templates');
+
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('subject', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('previewtext', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '');
+        $table->add_field('bodyhtml', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('bodytext', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('name', XMLDB_INDEX_NOTUNIQUE, ['name']);
+        $table->add_index('timemodified', XMLDB_INDEX_NOTUNIQUE, ['timemodified']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026063002, 'local', 'mailwhistle');
+    }
+
+    if ($oldversion < 2026063003) {
+        $table = new xmldb_table('local_mailwhistle_templates');
+
+        $field = new xmldb_field('editormode', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'html', 'previewtext');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('builderjson', XMLDB_TYPE_TEXT, null, null, null, null, null, 'editormode');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026063003, 'local', 'mailwhistle');
+    }
+
+    if ($oldversion < 2026063004) {
         // Create local_mailwhistle_tag table.
         $table = new xmldb_table('local_mailwhistle_tag');
 
@@ -78,6 +118,65 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         }
 
         upgrade_plugin_savepoint(true, 2026063004, 'local', 'mailwhistle');
+    }
+
+    if ($oldversion < 2026063014) {
+        $table = new xmldb_table('local_mailwhistle_templates');
+
+        $field = new xmldb_field('archived', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'bodytext');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $index = new xmldb_index('archived', XMLDB_INDEX_NOTUNIQUE, ['archived']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026063014, 'local', 'mailwhistle');
+    }
+
+    if ($oldversion < 2026070102) {
+        $table = new xmldb_table('local_mailwhistle_templates');
+        $field = new xmldb_field('subject');
+
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026070102, 'local', 'mailwhistle');
+    }
+
+    if ($oldversion < 2026070103) {
+        $table = new xmldb_table('local_mailwhistle_templates');
+
+        $field = new xmldb_field('background', XMLDB_TYPE_CHAR, '7', null, XMLDB_NOTNULL, null, '#ffffff', 'previewtext');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('placeholdersjson', XMLDB_TYPE_TEXT, null, null, null, null, null, 'builderjson');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('bodytext');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026070103, 'local', 'mailwhistle');
+    }
+
+    if ($oldversion < 2026070106) {
+        $table = new xmldb_table('local_mailwhistle_templates');
+        $field = new xmldb_field('placeholdersjson');
+
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026070106, 'local', 'mailwhistle');
     }
 
     return true;

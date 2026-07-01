@@ -207,3 +207,457 @@
         padding: 0.5rem 0.75rem;
     }
 }
+
+/* ===== TEMPLATE MANAGEMENT ===== */
+
+.local-mailwhistle-templates-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.local-mailwhistle-templates-header h3 {
+    margin: 0;
+}
+
+.local-mailwhistle-template-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.local-mailwhistle-template-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+
+.local-mailwhistle-template-background[type="color"] {
+    width: 4.5rem;
+    min-height: 2.25rem;
+    padding: 0.15rem;
+}
+
+.local-mailwhistle-template-card {
+    display: flex;
+    flex-direction: column;
+    height: 460px;
+    min-width: 0;
+    border: 1px solid var(--mail-whistle-border-color);
+    border-radius: var(--mail-whistle-border-radius);
+    background: var(--mail-whistle-bg-card);
+    box-shadow: var(--mail-whistle-shadow);
+    overflow: hidden;
+}
+
+.local-mailwhistle-template-preview {
+    position: relative;
+    flex: 0 0 230px;
+    height: 230px;
+    overflow: hidden;
+    pointer-events: none;
+    background: #e9edf2;
+    border-bottom: 1px solid var(--mail-whistle-border-color);
+}
+
+.local-mailwhistle-template-preview-canvas {
+    position: absolute;
+    top: -0.25rem;
+    left: 50%;
+    width: 420px;
+    min-height: 720px;
+    padding: 1rem;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+    transform: translateX(-50%) scale(0.34);
+    transform-origin: top center;
+}
+
+.local-mailwhistle-template-preview-canvas * {
+    max-width: 100%;
+}
+
+.local-mailwhistle-template-preview-canvas img {
+    display: block;
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+.local-mailwhistle-template-preview-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+    color: #6c757d;
+    border: 1px dashed var(--mail-whistle-border-color);
+    background: #ffffff;
+}
+
+.local-mailwhistle-template-card-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 9px;
+    min-height: 0;
+    padding: 12px 14px 10px;
+    overflow: hidden;
+}
+
+.local-mailwhistle-template-title {
+    margin: 0;
+    overflow: hidden;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 22px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.local-mailwhistle-template-meta-list {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 7px;
+    min-height: 0;
+}
+
+.local-mailwhistle-template-meta {
+    display: block;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.local-mailwhistle-template-label {
+    display: block;
+    margin-bottom: 1px;
+    color: #5d6672;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 14px;
+}
+
+.local-mailwhistle-template-value {
+    display: -webkit-box;
+    overflow: hidden;
+    color: #2f3742;
+    font-size: 14px;
+    line-height: 18px;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+}
+
+.local-mailwhistle-template-meta-preview .local-mailwhistle-template-value {
+    -webkit-line-clamp: 1;
+}
+
+.local-mailwhistle-template-meta-date {
+    margin-top: auto;
+}
+
+.local-mailwhistle-template-meta-date .local-mailwhistle-template-value {
+    color: #6c757d;
+}
+
+.local-mailwhistle-template-actions {
+    display: flex;
+    flex: 0 0 52px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 8px 14px;
+    border-top: 1px solid #eef1f4;
+    background: #ffffff;
+}
+
+.local-mailwhistle-template-actions-menu {
+    display: inline-block;
+}
+
+.local-mailwhistle-template-actions .dropdown-menu {
+    min-width: 10rem;
+}
+
+.local-mailwhistle-preview-toolbar {
+    margin-bottom: 1rem;
+}
+
+.local-mailwhistle-template-preview-subject,
+.local-mailwhistle-template-previewtext {
+    margin-bottom: 0.5rem;
+}
+
+.local-mailwhistle-email-preview {
+    max-width: 760px;
+    margin-top: 1rem;
+    padding: 1.5rem;
+    overflow: hidden;
+    border: 1px solid var(--mail-whistle-border-color);
+    border-radius: var(--mail-whistle-border-radius);
+    background: #ffffff;
+    box-shadow: var(--mail-whistle-shadow);
+}
+
+.local-mailwhistle-email-preview img {
+    display: block;
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+.local-mailwhistle-builder {
+    margin: 1rem 0;
+    border: 1px solid var(--mail-whistle-border-color);
+    border-radius: var(--mail-whistle-border-radius);
+    background: #ffffff;
+}
+
+.local-mailwhistle-builder-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--mail-whistle-border-color);
+    background: var(--mail-whistle-bg-light);
+}
+
+.local-mailwhistle-builder-header h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.local-mailwhistle-builder-design {
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+    gap: 0.45rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--mail-whistle-border-color);
+    border-radius: var(--mail-whistle-border-radius);
+    background: #ffffff;
+    white-space: nowrap;
+}
+
+.local-mailwhistle-builder-design label {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.local-mailwhistle-builder-design input[type="color"] {
+    width: 38px;
+    height: 32px;
+    padding: 0.12rem;
+    border: 1px solid #8f98a3;
+    border-radius: 0.2rem;
+    background: #ffffff;
+}
+
+.local-mailwhistle-builder-toolbar {
+    display: grid;
+    flex: 1;
+    grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+    gap: 0.5rem;
+    min-width: 0;
+    width: 100%;
+}
+
+.local-mailwhistle-builder-element {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-height: 78px;
+    min-width: 0;
+    padding: 0.55rem;
+    color: var(--mail-whistle-text-color);
+    border: 1px solid var(--mail-whistle-border-color);
+    border-radius: var(--mail-whistle-border-radius);
+    background: #ffffff;
+}
+
+.local-mailwhistle-builder-element:hover,
+.local-mailwhistle-builder-element:focus {
+    border-color: var(--mail-whistle-primary-color);
+    box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.18);
+}
+
+.local-mailwhistle-builder-element-icon {
+    display: block;
+    width: 48px;
+    height: 40px;
+}
+
+.local-mailwhistle-builder-element-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.local-mailwhistle-icon-dark {
+    fill: var(--mail-whistle-text-color);
+}
+
+.local-mailwhistle-icon-blue {
+    fill: var(--mail-whistle-primary-color);
+}
+
+.local-mailwhistle-icon-green {
+    fill: #12a978;
+}
+
+.local-mailwhistle-icon-white {
+    fill: #ffffff;
+}
+
+.local-mailwhistle-builder-element-label {
+    font-weight: 600;
+}
+
+.local-mailwhistle-builder-body {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.85fr) minmax(420px, 1.15fr);
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.local-mailwhistle-builder-list {
+    min-height: 220px;
+}
+
+.local-mailwhistle-builder-empty {
+    padding: 2rem;
+    color: #6c757d;
+    text-align: center;
+    border: 1px dashed var(--mail-whistle-border-color);
+    background: var(--mail-whistle-bg-light);
+}
+
+.local-mailwhistle-builder-block {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--mail-whistle-border-color);
+    border-radius: var(--mail-whistle-border-radius);
+    background: #ffffff;
+}
+
+.local-mailwhistle-builder-block.is-dragging {
+    opacity: 0.55;
+}
+
+.local-mailwhistle-builder-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.local-mailwhistle-builder-drag {
+    cursor: move;
+    font-weight: 600;
+}
+
+.local-mailwhistle-builder-block-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem 0.75rem;
+}
+
+.local-mailwhistle-builder-field {
+    min-width: 0;
+}
+
+.local-mailwhistle-builder-field label {
+    display: block;
+    margin-bottom: 0.12rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.local-mailwhistle-builder-field input,
+.local-mailwhistle-builder-field textarea,
+.local-mailwhistle-builder-field select {
+    width: 100%;
+    min-height: 34px;
+    padding: 0.25rem 0.45rem;
+    border: 1px solid #8f98a3;
+    border-radius: 0.2rem;
+    background: #ffffff;
+}
+
+.local-mailwhistle-builder-field textarea {
+    min-height: 74px;
+}
+
+.local-mailwhistle-builder-field-wide {
+    grid-column: 1 / -1;
+}
+
+.local-mailwhistle-builder-field-colour input[type="color"] {
+    width: 100%;
+    height: 34px;
+    padding: 0.15rem;
+}
+
+.local-mailwhistle-builder-preview {
+    overflow: hidden;
+    border: 1px solid var(--mail-whistle-border-color);
+    background: #e9edf2;
+}
+
+.local-mailwhistle-builder-preview-inner {
+    max-width: 560px;
+    min-height: 300px;
+    margin: 1rem auto;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: var(--mail-whistle-shadow);
+}
+
+.local-mailwhistle-builder-preview-inner img {
+    display: block;
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+@media (max-width: 768px) {
+    .local-mailwhistle-templates-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .local-mailwhistle-template-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .local-mailwhistle-template-preview-canvas {
+        transform: translateX(-50%) scale(0.34);
+    }
+
+    .local-mailwhistle-email-preview {
+        padding: 1rem;
+    }
+
+    .local-mailwhistle-builder-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1100px) {
+    .local-mailwhistle-builder-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1199px) {
+    .local-mailwhistle-template-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
