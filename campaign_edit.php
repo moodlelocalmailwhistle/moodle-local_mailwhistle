@@ -221,6 +221,19 @@ if ($action === 'complete' && confirm_sesskey()) {
     redirect($returnurl, $donemsg, null, \core\output\notification::NOTIFY_SUCCESS);
 }
 
+// Send a test copy of the current draft to the logged-in user.
+if ($action === 'sendtest' && confirm_sesskey()) {
+    $sent = \local_mailwhistle\manager\send_manager::send_test($campaignid, $USER);
+    if ($sent) {
+        $testmsg = get_string('testmail_sent', 'local_mailwhistle', s($USER->email));
+        $testtype = \core\output\notification::NOTIFY_SUCCESS;
+    } else {
+        $testmsg = get_string('testmail_failed', 'local_mailwhistle');
+        $testtype = \core\output\notification::NOTIFY_ERROR;
+    }
+    redirect(local_mailwhistle_step_url($baseurl, 'review'), $testmsg, null, $testtype);
+}
+
 $iscomplete = campaign_manager::is_complete($campaignid);
 $tagids = audience_manager::get_campaign_tagids($campaignid);
 
@@ -240,6 +253,13 @@ $summary->data = [
     [get_string('body', 'local_mailwhistle'), format_text((string) $campaign->bodyhtml, FORMAT_HTML, ['noclean' => true])],
 ];
 echo html_writer::table($summary);
+
+// Test-mail: send a copy of the current draft to the logged-in user.
+$testurl = new moodle_url($baseurl, ['step' => 'review', 'action' => 'sendtest', 'sesskey' => sesskey()]);
+echo html_writer::div(
+    $OUTPUT->single_button($testurl, get_string('testmail_send', 'local_mailwhistle'), 'get'),
+    'local-mailwhistle-testmail mb-3'
+);
 
 if ($iscomplete) {
     $completeurl = new moodle_url($baseurl, ['step' => 'review', 'action' => 'complete', 'sesskey' => sesskey()]);
