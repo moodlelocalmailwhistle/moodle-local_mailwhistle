@@ -179,16 +179,31 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026070106, 'local', 'mailwhistle');
     }
 
-    if ($oldversion < 2026070111) {
+    if ($oldversion < 2026070112) {
         $dbman = $DB->get_manager();
 
-        // Create the open/click tracking table if it is not already present.
-        $table = new xmldb_table('local_mailwhistle_tracking');
-        if (!$dbman->table_exists($table)) {
-            $dbman->install_one_table_from_xmldb_file(__DIR__ . '/install.xml', 'local_mailwhistle_tracking');
+        // Create any table defined in install.xml that is missing on this site.
+        // Installs whose savepoints diverged (e.g. upgraded through a branch that
+        // skipped the templates steps) can be missing tables that the current
+        // code expects; create them idempotently so the schema is complete.
+        $expectedtables = [
+            'local_mailwhistle_campaigns',
+            'local_mailwhistle_audrules',
+            'local_mailwhistle_recipients',
+            'local_mailwhistle_sendlogs',
+            'local_mailwhistle_unsubscribes',
+            'local_mailwhistle_tag',
+            'local_mailwhistle_tag_assign',
+            'local_mailwhistle_templates',
+            'local_mailwhistle_tracking',
+        ];
+        foreach ($expectedtables as $tablename) {
+            if (!$dbman->table_exists(new xmldb_table($tablename))) {
+                $dbman->install_one_table_from_xmldb_file(__DIR__ . '/install.xml', $tablename);
+            }
         }
 
-        upgrade_plugin_savepoint(true, 2026070111, 'local', 'mailwhistle');
+        upgrade_plugin_savepoint(true, 2026070112, 'local', 'mailwhistle');
     }
 
     return true;
