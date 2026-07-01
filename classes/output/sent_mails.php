@@ -47,7 +47,7 @@ class sent_mails implements renderable, templatable {
         $report = system_report_factory::create(campaigns::class, \context_system::instance());
         $report->add_base_condition_simple(
             'campaigns.status',
-            \local_mailwhistle\manager\campaign_manager::STATUS_DRAFT
+            \local_mailwhistle\manager\campaign_manager::STATUS_SENT
         );
         return ['table' => $report->output()];
     }
