@@ -1,0 +1,111 @@
+{
+    "format": "local_mailwhistle_template",
+    "formatversion": 1,
+    "component": "local_mailwhistle",
+    "exportedat": "2026-07-01T12:23:22+00:00",
+    "template": {
+        "name": "Default whistle",
+        "previewtext": "",
+        "background": "#ffffff",
+        "editormode": "builder",
+        "builder": {
+            "blocks": [
+                {
+                    "type": "header",
+                    "title": "welcome",
+                    "subtitle": "to mailwhistle",
+                    "background": "#434174",
+                    "color": "#ffffff",
+                    "fontfamily": "arial",
+                    "fontsize": 28,
+                    "align": "center",
+                    "padding": 32
+                },
+                {
+                    "type": "text",
+                    "content": "Hi {{firstname}} \n\nHave you already blown the whistle on boring Moodle emails?\n\nManaging communication in Moodle used to feel like shouting into a forum thread and hoping {{lastname}} reads it three weeks later. Not anymore. mail whistle brings styling mailing natively into your Moodle instance.\nNo external tools, no Mailchimp bill, just a plugin.",
+                    "color": "#1f2933",
+                    "fontfamily": "arial",
+                    "fontsize": 16,
+                    "align": "left",
+                    "padding": 24
+                },
+                {
+                    "type": "button",
+                    "label": "blow the whistle \u2192 ",
+                    "url": "https://moodlemootdach.org/course/view.php?id=25",
+                    "background": "#434174",
+                    "color": "#ffffff",
+                    "align": "center",
+                    "padding": 24
+                },
+                {
+                    "type": "highlight",
+                    "title": "Why this plugin exists",
+                    "content": "MDL-64825 has been open since forever. Mail templates are buried in language files. Forums sort-of work as mailing lists, but only if your audience manager moonlights as a forum moderator.",
+                    "background": "#e8f2f1",
+                    "color": "#1f2933",
+                    "bordercolor": "#434174",
+                    "fontfamily": "arial",
+                    "fontsize": 16,
+                    "padding": 20
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "text",
+                    "content": "Your message. Your audience. Your timing.\n",
+                    "color": "#1f2933",
+                    "fontfamily": "arial",
+                    "fontsize": 16,
+                    "align": "center",
+                    "padding": 24
+                },
+                {
+                    "type": "columns",
+                    "lefttitle": "Audience managagement",
+                    "leftcontent": "\nCohorts, courses, users:\ntag them, segment them, target them.",
+                    "righttitle": "Template editor",
+                    "rightcontent": "\nBuild this exact email inside Moodle. Header, logo, columns, footer:\nno code needed",
+                    "background": "#fdfce8",
+                    "color": "#1f2933",
+                    "fontfamily": "arial",
+                    "fontsize": 15,
+                    "padding": 25
+                },
+                {
+                    "type": "columns",
+                    "lefttitle": "GDPR-compliant",
+                    "leftcontent": "\nUnsubscribe links, consent tracking, no lawyers required.",
+                    "righttitle": "Schedule & plan",
+                    "rightcontent": "\nSend now or later. Trigger on dates.",
+                    "background": "#fdfce8",
+                    "color": "#1f2933",
+                    "fontfamily": "arial",
+                    "fontsize": 15,
+                    "padding": 20
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "social",
+                    "label1": "Website",
+                    "url1": "https://moodlemootdach.org/course/view.php?id=25",
+                    "label2": "LinkedIn",
+                    "url2": "https://www.linkedin.com/products/moodle/",
+                    "label3": "Kululu",
+                    "url3": "https://app.kululu.com/mootdach26",
+                    "align": "center",
+                    "padding": 20
+                }
+            ]
+        },
+        "html": "<div style=\"max-width:640px;margin:0 auto;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#1f2933;\"><div style=\"padding:32px 28px;background:#434174;color:#ffffff;font-family:Arial,Helvetica,sans-serif;text-align:center;\"><h1 style=\"margin:0 0 8px;font-size:28px;line-height:1.25;color:#ffffff;\">welcome</h1><p style=\"margin:0;font-size:16px;line-height:1.5;color:#ffffff;\">to mailwhistle</p></div><div style=\"padding:24px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;text-align:left;color:#1f2933;\">Hi {{firstname}} <br />\n<br />\nHave you already blown the whistle on boring Moodle emails?<br />\n<br />\nManaging communication in Moodle used to feel like shouting into a forum thread and hoping {{lastname}} reads it three weeks later. Not anymore. mail whistle brings styling mailing natively into your Moodle instance.<br />\nNo external tools, no Mailchimp bill, just a plugin.</div><div style=\"padding:8px 28px 24px;text-align:center;\"><a style=\"display:inline-block;padding:12px 20px;background:#434174;color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;\" href=\"https://moodlemootdach.org/course/view.php?id=25\">blow the whistle \u2192 </a></div><div style=\"padding:8px 28px 24px;\"><div style=\"padding:20px;border-left:5px solid #434174;background:#e8f2f1;font-family:Arial,Helvetica,sans-serif;color:#1f2933;\"><strong style=\"display:block;margin-bottom:6px;font-size:16px;\">Why this plugin exists</strong><div style=\"font-size:16px;line-height:1.5;\">MDL-64825 has been open since forever. Mail templates are buried in language files. Forums sort-of work as mailing lists, but only if your audience manager moonlights as a forum moderator.</div></div></div><div style=\"height:1px;margin:8px 28px;background:#d8dee6;\"></div><div style=\"padding:24px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;text-align:center;color:#1f2933;\">Your message. Your audience. Your timing.<br />\n</div><table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:#fdfce8;\"><tr><td width=\"50%\" style=\"padding:25px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#1f2933;vertical-align:top;\"><strong style=\"display:block;margin-bottom:6px;\">Audience managagement</strong><br />\nCohorts, courses, users:<br />\ntag them, segment them, target them.</td><td width=\"50%\" style=\"padding:25px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#1f2933;vertical-align:top;\"><strong style=\"display:block;margin-bottom:6px;\">Template editor</strong><br />\nBuild this exact email inside Moodle. Header, logo, columns, footer:<br />\nno code needed</td></tr></table><table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:#fdfce8;\"><tr><td width=\"50%\" style=\"padding:20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#1f2933;vertical-align:top;\"><strong style=\"display:block;margin-bottom:6px;\">GDPR-compliant</strong><br />\nUnsubscribe links, consent tracking, no lawyers required.</td><td width=\"50%\" style=\"padding:20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#1f2933;vertical-align:top;\"><strong style=\"display:block;margin-bottom:6px;\">Schedule &amp; plan</strong><br />\nSend now or later. Trigger on dates.</td></tr></table><div style=\"height:1px;margin:8px 28px;background:#d8dee6;\"></div><div style=\"padding:8px 28px 20px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:14px;\"><span style=\"display:inline-block;margin:0 8px 8px;\"><a style=\"color:#1f4f82;text-decoration:underline;\" href=\"https://moodlemootdach.org/course/view.php?id=25\">Website</a></span><span style=\"display:inline-block;margin:0 8px 8px;\"><a style=\"color:#1f4f82;text-decoration:underline;\" href=\"https://www.linkedin.com/products/moodle/\">LinkedIn</a></span><span style=\"display:inline-block;margin:0 8px 8px;\"><a style=\"color:#1f4f82;text-decoration:underline;\" href=\"https://app.kululu.com/mootdach26\">Kululu</a></span></div></div>",
+        "placeholders": [
+            "firstname",
+            "lastname"
+        ]
+    }
+}
