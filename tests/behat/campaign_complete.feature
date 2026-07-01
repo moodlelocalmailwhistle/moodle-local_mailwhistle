@@ -13,7 +13,6 @@ Feature: Mark a draft campaign as complete
       | Newsletter |
     And I log in as "admin"
 
-  @javascript
   Scenario: A complete draft campaign can be marked complete from the review step
     Given the following "local_mailwhistle > campaigns" exist:
       | name        | subject      | bodyhtml           | status |
@@ -24,7 +23,6 @@ Feature: Mark a draft campaign as complete
     Then I should see "Campaign marked as ready"
     And campaign "Autumn news" should have status "ready"
 
-  @javascript
   Scenario: An incomplete draft cannot be completed
     Given the following "local_mailwhistle > campaigns" exist:
       | name       | subject | bodyhtml | status |
