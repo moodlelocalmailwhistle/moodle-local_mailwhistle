@@ -206,7 +206,7 @@ class audience_table extends \table_sql {
      * Kept as a separate static helper so tests can call it directly.
      *
      * @param int[] $userids
-     * @return array<int, \stdClass[]>
+     * @return array
      */
     public static function fetch_tagmap(array $userids): array {
         global $DB;
