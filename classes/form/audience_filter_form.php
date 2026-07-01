@@ -16,6 +16,9 @@
 
 namespace local_mailwhistle\form;
 
+global $CFG;
+require_once($CFG->libdir . '/formslib.php');
+
 /**
  * GET filter form for the Mail Whistle audience listing.
  *

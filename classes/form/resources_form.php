@@ -25,6 +25,9 @@
 
 namespace local_mailwhistle\form;
 
+global $CFG;
+require_once($CFG->libdir . '/formslib.php');
+
 /**
  * Form to pick resources
  */
