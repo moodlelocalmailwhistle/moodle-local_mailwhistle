@@ -128,49 +128,122 @@ function local_mailwhistle_page_init(): void {
  * @return string Rendered HTML for the sent mails section.
  */
 function local_mailwhistle_render_sent_mails(): string {
-    $rows = local_mailwhistle_get_sample_sent_mails();
+    $mails = local_mailwhistle_get_sample_sent_mails();
 
-    $output = html_writer::tag(
-        'h3',
-        get_string('sentmails_heading', 'local_mailwhistle')
-    );
-
-    if (empty($rows)) {
-        return $output . html_writer::div(
-            get_string('nosentmails', 'local_mailwhistle'),
-            'alert alert-info'
-        );
-    }
-
-    $table = new html_table();
-    $table->head = [
-        get_string('col_subject', 'local_mailwhistle'),
-        get_string('col_audience', 'local_mailwhistle'),
-        get_string('col_recipients', 'local_mailwhistle'),
-        get_string('col_sentby', 'local_mailwhistle'),
-        get_string('col_sentat', 'local_mailwhistle'),
-        get_string('col_status', 'local_mailwhistle'),
-    ];
-    $table->attributes['class'] = 'generaltable local-mailwhistle-sentmails';
-
-    foreach ($rows as $row) {
+    $rows = [];
+    foreach ($mails as $mail) {
         $viewurl = new moodle_url('/local/mailwhistle/index.php', [
             'tab' => 'send',
-            'view' => $row['id'],
+            'view' => $mail['id'],
         ]);
-        $subjectlink = html_writer::link($viewurl, format_string($row['subject']));
-
-        $table->data[] = [
-            $subjectlink,
-            format_string($row['audience']),
-            number_format($row['recipients']),
-            format_string($row['sentby']),
-            userdate($row['sentat']),
-            local_mailwhistle_status_badge($row['status']),
+        $rows[] = [
+            html_writer::link($viewurl, format_string($mail['subject'])),
+            format_string($mail['audience']),
+            number_format($mail['recipients']),
+            format_string($mail['sentby']),
+            userdate($mail['sentat']),
+            local_mailwhistle_status_badge($mail['status']),
         ];
     }
 
+    return local_mailwhistle_render_campaign_table(
+        get_string('sentmails_heading', 'local_mailwhistle'),
+        get_string('nosentmails', 'local_mailwhistle'),
+        [
+            get_string('col_subject', 'local_mailwhistle'),
+            get_string('col_audience', 'local_mailwhistle'),
+            get_string('col_recipients', 'local_mailwhistle'),
+            get_string('col_sentby', 'local_mailwhistle'),
+            get_string('col_sentat', 'local_mailwhistle'),
+            get_string('col_status', 'local_mailwhistle'),
+        ],
+        $rows,
+        'local-mailwhistle-sentmails'
+    );
+}
+
+/**
+ * Maximum number of draft campaigns shown in the send-tab draft section.
+ */
+const LOCAL_MAILWHISTLE_DRAFT_LIMIT = 50;
+
+/**
+ * Render a heading plus a data table (or an empty-state notice) as one block.
+ *
+ * Shared scaffolding for the sent-newsletters and draft-campaigns sections so
+ * their heading, empty state and table markup stay consistent.
+ *
+ * @param string $heading Section heading text (already localised).
+ * @param string $emptymessage Empty-state message (already localised).
+ * @param array<int, string> $head Column header cells (already localised).
+ * @param array<int, array<int, string>> $rows Row data (each an array of cell HTML).
+ * @param string $tableclass Extra CSS class(es) for the table element.
+ * @return string Rendered HTML for the section.
+ */
+function local_mailwhistle_render_campaign_table(
+    string $heading,
+    string $emptymessage,
+    array $head,
+    array $rows,
+    string $tableclass
+): string {
+    $output = html_writer::tag('h3', $heading);
+
+    if (empty($rows)) {
+        return $output . html_writer::div($emptymessage, 'alert alert-info');
+    }
+
+    $table = new html_table();
+    $table->head = $head;
+    $table->attributes['class'] = 'generaltable ' . $tableclass;
+    $table->data = $rows;
+
     return $output . html_writer::table($table);
+}
+
+/**
+ * Render the draft campaigns section for the send-newsletters tab.
+ *
+ * Lists the most recent draft campaigns so managers can see what has been
+ * created but not yet sent. Bounded to {@see LOCAL_MAILWHISTLE_DRAFT_LIMIT}
+ * rows and only the displayed columns to keep the default page fast.
+ *
+ * @return string Rendered HTML for the draft campaigns section.
+ */
+function local_mailwhistle_render_draft_campaigns(): string {
+    global $DB;
+
+    $drafts = $DB->get_records(
+        'local_email_campaigns',
+        ['status' => 'draft'],
+        'timecreated DESC',
+        'id, name, status, timecreated',
+        0,
+        LOCAL_MAILWHISTLE_DRAFT_LIMIT
+    );
+
+    $rows = [];
+    foreach ($drafts as $draft) {
+        $rows[] = [
+            format_string($draft->name),
+            local_mailwhistle_status_badge($draft->status),
+            userdate($draft->timecreated),
+        ];
+    }
+
+    $section = local_mailwhistle_render_campaign_table(
+        get_string('draftcampaigns_heading', 'local_mailwhistle'),
+        get_string('nodraftcampaigns', 'local_mailwhistle'),
+        [
+            get_string('col_name', 'local_mailwhistle'),
+            get_string('col_status', 'local_mailwhistle'),
+            get_string('col_created', 'local_mailwhistle'),
+        ],
+        $rows,
+        'local-mailwhistle-drafts-table'
+    );
+
+    return html_writer::div($section, 'local-mailwhistle-drafts');
 }
 
 /**
@@ -319,11 +392,12 @@ function local_mailwhistle_get_sample_sent_mail(int $id): ?array {
 /**
  * Render a coloured status badge for a sent newsletter.
  *
- * @param string $status One of: sent, sending, scheduled, failed.
+ * @param string $status One of: draft, sent, sending, scheduled, failed.
  * @return string Rendered badge HTML.
  */
 function local_mailwhistle_status_badge(string $status): string {
     $classes = [
+        'draft' => 'badge badge-secondary bg-secondary text-white',
         'sent' => 'badge badge-success bg-success text-white',
         'sending' => 'badge badge-info bg-info text-white',
         'scheduled' => 'badge badge-secondary bg-secondary text-white',
@@ -350,4 +424,3 @@ function local_mailwhistle_status_badge(string $status): string {
 function local_mailwhistle_render_resources(): string {
     return '';
 }
-

@@ -73,6 +73,14 @@ switch ($tab) {
         if ($viewid > 0) {
             echo local_mailwhistle_render_view_mail($viewid);
         } else {
+            if (has_capability('local/mailwhistle:manage', $context)) {
+                echo $OUTPUT->single_button(
+                    new moodle_url('/local/mailwhistle/create.php'),
+                    get_string('createcampaign', 'local_mailwhistle'),
+                    'get'
+                );
+                echo local_mailwhistle_render_draft_campaigns();
+            }
             echo local_mailwhistle_render_sent_mails();
         }
         break;

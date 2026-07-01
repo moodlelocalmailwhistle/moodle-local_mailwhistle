@@ -109,4 +109,41 @@ class helper {
         $event = \local_mailwhistle\event\data_created::create($eventdata);
         $event->trigger();
     }
+
+    /**
+     * Create a new draft email campaign.
+     *
+     * Inserts a minimal campaign record with sensible defaults so it can
+     * be edited further later. Logs the creation as plugin activity.
+     *
+     * @param string $name The internal campaign name.
+     * @param int|null $userid The creating user (uses current user if null).
+     * @return int The new campaign id.
+     */
+    public static function create_campaign(string $name, ?int $userid = null): int {
+        global $DB, $USER;
+
+        if ($userid === null) {
+            $userid = $USER->id;
+        }
+
+        // Only the NOT NULL columns without a schema default are set here; the
+        // remaining columns (status, sendengine, sendername, senderemail,
+        // timescheduled, timesent) take their db/install.xml DEFAULT values.
+        $now = time();
+        $record = new \stdClass();
+        $record->name = $name;
+        $record->subject = get_string('untitledcampaign', 'local_mailwhistle');
+        $record->bodyhtml = null;
+        $record->bodytext = null;
+        $record->createdby = $userid;
+        $record->timecreated = $now;
+        $record->timemodified = $now;
+
+        $campaignid = $DB->insert_record('local_email_campaigns', $record);
+
+        self::log_activity('campaign_created', 'Created campaign: ' . $name, $userid);
+
+        return $campaignid;
+    }
 }

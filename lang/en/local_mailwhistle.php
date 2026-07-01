@@ -78,6 +78,7 @@ $string['col_recipients']       = 'Recipients';
 $string['col_sentby']           = 'Sent by';
 $string['col_sentat']           = 'Sent at';
 $string['col_status']           = 'Status';
+$string['status_draft']         = 'Draft';
 $string['status_sent']          = 'Sent';
 $string['status_sending']       = 'Sending';
 $string['status_scheduled']     = 'Scheduled';
@@ -93,3 +94,25 @@ $string['mailpreview']          = 'Newsletter preview';
 $string['audience_placeholder']     = 'Audience management is coming soon.';
 $string['templates_placeholder']    = 'Template management is coming soon.';
 $string['reports_placeholder']      = 'Reporting and analytics are coming soon.';
+
+// Campaign creation.
+$string['createcampaign']          = 'Create a campaign';
+$string['createcampaign_desc']     = 'Give your campaign an internal name. You can change everything else later.';
+$string['createcampaign_submit']   = 'Create campaign';
+$string['internalname']            = 'Internal email name';
+$string['campaigncreated']         = 'Campaign created.';
+$string['untitledcampaign']        = 'Untitled campaign';
+
+// Draft campaigns section (Option D2).
+$string['draftcampaigns_heading']  = 'Draft campaigns';
+$string['nodraftcampaigns']        = 'No draft campaigns yet.';
+$string['col_name']                = 'Internal name';
+$string['col_created']             = 'Created';
+
+// Privacy (GDPR) metadata.
+$string['privacy:metadata:local_email_campaigns']             = 'Information about email campaigns created in the plugin.';
+$string['privacy:metadata:local_email_campaigns:name']        = 'The internal name of the campaign.';
+$string['privacy:metadata:local_email_campaigns:subject']     = 'The subject line of the campaign.';
+$string['privacy:metadata:local_email_campaigns:status']      = 'The delivery status of the campaign.';
+$string['privacy:metadata:local_email_campaigns:createdby']   = 'The ID of the user who created the campaign.';
+$string['privacy:metadata:local_email_campaigns:timecreated'] = 'The time the campaign was created.';
