@@ -69,9 +69,15 @@ class campaign extends base {
         return $this;
     }
 
-    // No #[\Override]: get_available_columns() is not a parent method on the
-    // Moodle 5.0/5.1 base entity (it was formalised in 5.2), so the attribute
-    // would fatal on those branches.
+    /**
+     * Return the columns available for this entity.
+     *
+     * No #[\Override] attribute is used here: get_available_columns() is not a
+     * parent method on the Moodle 5.0/5.1 base entity (it was formalised in
+     * 5.2), so the attribute would fatal on those branches.
+     *
+     * @return column[]
+     */
     protected function get_available_columns(): array {
         $campaignsalias = $this->get_table_alias('local_mailwhistle_campaigns');
 
