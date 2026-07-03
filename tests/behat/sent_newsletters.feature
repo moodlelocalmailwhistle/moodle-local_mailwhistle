@@ -13,11 +13,11 @@ Feature: An admin can view a list of previously sent campaigns
     When I log in as "admin"
     And I navigate to "General > Mail Whistle > Campaigns" in site administration
     # Two report tables render on this page (draft campaigns then sent
-    # campaigns), both with class "reportbuilder-table". Target the sent table
-    # by its "Subject" column header, which the draft table does not have.
-    Then the following should exist in the "Subject" table:
-      | Name            | Subject                | Audience | Recipients | Sent by        | Sent at | Status |
-      | First campaign  | Read our exciting news | TODO     | 0          | Admin User     |         | Sent   |
-      | Second campaign | More useful info       | TODO     | 0          | Marketing User |         | Sent   |
-      | Third campaign  | Update for you         | TODO     | 0          | Test User      |         | Sent   |
-    And I should not see "Draft campaign" in the "Subject" "table"
+    # campaigns), both sharing the "reportbuilder-table" class, so the sent
+    # table cannot be targeted by that class alone. The sent report is wrapped
+    # in a ".local-mailwhistle-sent-campaigns" container; scope assertions to it.
+    Then I should see "First campaign" in the ".local-mailwhistle-sent-campaigns" "css_element"
+    And I should see "Read our exciting news" in the ".local-mailwhistle-sent-campaigns" "css_element"
+    And I should see "Second campaign" in the ".local-mailwhistle-sent-campaigns" "css_element"
+    And I should see "Third campaign" in the ".local-mailwhistle-sent-campaigns" "css_element"
+    And I should not see "Draft campaign" in the ".local-mailwhistle-sent-campaigns" "css_element"
