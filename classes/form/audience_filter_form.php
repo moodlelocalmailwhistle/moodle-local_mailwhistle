@@ -16,11 +16,6 @@
 
 namespace local_mailwhistle\form;
 
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->libdir . '/formslib.php');
-
 /**
  * GET filter form for the Mail Whistle audience listing.
  *
