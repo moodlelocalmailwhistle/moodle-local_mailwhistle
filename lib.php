@@ -740,6 +740,9 @@ function local_mailwhistle_render_template_form(int $id = 0): string {
     $builderjson = $template->builderjson ?? local_mailwhistle_get_default_builder_json();
     $builderstrings = local_mailwhistle_get_builder_strings();
 
+    global $CFG;
+    require_once($CFG->libdir . '/formslib.php');
+
     $mform = new \local_mailwhistle\form\template_form($formurl, [
         'submitlabel' => get_string('template_save', 'local_mailwhistle'),
         'builderjson' => $builderjson,

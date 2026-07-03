@@ -51,7 +51,33 @@ class campaign extends base {
         return new lang_string('campaign', 'local_mailwhistle');
     }
 
-    #[\Override]
+    /**
+     * Add the entity's columns to the report.
+     *
+     * The base class only gained a default implementation of this method in
+     * Moodle 5.2; declaring it here keeps the entity compatible with the 5.0
+     * and 5.1 branches this plugin supports, where the method is abstract.
+     * This entity only defines columns, so no filters or conditions are added.
+     *
+     * @return base
+     */
+    public function initialise(): base {
+        foreach ($this->get_available_columns() as $column) {
+            $this->add_column($column);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Return the columns available for this entity.
+     *
+     * No #[\Override] attribute is used here: get_available_columns() is not a
+     * parent method on the Moodle 5.0/5.1 base entity (it was formalised in
+     * 5.2), so the attribute would fatal on those branches.
+     *
+     * @return column[]
+     */
     protected function get_available_columns(): array {
         $campaignsalias = $this->get_table_alias('local_mailwhistle_campaigns');
 
