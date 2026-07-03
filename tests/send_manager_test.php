@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_mailwhistle\tests;
+namespace local_mailwhistle;
 
 use local_mailwhistle\manager\send_manager;
 use local_mailwhistle\manager\recipient_manager;

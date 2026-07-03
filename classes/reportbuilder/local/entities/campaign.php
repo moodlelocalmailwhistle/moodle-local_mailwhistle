@@ -51,6 +51,31 @@ class campaign extends base {
         return new lang_string('campaign', 'local_mailwhistle');
     }
 
+    /**
+     * Add the entity's columns, filters and conditions to the report.
+     *
+     * The base class only gained a default implementation of this method in
+     * Moodle 5.2; declaring it here keeps the entity compatible with the 5.0
+     * and 5.1 branches this plugin supports, where the method is abstract.
+     *
+     * @return base
+     */
+    public function initialise(): base {
+        foreach ($this->get_available_columns() as $column) {
+            $this->add_column($column);
+        }
+
+        foreach ($this->get_available_filters() as $filter) {
+            $this->add_filter($filter);
+        }
+
+        foreach ($this->get_available_conditions() as $condition) {
+            $this->add_condition($condition);
+        }
+
+        return $this;
+    }
+
     #[\Override]
     protected function get_available_columns(): array {
         $campaignsalias = $this->get_table_alias('local_mailwhistle_campaigns');
