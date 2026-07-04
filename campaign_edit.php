@@ -303,5 +303,11 @@ if ($iscomplete) {
     echo $OUTPUT->notification($incompletemsg, \core\output\notification::NOTIFY_WARNING);
 }
 
-echo html_writer::div(html_writer::link($returnurl, get_string('backtolist', 'local_mailwhistle')));
+echo html_writer::div(
+    html_writer::link(
+        $returnurl,
+        get_string('backtolist', 'local_mailwhistle'),
+        ['class' => 'btn btn-secondary mb-3']
+    )
+);
 echo $OUTPUT->footer();

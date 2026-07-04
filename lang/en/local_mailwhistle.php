@@ -102,7 +102,7 @@ $string['status_failed']        = 'Failed';
 $string['nosentmails']          = 'No newsletters have been sent yet.';
 
 // Sent newsletter detail view.
-$string['backtolist']           = '&laquo; Back to sent newsletters';
+$string['backtolist']           = 'Back to sent newsletters';
 $string['mailnotfound']         = 'The requested newsletter could not be found.';
 $string['mailpreview']          = 'Newsletter preview';
 
