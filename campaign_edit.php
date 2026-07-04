@@ -205,9 +205,21 @@ if ($step === 'audience') {
         echo $OUTPUT->heading(get_string('editcampaign', 'local_mailwhistle'));
         echo $rendertabs('audience');
         echo $OUTPUT->notification(get_string('audiencetags_notags', 'local_mailwhistle'), \core\output\notification::NOTIFY_INFO);
-        echo html_writer::div(html_writer::link($audienceurl, get_string('audiencetags_managetags', 'local_mailwhistle')));
+        echo html_writer::div(
+            html_writer::link(
+                $audienceurl,
+                get_string('audiencetags_managetags', 'local_mailwhistle'),
+                ['class' => 'btn btn-secondary mb-3']
+            )
+        );
         $reviewurl = local_mailwhistle_step_url($baseurl, 'review');
-        echo html_writer::div(html_writer::link($reviewurl, get_string('wizard_savecontinue', 'local_mailwhistle')));
+        echo html_writer::div(
+            html_writer::link(
+                $reviewurl,
+                get_string('wizard_savecontinue', 'local_mailwhistle'),
+                ['class' => 'btn btn-primary']
+            )
+        );
         echo $OUTPUT->footer();
         die;
     }
