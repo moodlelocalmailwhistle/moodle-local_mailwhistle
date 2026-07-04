@@ -539,7 +539,7 @@ function local_mailwhistle_render_template_filters(string $selected): string {
             'tab' => 'templates',
             'filter' => $filter,
         ]);
-        $classes = ['btn', 'btn-sm', $selected === $filter ? 'btn-primary' : 'btn-secondary'];
+        $classes = ['btn', $selected === $filter ? 'btn-primary' : 'btn-secondary'];
         $items[] = html_writer::link($url, get_string('template_filter_' . $filter, 'local_mailwhistle'), [
             'class' => implode(' ', $classes),
         ]);
@@ -638,7 +638,7 @@ function local_mailwhistle_render_template_card_meta(string $label, string $valu
  */
 function local_mailwhistle_render_template_card_actions(stdClass $template, moodle_url $previewurl, bool $canmanage): string {
     $actions = html_writer::link($previewurl, get_string('template_preview', 'local_mailwhistle'), [
-        'class' => 'btn btn-primary btn-sm',
+        'class' => 'btn btn-primary',
     ]);
 
     if ($canmanage) {
@@ -699,7 +699,7 @@ function local_mailwhistle_render_template_card_actions(stdClass $template, mood
         }
 
         $toggle = html_writer::tag('button', get_string('template_actions', 'local_mailwhistle'), [
-            'class' => 'btn btn-secondary btn-sm dropdown-toggle',
+            'class' => 'btn btn-secondary dropdown-toggle',
             'type' => 'button',
             'data-toggle' => 'dropdown',
             'data-bs-toggle' => 'dropdown',
