@@ -59,7 +59,12 @@ class campaign_audience_form extends \moodleform {
             ]
         );
         $mform->setType('tagids', PARAM_INT);
-
+        $mform->addElement(
+            'button',
+            'manageaudiencetags',
+            get_string('audiencetags_managetags', 'local_mailwhistle'),
+            ['onclick' => 'window.location.href = "' . new \moodle_url('/local/mailwhistle/index.php?tab=audience') . '";']
+        );
         $this->add_action_buttons(true, get_string('audiencetags_submit', 'local_mailwhistle'));
     }
 
