@@ -285,6 +285,8 @@ $summary->data = [
 ];
 echo html_writer::table($summary);
 
+echo html_writer::start_tag('div', ['class' => 'd-flex gap-2']);
+
 // Test-mail: send a copy of the current draft to the logged-in user.
 $testurl = new moodle_url($baseurl, ['step' => 'review', 'action' => 'sendtest', 'sesskey' => sesskey()]);
 echo html_writer::div(
@@ -310,4 +312,7 @@ echo html_writer::div(
         ['class' => 'btn btn-secondary mb-3']
     )
 );
+
+echo html_writer::end_div();
+
 echo $OUTPUT->footer();
