@@ -41,10 +41,10 @@ $ADMIN->add('local_mailwhistle', $settingspage);
 
 // Main entry point for Mailwhistle.
 $page = new admin_externalpage(
-    name: 'local_mailwhistle_mailings',
-    visiblename: get_string('campaigns', 'local_mailwhistle'),
-    url: new moodle_url('/local/mailwhistle/index.php'),
-    req_capability: 'local/mailwhistle:view',
+    'local_mailwhistle_mailings',
+    get_string('campaigns', 'local_mailwhistle'),
+    new moodle_url('/local/mailwhistle/index.php'),
+    'local/mailwhistle:view',
 );
 $ADMIN->add('local_mailwhistle', $page);
 
