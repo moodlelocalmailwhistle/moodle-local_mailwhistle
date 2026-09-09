@@ -9,8 +9,8 @@ Feature: Send a test copy of a draft campaign
       | name       |
       | Newsletter |
     And the following "local_mailwhistle > campaigns" exist:
-      | name        | subject      | bodyhtml           | status |
-      | Autumn news | Hello Autumn | <p>Body content</p> | draft  |
+      | name        | subject              | bodyhtml                    | status |
+      | Autumn news | Hello {{firstname}}  | <p>Body for {{firstname}}</p> | draft  |
     And I set the audience tag "Newsletter" for campaign "Autumn news"
     And I log in as "admin"
 

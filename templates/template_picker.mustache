@@ -46,7 +46,7 @@
         <select name="templateid" id="mw-campaign-templateid">
             <option value="">{{#str}}campaign_template_choose, local_mailwhistle{{/str}}</option>
             {{#options}}
-                <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                <option value="{{id}}" {{#selected}}selected{{/selected}}>{{{name}}}</option>
             {{/options}}
         </select>
     </div>

@@ -24,6 +24,20 @@ Feature: Email templates
     Then I should see "Template saved."
     And I should see "Plain HTML"
 
+  @javascript
+  Scenario: Create a template in builder mode
+    When I am on the Mail Whistle "templates" tab
+    And I follow "Create template"
+    And I set the field "Template name" to "Visual layout"
+    And I set the field "Preview text" to "Built visually"
+    And I click on "Header" "button" in the ".local-mailwhistle-builder-toolbar" "css_element"
+    And I click on "Button" "button" in the ".local-mailwhistle-builder-toolbar" "css_element"
+    And I press "Save template"
+    Then I should see "Template saved."
+    And I should see "Visual layout"
+    And I should see "Newsletter title"
+    And I should see "Learn more"
+
   Scenario: Archive a template
     Given the following "local_mailwhistle > templates" exist:
       | name            | bodyhtml                 |

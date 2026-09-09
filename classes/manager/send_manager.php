@@ -131,9 +131,10 @@ class send_manager {
      *
      * Unlike a real send this creates no recipient row, writes no sendlog and
      * injects no open/click tracking, so it never touches campaign statistics.
-     * The subject is prefixed so a test copy is obvious in the inbox. Delivery
-     * still goes through Moodle messaging so it honours the recipient's output
-     * preferences exactly like a live send would.
+     * Placeholders are filled from the reviewer's profile so the copy shows
+     * how the newsletter will look. The subject is prefixed so a test copy is
+     * obvious in the inbox. Delivery still goes through Moodle messaging so it
+     * honours the recipient's output preferences exactly like a live send would.
      *
      * @param int $campaignid The draft campaign to preview.
      * @param \stdClass $to The user record to send the test copy to.
@@ -144,7 +145,9 @@ class send_manager {
 
         $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
 
-        $subject = get_string('testmail_subjectprefix', 'local_mailwhistle') . ' ' . format_string($campaign->subject);
+        $subject = get_string('testmail_subjectprefix', 'local_mailwhistle') . ' ' . format_string(
+            placeholder_manager::apply((string) $campaign->subject, $to, false)
+        );
 
         $message = new \core\message\message();
         $message->component = 'local_mailwhistle';
@@ -152,9 +155,9 @@ class send_manager {
         $message->userfrom = self::get_from_user($campaign);
         $message->userto = $to;
         $message->subject = $subject;
-        $message->fullmessage = (string) $campaign->bodytext;
+        $message->fullmessage = placeholder_manager::apply((string) $campaign->bodytext, $to, false);
         $message->fullmessageformat = FORMAT_HTML;
-        $message->fullmessagehtml = (string) $campaign->bodyhtml;
+        $message->fullmessagehtml = placeholder_manager::apply((string) $campaign->bodyhtml, $to, true);
         $message->smallmessage = '';
         $message->notification = 1;
 

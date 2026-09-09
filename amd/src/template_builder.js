@@ -303,6 +303,11 @@ define([], function() {
 
     var createField = function(block, field, label, type, options) {
         options = options || {};
+        // Allow "#", empty, and {{placeholder}} values. Native type=url rejects them
+        // and blocks Save with HTML5 validation.
+        if (type === 'url') {
+            type = 'text';
+        }
         var wrapper = document.createElement('div');
         wrapper.className = 'local-mailwhistle-builder-field';
         if (type === 'color') {
@@ -671,10 +676,17 @@ define([], function() {
     var toggleMode = function() {
         var builderVisible = modeSelect.value === 'builder';
         var htmlEditor = document.getElementById('fitem_id_bodyhtml_editor');
+        var textarea = document.getElementById('id_bodyhtml_editor');
 
         root.style.display = builderVisible ? '' : 'none';
         if (htmlEditor) {
             htmlEditor.style.display = builderVisible ? 'none' : '';
+        }
+        // Builder mode renders HTML from JSON server-side. Disable the hidden
+        // editor so TinyMCE / HTML5 cannot block Save on an empty textarea.
+        if (textarea) {
+            textarea.disabled = builderVisible;
+            textarea.removeAttribute('required');
         }
     };
 
