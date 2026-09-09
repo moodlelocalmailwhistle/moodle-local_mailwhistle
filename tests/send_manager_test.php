@@ -26,7 +26,7 @@ use local_mailwhistle\manager\tag_manager;
  * Unit tests for the send_manager and the campaign send lifecycle.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\manager\send_manager
  */
@@ -161,5 +161,53 @@ final class send_manager_test extends \advanced_testcase {
         $this->assertSame(1, recipient_manager::count_pending($campaignid));
         $status = $DB->get_field('local_mailwhistle_campaigns', 'status', ['id' => $campaignid], MUST_EXIST);
         $this->assertSame(campaign_manager::STATUS_SENDING, $status);
+    }
+
+    /**
+     * Test copies personalise placeholders for the reviewer without tracking.
+     */
+    public function test_send_test_personalises_without_tracking(): void {
+        $this->resetAfterTest();
+        global $DB, $USER;
+
+        $reviewer = self::getDataGenerator()->create_user([
+            'firstname' => 'Alice',
+            'lastname' => 'Student',
+            'email' => 'alice@example.com',
+        ]);
+        $this->setUser($reviewer);
+
+        $now = time();
+        $campaignid = (int) $DB->insert_record('local_mailwhistle_campaigns', (object) [
+            'name' => 'C',
+            'subject' => 'Hi {{firstname}}',
+            'bodyhtml' => '<p>Hello {{firstname}}</p><p><a href="https://example.com/campus">Go</a></p>',
+            'bodytext' => 'Hello {{firstname}}',
+            'sendername' => 'Campus News',
+            'senderemail' => 'news@example.com',
+            'status' => campaign_manager::STATUS_DRAFT,
+            'createdby' => (int) $USER->id,
+            'timecreated' => $now,
+            'timemodified' => $now,
+        ]);
+
+        $this->preventResetByRollback();
+        $sink = $this->redirectMessages();
+        $sent = send_manager::send_test($campaignid, $reviewer);
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertTrue($sent);
+        $this->assertCount(1, $messages);
+        $this->assertStringContainsString('[Test]', $messages[0]->subject);
+        $this->assertStringContainsString('Hi Alice', $messages[0]->subject);
+        $this->assertStringContainsString('Hello Alice', $messages[0]->fullmessagehtml);
+        $this->assertStringContainsString('https://example.com/campus', $messages[0]->fullmessagehtml);
+        $this->assertStringNotContainsString('{{firstname}}', $messages[0]->subject);
+        $this->assertStringNotContainsString('{{firstname}}', $messages[0]->fullmessagehtml);
+        $this->assertStringNotContainsString('pixel.php', $messages[0]->fullmessagehtml);
+        $this->assertStringNotContainsString('click.php', $messages[0]->fullmessagehtml);
+        $this->assertFalse($DB->record_exists('local_mailwhistle_recipients', ['campaignid' => $campaignid]));
+        $this->assertFalse($DB->record_exists('local_mailwhistle_tracking', ['campaignid' => $campaignid]));
     }
 }

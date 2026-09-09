@@ -23,7 +23,7 @@ namespace local_mailwhistle\event;
  * audit trails and integrations with other plugins.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class data_created extends \core\event\base {

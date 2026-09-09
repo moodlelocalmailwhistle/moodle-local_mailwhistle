@@ -1,0 +1,64 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_mailwhistle/template_preview
+
+    Full-page template preview.
+
+    Context variables required for this template:
+    * name - format_string() template name.
+    * listurl, canmanage, editurl, exporturl
+    * haspreviewtext, previewtext
+    * hasbody, bodyhtml - bodyhtml is sanitised by format_text().
+    * background - Safe hex colour.
+
+    Example context (json):
+    {
+        "name": "Default",
+        "listurl": "#",
+        "canmanage": true,
+        "editurl": "#",
+        "exporturl": "#",
+        "haspreviewtext": false,
+        "previewtext": "",
+        "hasbody": true,
+        "bodyhtml": "<p>Hi</p>",
+        "background": "#ffffff"
+    }
+}}
+<div class="local-mailwhistle-template-fullpreview">
+    <div class="local-mailwhistle-preview-toolbar">
+        <a href="{{listurl}}" class="btn btn-secondary me-1">{{#str}}backtotemplates, local_mailwhistle{{/str}}</a>
+        {{#canmanage}}
+            <a href="{{editurl}}" class="btn btn-primary me-1">{{#str}}template_edit, local_mailwhistle{{/str}}</a>
+            <a href="{{exporturl}}" class="btn btn-secondary">{{#str}}template_export, local_mailwhistle{{/str}}</a>
+        {{/canmanage}}
+    </div>
+    <h3>{{{name}}}</h3>
+    {{#haspreviewtext}}
+        <div class="local-mailwhistle-template-previewtext">
+            <span class="local-mailwhistle-template-label">{{#str}}template_previewtext_label, local_mailwhistle{{/str}}</span>
+            {{{previewtext}}}
+        </div>
+    {{/haspreviewtext}}
+    <div class="local-mailwhistle-email-preview" style="background: {{background}};">
+        {{#hasbody}}{{{bodyhtml}}}{{/hasbody}}
+        {{^hasbody}}
+            <div class="local-mailwhistle-template-preview-empty">{{#str}}template_no_body, local_mailwhistle{{/str}}</div>
+        {{/hasbody}}
+    </div>
+</div>

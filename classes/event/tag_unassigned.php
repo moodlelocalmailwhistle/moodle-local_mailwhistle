@@ -24,7 +24,7 @@ namespace local_mailwhistle\event;
  * userid   = actor who removed the assignment (set by the triggering code).
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tag_unassigned extends \core\event\base {

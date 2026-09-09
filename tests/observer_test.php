@@ -25,7 +25,7 @@ use local_mailwhistle\manager\tag_manager;
  * local_mailwhistle_tag_assign rows for that user (D6 / AC#11).
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\observer
  */

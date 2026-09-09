@@ -18,7 +18,7 @@
  * Local plugin "Mail Whistle" - Install-time setup.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -31,9 +31,5 @@
  * @return void
  */
 function xmldb_local_mailwhistle_install(): void {
-    global $CFG;
-
-    require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
-
-    local_mailwhistle_install_default_templates();
+    \local_mailwhistle\manager\template_manager::install_defaults();
 }

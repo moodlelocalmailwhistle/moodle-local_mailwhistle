@@ -25,7 +25,7 @@ use local_mailwhistle\manager\tag_manager;
  * Tags are fetched in a second per-page query inside query_db() so the
  * main pager COUNT stays a clean per-user count (no GROUP BY fan-out).
  *
- * The outer POST form is owned by index.php.  This class deliberately
+ * The outer POST form is owned by the audience page controller. This class deliberately
  * does NOT override wrap_html_start / wrap_html_finish so no second
  * <form> element is emitted (AC#15).
  *
@@ -34,7 +34,7 @@ use local_mailwhistle\manager\tag_manager;
  * remove links can include the tagid.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class audience_table extends \table_sql {

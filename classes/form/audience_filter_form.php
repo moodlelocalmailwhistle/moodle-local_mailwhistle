@@ -28,7 +28,7 @@ namespace local_mailwhistle\form;
  *   - auths  array  auth plugin => label map for the auth filter select.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class audience_filter_form extends \moodleform {

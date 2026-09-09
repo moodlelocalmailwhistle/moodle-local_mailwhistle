@@ -1,0 +1,58 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_mailwhistle/templates_overview
+
+    Template cards overview with filters and create action.
+
+    Context variables required for this template:
+    * canmanage - Whether the user can create/edit templates.
+    * createurl - URL of the create-template page.
+    * filters - Filter buttons (url, label, active).
+    * hascards - True when at least one card is present.
+    * cards - Array of template_card contexts.
+    * emptynotification - Pre-rendered Moodle notification HTML.
+
+    Example context (json):
+    {
+        "canmanage": true,
+        "createurl": "/local/mailwhistle/index.php?tab=templates&action=create",
+        "filters": [{"url": "#", "label": "Active", "active": true}],
+        "hascards": false,
+        "cards": [],
+        "emptynotification": "<div class=\"alert alert-info\">None</div>"
+    }
+}}
+<div class="local-mailwhistle-templates">
+    <div class="local-mailwhistle-templates-header">
+        <h3>{{#str}}templates_heading, local_mailwhistle{{/str}}</h3>
+        {{#canmanage}}
+            <a href="{{createurl}}" class="btn btn-primary">{{#str}}template_create, local_mailwhistle{{/str}}</a>
+        {{/canmanage}}
+    </div>
+    {{> local_mailwhistle/template_filters}}
+    {{#hascards}}
+        <div class="local-mailwhistle-template-grid">
+            {{#cards}}
+                {{> local_mailwhistle/template_card}}
+            {{/cards}}
+        </div>
+    {{/hascards}}
+    {{^hascards}}
+        {{{emptynotification}}}
+    {{/hascards}}
+</div>

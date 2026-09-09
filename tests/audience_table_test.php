@@ -29,7 +29,7 @@ use local_mailwhistle\table\audience_table;
  * when invoking table_sql in unit tests is awkward.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\table\audience_table
  */

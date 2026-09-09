@@ -50,7 +50,7 @@ use core_privacy\local\request\writer;
  * anonymised.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements core_userlist_provider, metadata_provider, request_provider {
@@ -72,6 +72,17 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                 'timesent' => 'privacy:metadata:local_mailwhistle_recipients:timesent',
             ],
             'privacy:metadata:local_mailwhistle_recipients'
+        );
+
+        $collection->add_database_table(
+            'local_mailwhistle_sendlogs',
+            [
+                'recipientid' => 'privacy:metadata:local_mailwhistle_sendlogs:recipientid',
+                'level' => 'privacy:metadata:local_mailwhistle_sendlogs:level',
+                'message' => 'privacy:metadata:local_mailwhistle_sendlogs:message',
+                'timecreated' => 'privacy:metadata:local_mailwhistle_sendlogs:timecreated',
+            ],
+            'privacy:metadata:local_mailwhistle_sendlogs'
         );
 
         $collection->add_database_table(
@@ -242,6 +253,18 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                     ]
                 );
 
+                $sendlogs = $DB->get_records('local_mailwhistle_sendlogs', ['recipientid' => $recipient->id]);
+                foreach ($sendlogs as $sendlog) {
+                    writer::with_context($context)->export_data(
+                        [get_string('pluginname', 'local_mailwhistle'), 'sendlogs', $sendlog->id],
+                        (object) [
+                            'level' => $sendlog->level,
+                            'message' => $sendlog->message,
+                            'timecreated' => transform::datetime($sendlog->timecreated),
+                        ]
+                    );
+                }
+
                 // Tracking events recorded for this recipient (opens/clicks).
                 $events = $DB->get_records('local_mailwhistle_tracking', ['recipientid' => $recipient->id]);
                 foreach ($events as $event) {
@@ -350,9 +373,11 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
             return;
         }
 
-        // Tracking rows first (they reference recipients).
+        // Child rows first (they reference campaigns/recipients).
         $DB->delete_records('local_mailwhistle_tracking');
+        $DB->delete_records('local_mailwhistle_sendlogs');
         $DB->delete_records('local_mailwhistle_recipients');
+        $DB->delete_records('local_mailwhistle_audrules');
         $DB->delete_records('local_mailwhistle_unsubscribes');
 
         // Remove all assignment rows (personal data: who is tagged).
@@ -384,9 +409,14 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
                 continue;
             }
 
-            // Delete tracking events for this user's recipient rows first.
+            // Delete tracking events and send logs for this user's recipient rows first.
             $DB->delete_records_select(
                 'local_mailwhistle_tracking',
+                'recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid = :userid)',
+                ['userid' => $user->id]
+            );
+            $DB->delete_records_select(
+                'local_mailwhistle_sendlogs',
                 'recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid = :userid)',
                 ['userid' => $user->id]
             );
@@ -402,7 +432,20 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
             // Anonymise tag definitions this user authored.
             $DB->set_field('local_mailwhistle_tag', 'usermodified', 0, ['usermodified' => $user->id]);
 
-            // Delete email campaigns created by this user.
+            // Delete email campaigns created by this user, plus dependent rows.
+            $campaignids = $DB->get_fieldset_select(
+                'local_mailwhistle_campaigns',
+                'id',
+                'createdby = :userid',
+                ['userid' => $user->id]
+            );
+            if ($campaignids) {
+                [$campinsql, $campparams] = $DB->get_in_or_equal($campaignids, SQL_PARAMS_NAMED, 'cid');
+                $DB->delete_records_select('local_mailwhistle_tracking', "campaignid {$campinsql}", $campparams);
+                $DB->delete_records_select('local_mailwhistle_sendlogs', "campaignid {$campinsql}", $campparams);
+                $DB->delete_records_select('local_mailwhistle_recipients', "campaignid {$campinsql}", $campparams);
+                $DB->delete_records_select('local_mailwhistle_audrules', "campaignid {$campinsql}", $campparams);
+            }
             $DB->delete_records('local_mailwhistle_campaigns', ['createdby' => $user->id]);
         }
     }
@@ -428,9 +471,14 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
 
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
 
-        // Delete tracking events for these users' recipient rows first.
+        // Delete tracking events and send logs for these users' recipient rows first.
         $DB->delete_records_select(
             'local_mailwhistle_tracking',
+            "recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid {$insql})",
+            $inparams
+        );
+        $DB->delete_records_select(
+            'local_mailwhistle_sendlogs',
             "recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid {$insql})",
             $inparams
         );
@@ -446,7 +494,19 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
         // Anonymise tag definitions these users authored.
         $DB->set_field_select('local_mailwhistle_tag', 'usermodified', 0, "usermodified {$insql}", $inparams);
 
-        // Delete email campaigns created by these users.
+        $campaignids = $DB->get_fieldset_select(
+            'local_mailwhistle_campaigns',
+            'id',
+            "createdby {$insql}",
+            $inparams
+        );
+        if ($campaignids) {
+            [$campinsql, $campparams] = $DB->get_in_or_equal($campaignids, SQL_PARAMS_NAMED, 'cid');
+            $DB->delete_records_select('local_mailwhistle_tracking', "campaignid {$campinsql}", $campparams);
+            $DB->delete_records_select('local_mailwhistle_sendlogs', "campaignid {$campinsql}", $campparams);
+            $DB->delete_records_select('local_mailwhistle_recipients', "campaignid {$campinsql}", $campparams);
+            $DB->delete_records_select('local_mailwhistle_audrules', "campaignid {$campinsql}", $campparams);
+        }
         $DB->delete_records_select('local_mailwhistle_campaigns', "createdby {$insql}", $inparams);
     }
 }

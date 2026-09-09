@@ -18,7 +18,7 @@
  * Local plugin "Mail Whistle" - Settings page.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -35,7 +35,8 @@ $ADMIN->add('root', new admin_category('local_mailwhistle', get_string('pluginna
 // Create the main settings page for this plugin.
 $settingspage = new admin_settingpage(
     'local_mailwhistle_settings',
-    get_string('settings', 'local_mailwhistle')
+    get_string('settings', 'local_mailwhistle'),
+    'local/mailwhistle:configure'
 );
 $ADMIN->add('local_mailwhistle', $settingspage);
 
@@ -52,22 +53,11 @@ if (!$ADMIN->fulltree) {
     return;
 }
 
-// Add a heading section to organize plugin settings.
 $settingspage->add(
     new admin_setting_heading(
         'local_mailwhistle_settings',
         get_string('setting_heading', 'local_mailwhistle'),
         get_string('setting_heading_desc', 'local_mailwhistle')
-    )
-);
-
-// Example: Boolean setting to enable/disable a feature.
-$settingspage->add(
-    new admin_setting_configcheckbox(
-        'local_mailwhistle/enable',
-        get_string('enable', 'local_mailwhistle'),
-        get_string('enable_desc', 'local_mailwhistle'),
-        1
     )
 );
 

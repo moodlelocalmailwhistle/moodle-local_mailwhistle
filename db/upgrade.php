@@ -18,7 +18,7 @@
  * Local plugin "Mail Whistle" - Database upgrade file.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -181,8 +181,7 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
 
     if ($oldversion < 2026070110) {
         // Seed the bundled default email template on existing installs.
-        require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
-        local_mailwhistle_install_default_templates();
+        \local_mailwhistle\manager\template_manager::install_defaults();
 
         upgrade_plugin_savepoint(true, 2026070110, 'local', 'mailwhistle');
     }

@@ -23,7 +23,7 @@ namespace local_mailwhistle;
  * configuration management and user data processing.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\helper
  */
@@ -99,5 +99,35 @@ final class helper_test extends \advanced_testcase {
         // Process non-existent user - should return false.
         $result = \local_mailwhistle\helper::process_user_data(99999);
         $this->assertFalse($result);
+    }
+
+    /**
+     * Writes must be POST; an empty request is rejected.
+     */
+    public function test_require_post_rejects_get(): void {
+        $this->resetAfterTest();
+        $previous = $_POST;
+        $_POST = [];
+        try {
+            $this->expectException(\moodle_exception::class);
+            helper::require_post();
+        } finally {
+            $_POST = $previous;
+        }
+    }
+
+    /**
+     * A submitted POST body is accepted.
+     */
+    public function test_require_post_accepts_post(): void {
+        $this->resetAfterTest();
+        $previous = $_POST;
+        $_POST = ['sesskey' => 'test'];
+        try {
+            helper::require_post();
+        } finally {
+            $_POST = $previous;
+        }
+        $this->assertTrue(true);
     }
 }

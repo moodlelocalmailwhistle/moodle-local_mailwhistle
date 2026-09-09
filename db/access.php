@@ -20,7 +20,7 @@
  * Defines capabilities required for this plugin to function correctly.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -40,10 +40,9 @@ $capabilities = [
         'captype' => 'read',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => [
-            'user' => CAP_ALLOW, // All logged-in users can view.
-            'manager' => CAP_ALLOW, // Site managers can view.
+            'manager' => CAP_ALLOW,
         ],
-        'clonepermissionsfrom' => '',
+        'riskbitmask' => RISK_PERSONAL,
     ],
 
     // Capability: Manage plugin functionality and data.
@@ -51,9 +50,9 @@ $capabilities = [
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => [
-            'manager' => CAP_ALLOW, // Only managers can manage.
+            'manager' => CAP_ALLOW,
         ],
-        'clonepermissionsfrom' => '',
+        'riskbitmask' => RISK_SPAM | RISK_PERSONAL | RISK_XSS,
     ],
 
     // Capability: Configure plugin settings in admin panel.
@@ -61,9 +60,9 @@ $capabilities = [
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => [
-            'manager' => CAP_ALLOW, // Only managers can configure.
+            'manager' => CAP_ALLOW,
         ],
-        'clonepermissionsfrom' => '',
+        'riskbitmask' => RISK_CONFIG,
     ],
 
     // Capability: Manage audience tags (create, assign, unassign).
@@ -71,8 +70,9 @@ $capabilities = [
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => [
-            'manager' => CAP_ALLOW, // Only managers can manage tags.
+            'manager' => CAP_ALLOW,
         ],
         'clonepermissionsfrom' => 'local/mailwhistle:manage',
+        'riskbitmask' => RISK_PERSONAL,
     ],
 ];

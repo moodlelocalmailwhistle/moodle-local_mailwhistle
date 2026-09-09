@@ -27,7 +27,7 @@ use local_mailwhistle\manager\tag_manager;
  * exclusion, dedupe, idempotent snapshotting, and pending fetch.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\manager\recipient_manager
  */

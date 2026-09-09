@@ -31,7 +31,7 @@ use local_mailwhistle\privacy\provider;
  * rows are never deleted by any privacy routine (AC#16).
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\privacy\provider
  */
@@ -66,6 +66,11 @@ final class privacy_provider_test extends provider_testcase {
             'local_mailwhistle_tag',
             $tablenames,
             'Metadata must declare local_mailwhistle_tag.'
+        );
+        $this->assertContains(
+            'local_mailwhistle_sendlogs',
+            $tablenames,
+            'Metadata must declare local_mailwhistle_sendlogs.'
         );
     }
 

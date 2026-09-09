@@ -19,8 +19,7 @@
  *
  * @package   local_mailwhistle
  * @category  test
- * @copyright 2026 Synergy Learning
- * @author    Davo Smith
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class behat_local_mailwhistle_generator extends behat_generator_base {
@@ -40,6 +39,18 @@ class behat_local_mailwhistle_generator extends behat_generator_base {
             'tags' => [
                 'singular' => 'tag',
                 'datagenerator' => 'tag',
+                'required' => ['name'],
+                'switchids' => [],
+            ],
+            'tag assignments' => [
+                'singular' => 'tag assignment',
+                'datagenerator' => 'tag_assignment',
+                'required' => ['tag', 'user'],
+                'switchids' => ['user' => 'userid'],
+            ],
+            'templates' => [
+                'singular' => 'template',
+                'datagenerator' => 'template',
                 'required' => ['name'],
                 'switchids' => [],
             ],

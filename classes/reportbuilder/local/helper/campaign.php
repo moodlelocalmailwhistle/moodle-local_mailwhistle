@@ -18,8 +18,7 @@
  * Helper for formatting campaign fields
  *
  * @package   local_mailwhistle
- * @copyright 2026 Synergy Learning
- * @author    Davo Smith
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -37,9 +36,9 @@ class campaign {
      * @return string
      */
     public static function status(?string $status, \stdClass $row): string {
-        global $CFG;
-        require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
-        return local_mailwhistle_status_badge($status);
+        global $PAGE;
+        $renderer = $PAGE->get_renderer('local_mailwhistle');
+        return $renderer->status_badge((string) $status);
     }
 
     /**
@@ -65,10 +64,11 @@ class campaign {
         } else if ($row->status === \local_mailwhistle\manager\campaign_manager::STATUS_SENT) {
             $url = new \moodle_url('/local/mailwhistle/index.php', ['view' => $row->id, 'tab' => 'send']);
         }
+        $safe = format_string((string) $name, true, ['context' => \context_system::instance()]);
         if ($url) {
-            return \html_writer::link($url, $name);
+            return \html_writer::link($url, $safe);
         }
-        return $name;
+        return $safe;
     }
 
     /**

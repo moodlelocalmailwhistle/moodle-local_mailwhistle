@@ -26,7 +26,7 @@ use local_mailwhistle\manager\tag_manager;
  * become the campaign's tag-based audience rules.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class campaign_audience_form extends \moodleform {
@@ -60,10 +60,14 @@ class campaign_audience_form extends \moodleform {
         );
         $mform->setType('tagids', PARAM_INT);
         $mform->addElement(
-            'button',
+            'static',
             'manageaudiencetags',
-            get_string('audiencetags_managetags', 'local_mailwhistle'),
-            ['onclick' => 'window.location.href = "' . new \moodle_url('/local/mailwhistle/index.php?tab=audience') . '";']
+            '',
+            \html_writer::link(
+                new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'audience']),
+                get_string('audiencetags_managetags', 'local_mailwhistle'),
+                ['class' => 'btn btn-secondary']
+            )
         );
         $this->add_action_buttons(true, get_string('audiencetags_submit', 'local_mailwhistle'));
     }

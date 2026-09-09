@@ -22,7 +22,7 @@ namespace local_mailwhistle;
  * Listens for core Moodle events and keeps plugin tables consistent.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class observer {
@@ -37,6 +37,23 @@ class observer {
      */
     public static function user_deleted(\core\event\user_deleted $event): void {
         global $DB;
-        $DB->delete_records('local_mailwhistle_tag_assign', ['userid' => $event->objectid]);
+
+        $userid = (int) $event->objectid;
+
+        $DB->delete_records_select(
+            'local_mailwhistle_tracking',
+            'recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid = :userid)',
+            ['userid' => $userid]
+        );
+        $DB->delete_records_select(
+            'local_mailwhistle_sendlogs',
+            'recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid = :userid)',
+            ['userid' => $userid]
+        );
+        $DB->delete_records('local_mailwhistle_recipients', ['userid' => $userid]);
+        $DB->delete_records('local_mailwhistle_unsubscribes', ['userid' => $userid]);
+        $DB->delete_records('local_mailwhistle_tag_assign', ['userid' => $userid]);
+        $DB->set_field('local_mailwhistle_tag_assign', 'usermodified', 0, ['usermodified' => $userid]);
+        $DB->set_field('local_mailwhistle_tag', 'usermodified', 0, ['usermodified' => $userid]);
     }
 }

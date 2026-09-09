@@ -28,7 +28,7 @@ use local_mailwhistle\manager\campaign_manager;
  * repeatedly: send_campaign only touches 'pending' recipients.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class requeue_stuck_sends extends \core\task\scheduled_task {
@@ -63,7 +63,7 @@ class requeue_stuck_sends extends \core\task\scheduled_task {
         foreach ($ids as $campaignid) {
             $task = new send_campaign();
             $task->set_custom_data(['campaignid' => (int) $campaignid]);
-            \core\task\manager::queue_adhoc_task($task);
+            \core\task\manager::queue_adhoc_task($task, true);
         }
     }
 }

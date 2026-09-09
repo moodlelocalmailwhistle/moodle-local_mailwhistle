@@ -18,8 +18,7 @@
  * Report of campaigns
  *
  * @package   local_mailwhistle
- * @copyright 2026 Synergy Learning
- * @author    Davo Smith
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -69,6 +68,6 @@ class draft_campaigns extends system_report {
 
     #[\Override]
     protected function can_view(): bool {
-        return has_capability('local/mailwhistle:view', \context_system::instance());
+        return has_capability('local/mailwhistle:manage', \context_system::instance());
     }
 }
