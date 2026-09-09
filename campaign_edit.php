@@ -78,9 +78,6 @@ $PAGE->set_heading(get_string('pluginname', 'local_mailwhistle'));
 $PAGE->requires->css(new moodle_url('/local/mailwhistle/styles.css'));
 
 
-// TODO: This needs refactoring. Also, $_SERVER should not be in a Moodle plugin.
-// TODO: Inline functions should not be here
-
 /**
  * Build the URL for a given wizard step.
  *
