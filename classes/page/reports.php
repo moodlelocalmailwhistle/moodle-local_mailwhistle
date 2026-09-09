@@ -14,18 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_mailwhistle\page;
+
 /**
- * Local plugin "Mail Whistle" - Main page.
+ * Reports tab placeholder.
  *
  * @package   local_mailwhistle
  * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+class reports {
+    /**
+     * Render the coming-soon notice.
+     *
+     * @return string
+     */
+    public static function render(): string {
+        global $OUTPUT;
 
-require_once(__DIR__ . '/../../config.php');
-require_once($CFG->libdir . '/adminlib.php');
-
-$tab = optional_param('tab', 'send', PARAM_ALPHA);
-admin_externalpage_setup('local_mailwhistle_mailings', extraurlparams: ['tab' => $tab]);
-
-\local_mailwhistle\page\index::execute($tab);
+        return $OUTPUT->notification(
+            get_string('reports_placeholder', 'local_mailwhistle'),
+            \core\output\notification::NOTIFY_INFO
+        );
+    }
+}

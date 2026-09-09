@@ -60,6 +60,29 @@ class templates {
     }
 
     /**
+     * Extra URL params so pagination and the active action survive.
+     *
+     * @return array<string, int|string>
+     */
+    public static function url_params(): array {
+        $action = optional_param('action', 'list', PARAM_ALPHA);
+        $id = optional_param('id', 0, PARAM_INT);
+        $filter = optional_param('filter', template_manager::FILTER_ACTIVE, PARAM_ALPHA);
+        $params = [];
+        if ($action !== 'list') {
+            $params['action'] = $action;
+            if ($id > 0) {
+                $params['id'] = $id;
+            }
+            return $params;
+        }
+        if ($filter !== template_manager::FILTER_ACTIVE) {
+            $params['filter'] = $filter;
+        }
+        return $params;
+    }
+
+    /**
      * Render the template cards overview.
      *
      * @return string
