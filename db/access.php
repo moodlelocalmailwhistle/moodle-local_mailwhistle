@@ -20,7 +20,7 @@
  * Defines capabilities required for this plugin to function correctly.
  *
  * @package   local_mailwhistle
- * @copyright 2024 onwards MoodleDach project
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

@@ -23,7 +23,7 @@ namespace local_mailwhistle\builder;
  * live in {@see document}; email HTML lives in {@see html_renderer}.
  *
  * @package   local_mailwhistle
- * @copyright 2024 onwards MoodleDach project
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class schema {

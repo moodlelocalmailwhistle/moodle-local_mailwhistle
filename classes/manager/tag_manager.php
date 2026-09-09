@@ -26,7 +26,7 @@ namespace local_mailwhistle\manager;
  * {table} placeholders, no DB-specific literals).
  *
  * @package   local_mailwhistle
- * @copyright 2024 onwards MoodleDach project
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tag_manager {

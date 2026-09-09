@@ -54,6 +54,6 @@ People with commits in this repository so far (alphabetical):
 
 ## Copyright and license
 
-Copyright 2024 onwards MoodleDach project.
+Copyright 2026 onwards MoodleDach project.
 
 GNU GPL v3 or later. See [LICENSE](LICENSE).

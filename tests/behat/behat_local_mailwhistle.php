@@ -24,7 +24,7 @@ require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
  *
  * @package   local_mailwhistle
  * @category  test
- * @copyright 2024 onwards MoodleDach project
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class behat_local_mailwhistle extends behat_base {

@@ -26,7 +26,7 @@ use local_mailwhistle\manager\tag_manager;
  * Unit tests for the send_manager and the campaign send lifecycle.
  *
  * @package   local_mailwhistle
- * @copyright 2024 onwards MoodleDach project
+ * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\manager\send_manager
  */
