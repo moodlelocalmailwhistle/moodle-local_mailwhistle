@@ -1,0 +1,56 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_mailwhistle/template_picker
+
+    Campaign content-step template picker. GET form copies a template into the
+    body editor (not a write).
+
+    Context variables required for this template:
+    * hastemplates - False when there are no active templates.
+    * actionurl - campaign_edit.php URL.
+    * campaignid - Campaign id.
+    * options - Array of {id, name, selected}.
+
+    Example context (json):
+    {
+        "hastemplates": true,
+        "actionurl": "/local/mailwhistle/campaign_edit.php",
+        "campaignid": 1,
+        "options": [{"id": 2, "name": "Default", "selected": false}]
+    }
+}}
+{{#hastemplates}}
+<form method="get" action="{{actionurl}}"
+      class="local-mailwhistle-campaign-template-picker d-flex align-items-end mb-3">
+    <input type="hidden" name="campaignid" value="{{campaignid}}">
+    <input type="hidden" name="step" value="content">
+    <div class="me-2">
+        <label for="mw-campaign-templateid" class="d-block">
+            {{#str}}campaign_usetemplate, local_mailwhistle{{/str}}
+        </label>
+        <select name="templateid" id="mw-campaign-templateid">
+            <option value="">{{#str}}campaign_template_choose, local_mailwhistle{{/str}}</option>
+            {{#options}}
+                <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+            {{/options}}
+        </select>
+    </div>
+    <input type="submit" class="btn btn-secondary"
+           value="{{#str}}campaign_template_load, local_mailwhistle{{/str}}">
+</form>
+{{/hastemplates}}

@@ -23,7 +23,6 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
-require_once(__DIR__ . '/lib.php');
 require_once($CFG->libdir . '/tablelib.php');
 require_once($CFG->libdir . '/adminlib.php');
 require_once($CFG->libdir . '/formslib.php');
@@ -193,7 +192,7 @@ $PAGE->requires->css(new moodle_url('/local/mailwhistle/styles.css'));
 
 $templatescontent = null;
 if ($tab === 'templates') {
-    $templatescontent = local_mailwhistle_render_templates_page($templateaction, $templateid);
+    $templatescontent = \local_mailwhistle\page\templates::execute($templateaction, $templateid);
 }
 
 // Build the tab tree. Each tab links back to this page with its own tab param.
@@ -214,7 +213,7 @@ echo $OUTPUT->tabtree($tabs, $tab);
 switch ($tab) {
     case 'send':
         if ($viewid > 0) {
-            echo local_mailwhistle_render_view_mail($viewid);
+            echo $OUTPUT->render(new \local_mailwhistle\output\campaign_preview($viewid));
         } else {
             if (has_capability('local/mailwhistle:manage', $context)) {
                 echo $OUTPUT->render(new \local_mailwhistle\output\draft_campaigns());

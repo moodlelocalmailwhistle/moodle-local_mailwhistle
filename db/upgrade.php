@@ -181,8 +181,7 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
 
     if ($oldversion < 2026070110) {
         // Seed the bundled default email template on existing installs.
-        require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
-        local_mailwhistle_install_default_templates();
+        \local_mailwhistle\manager\template_manager::install_defaults();
 
         upgrade_plugin_savepoint(true, 2026070110, 'local', 'mailwhistle');
     }

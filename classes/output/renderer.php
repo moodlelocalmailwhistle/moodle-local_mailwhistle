@@ -14,22 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_mailwhistle\output;
+
 /**
- * Local plugin "Mail Whistle" - Install-time setup.
+ * Plugin renderer for Mail Whistle admin UI.
+ *
+ * Renderables implement templatable and map to templates/*.mustache.
+ * This class adds a few named helpers so callers do not construct
+ * tiny renderables themselves.
  *
  * @package   local_mailwhistle
  * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-/**
- * Runs once on a fresh installation, after install.xml tables are created.
- *
- * Seeds the bundled default email template so a newly installed site has one
- * ready to use out of the box.
- *
- * @return void
- */
-function xmldb_local_mailwhistle_install(): void {
-    \local_mailwhistle\manager\template_manager::install_defaults();
+class renderer extends \plugin_renderer_base {
+    /**
+     * Coloured campaign status badge.
+     *
+     * @param string $status One of: draft, ready, sent, sending, scheduled, failed.
+     * @return string Rendered badge HTML.
+     */
+    public function status_badge(string $status): string {
+        return $this->render(new status_badge($status));
+    }
 }

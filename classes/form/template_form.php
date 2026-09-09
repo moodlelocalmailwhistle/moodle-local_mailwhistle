@@ -118,7 +118,7 @@ class template_form extends \moodleform {
 
         if ($mode === 'builder') {
             $builderjson = trim((string) ($data['builderjson'] ?? ''));
-            $buildererrors = \local_mailwhistle_validate_builder_json($builderjson);
+            $buildererrors = \local_mailwhistle\builder\document::validate_json($builderjson);
             if (!empty($buildererrors)) {
                 $errors['editormode'] = reset($buildererrors);
             }

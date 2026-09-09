@@ -17,6 +17,7 @@
 namespace local_mailwhistle;
 
 use local_mailwhistle\manager\campaign_manager;
+use local_mailwhistle\output\campaign_preview;
 
 /**
  * Tests for the sent-campaign preview renderer.
@@ -24,9 +25,23 @@ use local_mailwhistle\manager\campaign_manager;
  * @package   local_mailwhistle
  * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers    ::local_mailwhistle_render_view_mail
+ * @covers    \local_mailwhistle\output\campaign_preview
  */
 final class view_mail_test extends \advanced_testcase {
+    /**
+     * Render a campaign preview through the plugin renderer.
+     *
+     * @param int $id Campaign id.
+     * @return string
+     */
+    private function render_preview(int $id): string {
+        global $PAGE;
+
+        $PAGE->set_context(\context_system::instance());
+        $renderer = $PAGE->get_renderer('local_mailwhistle');
+        return $renderer->render(new campaign_preview($id));
+    }
+
     /**
      * Sent campaigns render their real subject and body, not sample data.
      */
@@ -44,7 +59,7 @@ final class view_mail_test extends \advanced_testcase {
             'timesent' => time(),
         ]);
 
-        $html = local_mailwhistle_render_view_mail((int) $campaign->id);
+        $html = $this->render_preview((int) $campaign->id);
 
         $this->assertStringContainsString('Read our exciting news', $html);
         $this->assertStringContainsString('Some important information', $html);
@@ -66,11 +81,11 @@ final class view_mail_test extends \advanced_testcase {
             'status' => campaign_manager::STATUS_DRAFT,
         ]);
 
-        $drafthtml = local_mailwhistle_render_view_mail((int) $draft->id);
+        $drafthtml = $this->render_preview((int) $draft->id);
         $this->assertStringContainsString(get_string('mailnotfound', 'local_mailwhistle'), $drafthtml);
         $this->assertStringNotContainsString('Not yet sent', $drafthtml);
 
-        $missinghtml = local_mailwhistle_render_view_mail(999999);
+        $missinghtml = $this->render_preview(999999);
         $this->assertStringContainsString(get_string('mailnotfound', 'local_mailwhistle'), $missinghtml);
     }
 }

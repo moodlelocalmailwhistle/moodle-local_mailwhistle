@@ -150,8 +150,6 @@ if ($step === 'details') {
 
 // Step: content (subject + body).
 if ($step === 'content') {
-    require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
-
     // When a template is chosen in the picker below, its HTML prefills the body.
     $templateid = optional_param('templateid', 0, PARAM_INT);
 
@@ -173,7 +171,7 @@ if ($step === 'content') {
         $prefillsubject = (string) $campaign->subject;
         $prefillbody = (string) $campaign->bodyhtml;
         if ($templateid) {
-            $template = local_mailwhistle_get_template($templateid);
+            $template = \local_mailwhistle\manager\template_manager::get($templateid);
             if ($template) {
                 $prefillbody = (string) $template->bodyhtml;
                 if (trim($prefillsubject) === '') {
@@ -191,7 +189,7 @@ if ($step === 'content') {
     echo $OUTPUT->header();
     echo $OUTPUT->heading(get_string('editcampaign', 'local_mailwhistle'));
     echo $rendertabs('content');
-    echo local_mailwhistle_render_campaign_template_picker($baseurl, $campaignid, $templateid);
+    echo $OUTPUT->render(new \local_mailwhistle\output\template_picker($campaignid, $templateid));
     $mform->display();
     echo $OUTPUT->footer();
     die;

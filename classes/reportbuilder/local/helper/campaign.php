@@ -37,9 +37,9 @@ class campaign {
      * @return string
      */
     public static function status(?string $status, \stdClass $row): string {
-        global $CFG;
-        require_once($CFG->dirroot . '/local/mailwhistle/lib.php');
-        return local_mailwhistle_status_badge($status);
+        global $PAGE;
+        $renderer = $PAGE->get_renderer('local_mailwhistle');
+        return $renderer->status_badge((string) $status);
     }
 
     /**
