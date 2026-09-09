@@ -218,9 +218,7 @@ class templates {
      * @return string Never returns; redirects.
      */
     private static function archive(int $id): string {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            throw new \moodle_exception('invalidrequest');
-        }
+        \local_mailwhistle\helper::require_post();
         require_capability('local/mailwhistle:manage', \context_system::instance());
         require_sesskey();
 
@@ -244,9 +242,7 @@ class templates {
      * @return string Never returns; redirects.
      */
     private static function restore(int $id): string {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            throw new \moodle_exception('invalidrequest');
-        }
+        \local_mailwhistle\helper::require_post();
         require_capability('local/mailwhistle:manage', \context_system::instance());
         require_sesskey();
 
@@ -295,9 +291,7 @@ class templates {
 
         $confirmed = optional_param('confirm', 0, PARAM_BOOL);
         if ($confirmed) {
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                throw new \moodle_exception('invalidrequest');
-            }
+            \local_mailwhistle\helper::require_post();
             require_sesskey();
             template_manager::delete($id);
             redirect(

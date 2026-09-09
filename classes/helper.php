@@ -79,6 +79,20 @@ class helper {
     }
 
     /**
+     * Reject the request unless it was submitted as POST.
+     *
+     * Uses Moodle's data_submitted() so callers never read $_SERVER.
+     * Prefetchers and scanners must not trigger writes.
+     *
+     * @return void
+     */
+    public static function require_post(): void {
+        if (!data_submitted()) {
+            throw new \moodle_exception('invalidrequest');
+        }
+    }
+
+    /**
      * Log plugin activity event.
      *
      * Records an event in the Moodle event system for audit trails.

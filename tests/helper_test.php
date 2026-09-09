@@ -100,4 +100,34 @@ final class helper_test extends \advanced_testcase {
         $result = \local_mailwhistle\helper::process_user_data(99999);
         $this->assertFalse($result);
     }
+
+    /**
+     * Writes must be POST; an empty request is rejected.
+     */
+    public function test_require_post_rejects_get(): void {
+        $this->resetAfterTest();
+        $previous = $_POST;
+        $_POST = [];
+        try {
+            $this->expectException(\moodle_exception::class);
+            helper::require_post();
+        } finally {
+            $_POST = $previous;
+        }
+    }
+
+    /**
+     * A submitted POST body is accepted.
+     */
+    public function test_require_post_accepts_post(): void {
+        $this->resetAfterTest();
+        $previous = $_POST;
+        $_POST = ['sesskey' => 'test'];
+        try {
+            helper::require_post();
+        } finally {
+            $_POST = $previous;
+        }
+        $this->assertTrue(true);
+    }
 }

@@ -51,9 +51,7 @@ $action = optional_param('action', '', PARAM_ALPHA);
 $writeactions = ['applytag', 'createtag', 'removetagconfirm'];
 if ($tab === 'audience' && in_array($action, $writeactions, true)) {
     // Assert POST method — prefetchers/scanners must not trigger writes.
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        throw new \moodle_exception('invalidrequest');
-    }
+    \local_mailwhistle\helper::require_post();
     require_sesskey();
     require_capability('local/mailwhistle:managetags', $context);
 
@@ -135,9 +133,7 @@ if ($tab === 'resources') {
 // campaign ready -> sending atomically (only one caller wins), snapshots its
 // recipients, and queues the delivery adhoc task.
 if ($tab === 'send' && $action === 'sendnow') {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        throw new \moodle_exception('invalidrequest');
-    }
+    \local_mailwhistle\helper::require_post();
     require_sesskey();
     require_capability('local/mailwhistle:manage', $context);
 
