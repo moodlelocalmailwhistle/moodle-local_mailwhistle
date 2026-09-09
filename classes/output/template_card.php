@@ -27,7 +27,7 @@ use local_mailwhistle\manager\template_manager;
  * One template overview card.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2024 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class template_card implements renderable, templatable {

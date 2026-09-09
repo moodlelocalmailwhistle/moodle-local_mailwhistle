@@ -9,7 +9,9 @@ moodle-local_mailwhistle
 
 Moodle local plugin for sending newsletters / email campaigns to an audience of users. Moodle 4.5 LTS+.
 
-> Status: early development (`MATURITY_ALPHA`). The send engine and most tabs are placeholders; the data model, admin UI shell, and privacy provider are in place.
+This is a **MoodleDach project** (MoodleMoot DACH community). Copyright belongs to the project, not to any one person or company. See [Contributors](#contributors).
+
+> Status: early development (`MATURITY_ALPHA`).
 
 ## Install
 
@@ -39,6 +41,19 @@ Open at **Site administration → Mail Whistle**, or `/local/mailwhistle/index.p
 - Run tests: `php vendor/bin/phpunit local/mailwhistle/tests/`
 - Lint: `phpcs --standard=moodle .` (or `moodle-plugin-ci`)
 
-## License
+## Contributors
 
-GNU GPL v3 or later.
+Everyone who works on Mail Whistle is a MoodleDach project contributor. The full list is the
+[GitHub contributors graph](https://github.com/moodlelocalmailwhistle/moodle-local_mailwhistle/graphs/contributors).
+People with commits in this repository so far (alphabetical):
+
+- Amir Ahkami
+- Davo Smith
+- Luca Bösch
+- Luuk Verhoeven
+
+## Copyright and license
+
+Copyright 2024 onwards MoodleDach project.
+
+GNU GPL v3 or later. See [LICENSE](LICENSE).

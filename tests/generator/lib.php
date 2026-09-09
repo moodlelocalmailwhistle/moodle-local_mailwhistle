@@ -19,7 +19,7 @@
  *
  * @package   local_mailwhistle
  * @category  test
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2024 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class local_mailwhistle_generator extends \component_generator_base {

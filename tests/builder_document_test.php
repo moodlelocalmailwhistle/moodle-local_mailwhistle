@@ -25,7 +25,7 @@ use local_mailwhistle\builder\schema;
  * Tests for builder document validation and email HTML rendering.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2024 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\builder\document
  * @covers    \local_mailwhistle\builder\html_renderer

@@ -23,7 +23,7 @@ use local_mailwhistle\manager\placeholder_manager;
  *
  * @package   local_mailwhistle
  * @covers    \local_mailwhistle\manager\placeholder_manager
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2024 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class placeholder_manager_test extends \advanced_testcase {

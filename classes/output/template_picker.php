@@ -25,7 +25,7 @@ use local_mailwhistle\manager\template_manager;
  * "Use a template" picker shown above the campaign content step.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2024 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class template_picker implements renderable, templatable {

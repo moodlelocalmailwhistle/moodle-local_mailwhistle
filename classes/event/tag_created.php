@@ -23,7 +23,7 @@ namespace local_mailwhistle\event;
  * userid   = actor who created the tag (set by the triggering code).
  *
  * @package   local_mailwhistle
- * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
+ * @copyright 2024 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tag_created extends \core\event\base {
