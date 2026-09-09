@@ -43,13 +43,13 @@ Open at **Site administration → Mail Whistle**, or `/local/mailwhistle/index.p
 
 ## Contributors
 
-Everyone who works on Mail Whistle is a MoodleDach project contributor. The full list is the
-[GitHub contributors graph](https://github.com/moodlelocalmailwhistle/moodle-local_mailwhistle/graphs/contributors).
-People with commits in this repository so far (alphabetical):
+Everyone who works on Mail Whistle. 
 
+- Luca Bösch
 - Amir Ahkami
 - Davo Smith
-- Luca Bösch
+- Meret Racz
+- Júlia Verdaguer
 - Luuk Verhoeven
 
 ## Copyright and license
