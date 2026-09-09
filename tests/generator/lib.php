@@ -89,4 +89,58 @@ class local_mailwhistle_generator extends \component_generator_base {
 
         return $DB->get_record('local_mailwhistle_tag', ['id' => $id], '*', MUST_EXIST);
     }
+
+    /**
+     * Assign an existing tag to a user.
+     *
+     * Accepts either tagid, or tag (display name). userid is required.
+     *
+     * @param array|\stdClass $record Assignment fields.
+     * @return \stdClass Object with tagid and userid.
+     */
+    public function create_tag_assignment($record = []): \stdClass {
+        global $DB;
+
+        $record = (array) $record;
+        $tagid = (int) ($record['tagid'] ?? 0);
+        if ($tagid <= 0 && !empty($record['tag'])) {
+            $tagid = (int) $DB->get_field('local_mailwhistle_tag', 'id', ['name' => $record['tag']], MUST_EXIST);
+        }
+        $userid = (int) ($record['userid'] ?? 0);
+        if ($userid <= 0) {
+            throw new \coding_exception('create_tag_assignment requires userid');
+        }
+
+        \local_mailwhistle\manager\tag_manager::assign_tag($tagid, $userid);
+
+        return (object) ['tagid' => $tagid, 'userid' => $userid];
+    }
+
+    /**
+     * Create a reusable email template.
+     *
+     * @param array|\stdClass $record Template fields.
+     * @return \stdClass The created template record.
+     */
+    public function create_template($record = []): \stdClass {
+        global $DB;
+
+        $record = (array) $record;
+        $now = time();
+        $defaults = [
+            'name' => 'Test template',
+            'previewtext' => '',
+            'background' => '#ffffff',
+            'editormode' => 'html',
+            'builderjson' => '',
+            'bodyhtml' => '<p>Template body</p>',
+            'archived' => 0,
+            'timecreated' => $now,
+            'timemodified' => $now,
+        ];
+        $record = array_merge($defaults, $record);
+        $record['id'] = $DB->insert_record('local_mailwhistle_templates', (object) $record);
+
+        return (object) $record;
+    }
 }

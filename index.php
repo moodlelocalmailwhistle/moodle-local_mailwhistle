@@ -18,7 +18,7 @@
  * Local plugin "Mail Whistle" - Main page.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -123,6 +123,7 @@ if ($tab === 'audience' && in_array($action, $writeactions, true)) {
 // Handle processing the 'resources' form.
 $resourcesform = null;
 if ($tab === 'resources') {
+    require_capability('local/mailwhistle:manage', $context);
     $resourcesform = new local_mailwhistle\form\resources_form($PAGE->url);
     if ($resourcesform->process()) {
         redirect($PAGE->url);
@@ -148,7 +149,7 @@ if ($tab === 'send' && $action === 'sendnow') {
         \local_mailwhistle\manager\recipient_manager::snapshot_recipients($sendcampaignid);
         $task = new \local_mailwhistle\task\send_campaign();
         $task->set_custom_data(['campaignid' => $sendcampaignid]);
-        \core\task\manager::queue_adhoc_task($task);
+        \core\task\manager::queue_adhoc_task($task, true);
         redirect(
             $sendurl,
             get_string('sendqueued', 'local_mailwhistle'),

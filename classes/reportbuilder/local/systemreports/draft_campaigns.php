@@ -69,6 +69,6 @@ class draft_campaigns extends system_report {
 
     #[\Override]
     protected function can_view(): bool {
-        return has_capability('local/mailwhistle:view', \context_system::instance());
+        return has_capability('local/mailwhistle:manage', \context_system::instance());
     }
 }

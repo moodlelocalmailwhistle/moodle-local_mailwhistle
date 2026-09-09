@@ -20,7 +20,7 @@ namespace local_mailwhistle\form;
  * Template create/edit form.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class template_form extends \moodleform {
@@ -71,39 +71,12 @@ class template_form extends \moodleform {
                 'local-mailwhistle-builder-empty'
             ),
             'local-mailwhistle-builder',
-            [
-                'id' => $builderid,
-                'data-config' => json_encode($config),
-            ]
-        );
-        $builderhtml .= \html_writer::script(
-            "(function() {"
-                . "var root = document.getElementById('" . $builderid . "');"
-                . "if (!root) { return; }"
-                . "var readConfig = function() {"
-                . "try { return root.dataset.config ? JSON.parse(root.dataset.config) : {}; } catch (error) { return {}; }"
-                . "};"
-                . "var start = function() {"
-                . "if (window.localMailwhistleTemplateBuilder) {"
-                . "window.localMailwhistleTemplateBuilder.init(readConfig());"
-                . "}"
-                . "};"
-                . "if (window.localMailwhistleTemplateBuilder) { start(); return; }"
-                . "var script = document.createElement('script');"
-                . "script.src = M.cfg.wwwroot + '/local/mailwhistle/js/template_builder.js?v=2026070109';"
-                . "script.onload = start;"
-                . "document.head.appendChild(script);"
-                . "}());"
+            ['id' => $builderid]
         );
         $mform->addElement('html', $builderhtml);
-        $mform->addElement('html', \html_writer::script(
-            "(function() {"
-                . "var input = document.getElementById('id_background');"
-                . "if (!input) { return; }"
-                . "input.setAttribute('type', 'color');"
-                . "if (!/^#[0-9a-f]{6}$/i.test(input.value)) { input.value = '#ffffff'; }"
-                . "}());"
-        ));
+
+        global $PAGE;
+        $PAGE->requires->js_call_amd('local_mailwhistle/template_builder', 'init', [$config]);
 
         $editoroptions = [
             'maxfiles' => 0,

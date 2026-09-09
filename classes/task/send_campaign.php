@@ -53,8 +53,10 @@ class send_campaign extends \core\task\adhoc_task {
         }
 
         $batchsize = (int) get_config('local_mailwhistle', 'sendbatchsize');
-        if ($batchsize <= 0) {
+        if ($batchsize < 1) {
             $batchsize = 50;
+        } else if ($batchsize > 200) {
+            $batchsize = 200;
         }
 
         $pending = send_manager::process_campaign($campaignid, $batchsize);
@@ -63,7 +65,7 @@ class send_campaign extends \core\task\adhoc_task {
             // More recipients remain: queue another run.
             $next = new self();
             $next->set_custom_data(['campaignid' => $campaignid]);
-            \core\task\manager::queue_adhoc_task($next);
+            \core\task\manager::queue_adhoc_task($next, true);
         }
     }
 }

@@ -15,14 +15,16 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template local_mailwhistle/sent_mails
+    @template local_mailwhistle/sent_campaigns
 
-    Template to display the list of sent emails.
+    Previously sent campaigns report table.
 
     Context variables required for this template:
+    * table - Rendered report table HTML (already escaped by Report builder).
 
     Example context (json):
     {
+        "table": "<table></table>"
     }
 }}
 

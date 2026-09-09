@@ -65,10 +65,11 @@ class campaign {
         } else if ($row->status === \local_mailwhistle\manager\campaign_manager::STATUS_SENT) {
             $url = new \moodle_url('/local/mailwhistle/index.php', ['view' => $row->id, 'tab' => 'send']);
         }
+        $safe = format_string((string) $name, true, ['context' => \context_system::instance()]);
         if ($url) {
-            return \html_writer::link($url, $name);
+            return \html_writer::link($url, $safe);
         }
-        return $name;
+        return $safe;
     }
 
     /**

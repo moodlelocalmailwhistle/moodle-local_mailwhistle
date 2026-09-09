@@ -10,3 +10,5 @@ Feature: Using files as resources in mailwhistle
     And I navigate to "General > Mail Whistle > Campaigns" in site administration
     And I follow "Resources"
     And I upload "local/mailwhistle/tests/fixtures/image_640x480px.jpg" file to "Resources" filemanager
+    And I press "Save changes"
+    Then I should see "image_640x480px.jpg"

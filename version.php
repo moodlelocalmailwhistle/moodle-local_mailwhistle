@@ -18,15 +18,15 @@
  * Local plugin "Mail Whistle" - Version file.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_mailwhistle';
-$plugin->version = 2026070122;      // YYYYMMDDvv format.
-$plugin->release = '1.2.9';         // Semantic versioning.
+$plugin->version = 2026090900;      // YYYYMMDDxx format.
+$plugin->release = '1.2.10';        // Semantic versioning.
 $plugin->requires = 2024100700;     // Moodle 4.5 LTS minimum.
 $plugin->maturity = MATURITY_ALPHA; // Development stability level.
 $plugin->supported = [405, 502];    // Supported branch range: Moodle 4.5 to 5.2.

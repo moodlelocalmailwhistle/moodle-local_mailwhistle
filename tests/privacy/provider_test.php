@@ -26,7 +26,7 @@ use core_privacy\local\request\approved_contextlist;
  * correctly described, exported and deleted by the privacy API.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers    \local_mailwhistle\privacy\provider
  */

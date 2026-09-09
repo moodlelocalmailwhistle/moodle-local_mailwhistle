@@ -63,7 +63,7 @@ class requeue_stuck_sends extends \core\task\scheduled_task {
         foreach ($ids as $campaignid) {
             $task = new send_campaign();
             $task->set_custom_data(['campaignid' => (int) $campaignid]);
-            \core\task\manager::queue_adhoc_task($task);
+            \core\task\manager::queue_adhoc_task($task, true);
         }
     }
 }

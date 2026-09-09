@@ -23,7 +23,7 @@ namespace local_mailwhistle;
  * configuration management and data processing.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class helper {
@@ -127,15 +127,14 @@ class helper {
             $userid = $USER->id;
         }
 
-        // Only the NOT NULL columns without a schema default are set here; the
-        // remaining columns (status, sendengine, sendername, senderemail,
-        // timescheduled, timesent) take their db/install.xml DEFAULT values.
         $now = time();
         $record = new \stdClass();
         $record->name = $name;
         $record->subject = get_string('untitledcampaign', 'local_mailwhistle');
         $record->bodyhtml = null;
         $record->bodytext = null;
+        $record->sendername = '';
+        $record->senderemail = '';
         $record->createdby = $userid;
         $record->timecreated = $now;
         $record->timemodified = $now;

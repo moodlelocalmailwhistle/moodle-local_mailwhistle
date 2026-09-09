@@ -67,6 +67,11 @@ final class privacy_provider_test extends provider_testcase {
             $tablenames,
             'Metadata must declare local_mailwhistle_tag.'
         );
+        $this->assertContains(
+            'local_mailwhistle_sendlogs',
+            $tablenames,
+            'Metadata must declare local_mailwhistle_sendlogs.'
+        );
     }
 
     /**

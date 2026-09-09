@@ -15,14 +15,18 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template local_mailwhistle/sent_mails
+    @template local_mailwhistle/draft_campaigns
 
-    Template to display the list of sent emails.
+    Draft campaigns heading, create button, and report table.
 
     Context variables required for this template:
+    * button - HTML for the create-campaign button.
+    * table - Rendered report table HTML (already escaped by Report builder).
 
     Example context (json):
     {
+        "button": "<button>Create</button>",
+        "table": "<table></table>"
     }
 }}
 

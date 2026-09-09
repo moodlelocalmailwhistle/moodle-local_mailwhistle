@@ -21,3 +21,10 @@ Feature: An admin can view a list of previously sent campaigns
     And I should see "Second campaign" in the ".local-mailwhistle-sent-campaigns" "css_element"
     And I should see "Third campaign" in the ".local-mailwhistle-sent-campaigns" "css_element"
     And I should not see "Draft campaign" in the ".local-mailwhistle-sent-campaigns" "css_element"
+
+  Scenario: An admin can open a sent campaign preview
+    When I log in as "admin"
+    And I am on the Mail Whistle "send" tab
+    And I follow "First campaign"
+    Then I should see "Read our exciting news"
+    And I should see "Some important information"

@@ -60,10 +60,14 @@ class campaign_audience_form extends \moodleform {
         );
         $mform->setType('tagids', PARAM_INT);
         $mform->addElement(
-            'button',
+            'static',
             'manageaudiencetags',
-            get_string('audiencetags_managetags', 'local_mailwhistle'),
-            ['onclick' => 'window.location.href = "' . new \moodle_url('/local/mailwhistle/index.php?tab=audience') . '";']
+            '',
+            \html_writer::link(
+                new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'audience']),
+                get_string('audiencetags_managetags', 'local_mailwhistle'),
+                ['class' => 'btn btn-secondary']
+            )
         );
         $this->add_action_buttons(true, get_string('audiencetags_submit', 'local_mailwhistle'));
     }

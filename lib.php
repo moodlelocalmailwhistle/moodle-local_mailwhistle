@@ -20,102 +20,9 @@
  * This file contains hook implementations and callable functions for the plugin.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-/**
- * Plugin installation callback.
- *
- * Runs once during initial plugin installation.
- * Use this to set up initial data, database records, or configuration.
- *
- * @return void
- */
-function local_mailwhistle_install(): void {
-    // Add installation logic here if needed.
-}
-
-/**
- * Plugin upgrade callback.
- *
- * Runs when the plugin is upgraded to a new version.
- * Database schema changes should be handled in db/upgrade.php file.
- *
- * @param int $oldversion The previous plugin version code.
- * @return bool True if successful, false otherwise.
- */
-function local_mailwhistle_upgrade(int $oldversion): bool {
-    // Database upgrades are handled in db/upgrade.php.
-    // This function can handle non-database upgrade tasks if needed.
-    return true;
-}
-
-/**
- * Plugin uninstall callback.
- *
- * Runs when the plugin is being uninstalled.
- * Clean up plugin-specific data, files, and configuration.
- *
- * @return bool True if successful, false otherwise.
- */
-function local_mailwhistle_uninstall(): bool {
-    // Add cleanup logic here if needed.
-    // Note: Database tables are automatically dropped after this runs.
-    return true;
-}
-
-/**
- * Hook to extend the global site navigation.
- *
- * Adds navigation items to the main navigation menu.
- * Check user capabilities before adding sensitive menu items.
- *
- * @param global_navigation $navigation The global navigation object.
- * @return void
- */
-function local_mailwhistle_extend_navigation(global_navigation $navigation): void {
-    // Add plugin navigation nodes here when required, after a capability check.
-}
-
-/**
- * Hook to extend course-specific navigation.
- *
- * Adds course-related menu items when viewing a course.
- *
- * @param navigation_node $navigation The course navigation node.
- * @param stdClass $course The course object.
- * @return void
- */
-function local_mailwhistle_extend_navigation_course(navigation_node $navigation, stdClass $course): void {
-    // Add course-specific navigation items here if needed.
-}
-
-/**
- * Hook to extend user-specific navigation.
- *
- * Adds user profile menu items when viewing a user profile.
- *
- * @param navigation_node $navigation The user navigation node.
- * @param stdClass $user The user object.
- * @return void
- */
-function local_mailwhistle_extend_navigation_user(navigation_node $navigation, stdClass $user): void {
-    // Add user-specific navigation items here if needed.
-}
-
-/**
- * Hook called after every page is initialized.
- *
- * Use this to add global CSS, JavaScript, or make page modifications.
- * This hook runs very early in page initialization.
- *
- * @return void
- */
-function local_mailwhistle_page_init(): void {
-    global $PAGE;
-    // Add custom CSS or JavaScript requirements for plugin pages here when required.
-}
 
 /**
  * Maximum number of draft campaigns shown in the send-tab draft section.
@@ -223,13 +130,14 @@ function local_mailwhistle_render_draft_campaigns(): string {
  * Render the detail view for a single sent newsletter.
  *
  * Shows the metadata and a preview of the rendered newsletter body. Falls back
- * to a not-found notice and the list link when the id does not match a record.
+ * to a not-found notice and the list link when the id does not match a sent
+ * campaign.
  *
- * @param int $id The sample mail id to view.
+ * @param int $id The campaign id to view.
  * @return string Rendered HTML for the detail view.
  */
 function local_mailwhistle_render_view_mail(int $id): string {
-    $mail = local_mailwhistle_get_sample_sent_mail($id);
+    global $DB;
 
     $listurl = new moodle_url('/local/mailwhistle/index.php', ['tab' => 'send']);
     $backlink = html_writer::div(
@@ -237,129 +145,58 @@ function local_mailwhistle_render_view_mail(int $id): string {
         'local-mailwhistle-back mb-3'
     );
 
-    if ($mail === null) {
+    $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id]);
+    if (
+        !$campaign
+        || $campaign->status !== \local_mailwhistle\manager\campaign_manager::STATUS_SENT
+    ) {
         return $backlink . html_writer::div(
             get_string('mailnotfound', 'local_mailwhistle'),
             'alert alert-warning'
         );
     }
 
-    $output = $backlink;
-    $output .= html_writer::tag('h3', format_string($mail['subject']));
+    $systemcontext = \context_system::instance();
+    $recipientcount = $DB->count_records('local_mailwhistle_recipients', ['campaignid' => $id]);
+    $tagids = \local_mailwhistle\manager\audience_manager::get_campaign_tagids($id);
+    $tagnames = [];
+    foreach ($tagids as $tagid) {
+        $tagname = $DB->get_field('local_mailwhistle_tag', 'name', ['id' => $tagid]);
+        if ($tagname) {
+            $tagnames[] = format_string($tagname, true, ['context' => $systemcontext]);
+        }
+    }
+    $audiencelabel = $tagnames
+        ? implode(', ', $tagnames)
+        : get_string('audiencetags_none', 'local_mailwhistle');
+    $sentat = (int) $campaign->timesent > 0 ? (int) $campaign->timesent : (int) $campaign->timemodified;
 
-    // Metadata summary table.
+    $output = $backlink;
+    $output .= html_writer::tag('h3', format_string($campaign->subject, true, ['context' => $systemcontext]));
+
     $meta = new html_table();
     $meta->attributes['class'] = 'table generaltable w-auto local-mailwhistle-mailmeta mb-3';
     $meta->data = [
-        [get_string('col_audience', 'local_mailwhistle'), format_string($mail['audience'])],
-        [get_string('col_recipients', 'local_mailwhistle'), number_format($mail['recipients'])],
-        [get_string('col_sentby', 'local_mailwhistle'), format_string($mail['sentby'])],
-        [get_string('col_sentat', 'local_mailwhistle'), userdate($mail['sentat'])],
-        [get_string('col_status', 'local_mailwhistle'), local_mailwhistle_status_badge($mail['status'])],
+        [get_string('col_audience', 'local_mailwhistle'), $audiencelabel],
+        [get_string('col_recipients', 'local_mailwhistle'), number_format($recipientcount)],
+        [
+            get_string('col_sentby', 'local_mailwhistle'),
+            format_string($campaign->sendername, true, ['context' => $systemcontext]),
+        ],
+        [get_string('col_sentat', 'local_mailwhistle'), userdate($sentat)],
+        [get_string('col_status', 'local_mailwhistle'), local_mailwhistle_status_badge($campaign->status)],
     ];
     $output .= html_writer::table($meta);
 
-    // Newsletter body preview. Sample bodies are trusted plugin content, so the
-    // limited HTML is allowed through format_text() with no cleaning.
     $output .= html_writer::tag('h4', get_string('mailpreview', 'local_mailwhistle'));
-    $bodyhtml = format_text($mail['body'], FORMAT_HTML, ['noclean' => true]);
+    $bodyhtml = format_text(
+        (string) $campaign->bodyhtml,
+        FORMAT_HTML,
+        ['context' => $systemcontext]
+    );
     $output .= html_writer::div($bodyhtml, 'local-mailwhistle-mailbody card card-body');
 
     return $output;
-}
-
-/**
- * Provide sample sent-newsletter rows for the placeholder history table.
- *
- * Each row mirrors the shape expected from the future mailings table so the
- * rendering code does not need to change when real data is wired in.
- *
- * @return array List of sample sent mail records.
- */
-function local_mailwhistle_get_sample_sent_mails(): array {
-    // Fixed timestamps (UTC) keep the sample output stable across requests.
-    return [
-        [
-            'id' => 1,
-            'subject' => 'Welcome to the Autumn term',
-            'audience' => 'All enrolled students',
-            'recipients' => 1248,
-            'sentby' => 'Admin User',
-            'sentat' => 1725192000, // 2024-09-01 12:00 UTC.
-            'status' => 'sent',
-            'body' => '<h1>Welcome back!</h1>'
-                . '<p>Dear student, the Autumn term starts on <strong>2 September</strong>. '
-                . 'Your courses are now visible on your dashboard.</p>'
-                . '<p>We wish you a great term ahead.</p>'
-                . '<p>Kind regards,<br>The Mailwhistle Team</p>',
-        ],
-        [
-            'id' => 2,
-            'subject' => 'New course catalogue available',
-            'audience' => 'Active learners',
-            'recipients' => 873,
-            'sentby' => 'Marketing Team',
-            'sentat' => 1727784000, // 2024-10-01 12:00 UTC.
-            'status' => 'sent',
-            'body' => '<h1>Fresh courses, just for you</h1>'
-                . '<p>Our new catalogue is live. Explore over 40 new courses across '
-                . 'science, languages and the arts.</p>'
-                . '<p><a href="#">Browse the catalogue &raquo;</a></p>',
-        ],
-        [
-            'id' => 3,
-            'subject' => 'Reminder: assignment deadline this Friday',
-            'audience' => 'Biology 101 cohort',
-            'recipients' => 64,
-            'sentby' => 'Jane Teacher',
-            'sentat' => 1730462400, // 2024-11-01 12:00 UTC.
-            'status' => 'sending',
-            'body' => '<h1>Deadline approaching</h1>'
-                . '<p>This is a friendly reminder that your <strong>Cell Biology essay</strong> '
-                . 'is due this Friday at 23:59.</p>'
-                . '<p>Submit via the assignment activity in your course.</p>',
-        ],
-        [
-            'id' => 4,
-            'subject' => 'December newsletter (draft)',
-            'audience' => 'Newsletter subscribers',
-            'recipients' => 2105,
-            'sentby' => 'Marketing Team',
-            'sentat' => 1733054400, // 2024-12-01 12:00 UTC.
-            'status' => 'scheduled',
-            'body' => '<h1>What happened in December</h1>'
-                . '<p>A round-up of the month: new features, community highlights and '
-                . 'upcoming events for the new year.</p>',
-        ],
-        [
-            'id' => 5,
-            'subject' => 'Platform maintenance notice',
-            'audience' => 'All users',
-            'recipients' => 3490,
-            'sentby' => 'Admin User',
-            'sentat' => 1735732800, // 2025-01-01 12:00 UTC.
-            'status' => 'failed',
-            'body' => '<h1>Scheduled maintenance</h1>'
-                . '<p>The platform will be unavailable on Sunday between 02:00 and 04:00 UTC '
-                . 'for scheduled maintenance.</p>'
-                . '<p>We apologise for any inconvenience.</p>',
-        ],
-    ];
-}
-
-/**
- * Find a single sample sent-newsletter record by its id.
- *
- * @param int $id The sample mail id.
- * @return array|null The matching record, or null if not found.
- */
-function local_mailwhistle_get_sample_sent_mail(int $id): ?array {
-    foreach (local_mailwhistle_get_sample_sent_mails() as $row) {
-        if ((int) $row['id'] === $id) {
-            return $row;
-        }
-    }
-    return null;
 }
 
 /**
@@ -406,9 +243,12 @@ function local_mailwhistle_pluginfile(
     $forcedownload,
     array $options = []
 ): bool {
+    require_login();
+
     if ($context->contextlevel != CONTEXT_SYSTEM) {
         return false;
     }
+    require_capability('local/mailwhistle:view', $context);
     if ($filearea !== \local_mailwhistle\output\resources::FILEAREA) {
         return false;
     }
@@ -424,7 +264,9 @@ function local_mailwhistle_pluginfile(
         return false;
     }
 
-    send_stored_file($file, null, 0, $forcedownload);
+    $mimetype = $file->get_mimetype();
+    $safeinline = in_array($mimetype, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'], true);
+    send_stored_file($file, 0, 0, !$safeinline || $forcedownload, $options);
     return true;
 }
 
@@ -573,7 +415,9 @@ function local_mailwhistle_render_template_card(stdClass $template, bool $canman
     }
 
     $background = local_mailwhistle_normalise_template_background((string) ($template->background ?? ''));
-    $output = html_writer::start_div('local-mailwhistle-template-card');
+    $output = html_writer::start_div('local-mailwhistle-template-card', [
+        'data-template-name' => $template->name,
+    ]);
     $output .= html_writer::div(
         html_writer::div($previewhtml, 'local-mailwhistle-template-preview-canvas', [
             'style' => 'background:' . $background . ';',
@@ -629,6 +473,40 @@ function local_mailwhistle_render_template_card_meta(string $label, string $valu
 }
 
 /**
+ * Render a POST action as a dropdown item (mutating template actions).
+ *
+ * @param array $params Request parameters.
+ * @param string $label Button label.
+ * @return string Form HTML.
+ */
+function local_mailwhistle_template_post_action(array $params, string $label): string {
+    $html = html_writer::start_tag('form', [
+        'method' => 'post',
+        'action' => (new moodle_url('/local/mailwhistle/index.php'))->out(false),
+        'class' => 'm-0',
+    ]);
+    foreach ($params as $name => $value) {
+        $html .= html_writer::empty_tag('input', [
+            'type' => 'hidden',
+            'name' => $name,
+            'value' => $value,
+        ]);
+    }
+    $html .= html_writer::empty_tag('input', [
+        'type' => 'hidden',
+        'name' => 'sesskey',
+        'value' => sesskey(),
+    ]);
+    $html .= html_writer::tag('button', $label, [
+        'type' => 'submit',
+        'class' => 'dropdown-item',
+    ]);
+    $html .= html_writer::end_tag('form');
+
+    return $html;
+}
+
+/**
  * Render compact card actions.
  *
  * @param stdClass $template Template record.
@@ -663,26 +541,14 @@ function local_mailwhistle_render_template_card_actions(stdClass $template, mood
         );
 
         if (empty($template->archived)) {
-            $items[] = html_writer::link(
-                new moodle_url('/local/mailwhistle/index.php', [
-                    'tab' => 'templates',
-                    'action' => 'archive',
-                    'id' => $template->id,
-                    'sesskey' => sesskey(),
-                ]),
-                get_string('template_archive', 'local_mailwhistle'),
-                ['class' => 'dropdown-item']
+            $items[] = local_mailwhistle_template_post_action(
+                ['tab' => 'templates', 'action' => 'archive', 'id' => $template->id],
+                get_string('template_archive', 'local_mailwhistle')
             );
         } else {
-            $items[] = html_writer::link(
-                new moodle_url('/local/mailwhistle/index.php', [
-                    'tab' => 'templates',
-                    'action' => 'restore',
-                    'id' => $template->id,
-                    'sesskey' => sesskey(),
-                ]),
-                get_string('template_restore', 'local_mailwhistle'),
-                ['class' => 'dropdown-item']
+            $items[] = local_mailwhistle_template_post_action(
+                ['tab' => 'templates', 'action' => 'restore', 'id' => $template->id],
+                get_string('template_restore', 'local_mailwhistle')
             );
         }
 
@@ -908,6 +774,9 @@ function local_mailwhistle_export_template_action(int $id): void {
  * @return void
  */
 function local_mailwhistle_archive_template_action(int $id): void {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new moodle_exception('invalidrequest');
+    }
     require_capability('local/mailwhistle:manage', context_system::instance());
     require_sesskey();
 
@@ -931,6 +800,9 @@ function local_mailwhistle_archive_template_action(int $id): void {
  * @return void
  */
 function local_mailwhistle_restore_template_action(int $id): void {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new moodle_exception('invalidrequest');
+    }
     require_capability('local/mailwhistle:manage', context_system::instance());
     require_sesskey();
 
@@ -972,6 +844,9 @@ function local_mailwhistle_render_template_delete_confirmation(int $id): string 
 
     $confirmed = optional_param('confirm', 0, PARAM_BOOL);
     if ($confirmed) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            throw new moodle_exception('invalidrequest');
+        }
         require_sesskey();
         local_mailwhistle_delete_template($id);
         redirect(
@@ -1588,7 +1463,8 @@ function local_mailwhistle_builder_is_valid_url(string $url): bool {
         return true;
     }
 
-    return filter_var($url, FILTER_VALIDATE_URL) !== false;
+    $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+    return in_array($scheme, ['http', 'https'], true);
 }
 
 /**

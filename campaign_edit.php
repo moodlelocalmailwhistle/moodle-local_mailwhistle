@@ -22,7 +22,7 @@
  * be re-opened and edited until it is completed.
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -46,6 +46,9 @@ require_capability('local/mailwhistle:manage', $context);
 // empty draft and re-enter the wizard on it, so create and edit share one path.
 $campaignid = optional_param('campaignid', 0, PARAM_INT);
 if (empty($campaignid)) {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new \moodle_exception('invalidrequest');
+    }
     require_sesskey();
     $campaignid = \local_mailwhistle\helper::create_campaign('');
     redirect(new moodle_url('/local/mailwhistle/campaign_edit.php', [
@@ -246,14 +249,22 @@ if ($step === 'audience') {
 
 // Step: review (summary + mark complete).
 $action = optional_param('action', '', PARAM_ALPHA);
-if ($action === 'complete' && confirm_sesskey()) {
+if ($action === 'complete') {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new \moodle_exception('invalidrequest');
+    }
+    require_sesskey();
     campaign_manager::mark_complete($campaignid);
     $donemsg = get_string('editcampaign_completed', 'local_mailwhistle');
     redirect($returnurl, $donemsg, null, \core\output\notification::NOTIFY_SUCCESS);
 }
 
 // Send a test copy of the current draft to the logged-in user.
-if ($action === 'sendtest' && confirm_sesskey()) {
+if ($action === 'sendtest') {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new \moodle_exception('invalidrequest');
+    }
+    require_sesskey();
     $sent = \local_mailwhistle\manager\send_manager::send_test($campaignid, $USER);
     if ($sent) {
         $testmsg = get_string('testmail_sent', 'local_mailwhistle', s($USER->email));
@@ -276,12 +287,16 @@ echo $rendertabs('review');
 $summary = new html_table();
 $summary->attributes['class'] = 'generaltable table w-auto local-mailwhistle-review mb-3';
 $summary->data = [
-    [get_string('internalname', 'local_mailwhistle'), format_string($campaign->name)],
-    [get_string('subject', 'local_mailwhistle'), format_string($campaign->subject)],
-    [get_string('sendername', 'local_mailwhistle'), format_string($campaign->sendername)],
+    [get_string('internalname', 'local_mailwhistle'), format_string($campaign->name, true, ['context' => $context])],
+    [get_string('subject', 'local_mailwhistle'), format_string($campaign->subject, true, ['context' => $context])],
+    [get_string('sendername', 'local_mailwhistle'), format_string($campaign->sendername, true, ['context' => $context])],
     [get_string('senderemail', 'local_mailwhistle'), s($campaign->senderemail)],
     [get_string('audiencetags_label', 'local_mailwhistle'), count($tagids)],
-    [get_string('body', 'local_mailwhistle'), format_text((string) $campaign->bodyhtml, FORMAT_HTML, ['noclean' => true])],
+    [get_string('body', 'local_mailwhistle'), format_text(
+        (string) $campaign->bodyhtml,
+        FORMAT_HTML,
+        ['context' => $context]
+    )],
 ];
 echo html_writer::table($summary);
 
@@ -290,14 +305,14 @@ echo html_writer::start_tag('div', ['class' => 'd-flex gap-2']);
 // Test-mail: send a copy of the current draft to the logged-in user.
 $testurl = new moodle_url($baseurl, ['step' => 'review', 'action' => 'sendtest', 'sesskey' => sesskey()]);
 echo html_writer::div(
-    $OUTPUT->single_button($testurl, get_string('testmail_send', 'local_mailwhistle'), 'get'),
+    $OUTPUT->single_button($testurl, get_string('testmail_send', 'local_mailwhistle'), 'post'),
     'local-mailwhistle-testmail mb-3'
 );
 
 if ($iscomplete) {
     $completeurl = new moodle_url($baseurl, ['step' => 'review', 'action' => 'complete', 'sesskey' => sesskey()]);
     echo html_writer::div(
-        $OUTPUT->single_button($completeurl, get_string('editcampaign_markcomplete', 'local_mailwhistle'), 'get'),
+        $OUTPUT->single_button($completeurl, get_string('editcampaign_markcomplete', 'local_mailwhistle'), 'post'),
         'local-mailwhistle-complete mb-3'
     );
 } else {

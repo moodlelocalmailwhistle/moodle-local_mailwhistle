@@ -88,4 +88,67 @@ class behat_local_mailwhistle extends behat_base {
             );
         }
     }
+
+    /**
+     * Open a Mail Whistle admin tab.
+     *
+     * @When /^I am on the Mail Whistle "(?P<tab_string>(?:[^"]|\\")*)" tab$/
+     * @param string $tab Tab id (send, audience, templates, reports, resources).
+     * @return void
+     */
+    public function i_am_on_the_mail_whistle_tab(string $tab): void {
+        $url = new moodle_url('/local/mailwhistle/index.php', ['tab' => $tab]);
+        $this->execute('behat_general::i_visit', [$url]);
+    }
+
+    /**
+     * Assert that a user currently has the named audience tag.
+     *
+     * @Then /^user "(?P<username_string>(?:[^"]|\\")*)" should have tag "(?P<tag_string>(?:[^"]|\\")*)"$/
+     * @param string $username Moodle username.
+     * @param string $tag Tag display name.
+     * @return void
+     */
+    public function user_should_have_tag(string $username, string $tag): void {
+        global $DB;
+        $userid = (int) $DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
+        $tagid = (int) $DB->get_field('local_mailwhistle_tag', 'id', ['name' => $tag], MUST_EXIST);
+        $exists = $DB->record_exists('local_mailwhistle_tag_assign', [
+            'userid' => $userid,
+            'tagid' => $tagid,
+        ]);
+        if (!$exists) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                "User '$username' does not have tag '$tag'",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert that a user does not have the named audience tag.
+     *
+     * @Then /^user "(?P<username_string>(?:[^"]|\\")*)" should not have tag "(?P<tag_string>(?:[^"]|\\")*)"$/
+     * @param string $username Moodle username.
+     * @param string $tag Tag display name.
+     * @return void
+     */
+    public function user_should_not_have_tag(string $username, string $tag): void {
+        global $DB;
+        $userid = (int) $DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
+        $tagid = $DB->get_field('local_mailwhistle_tag', 'id', ['name' => $tag]);
+        if (!$tagid) {
+            return;
+        }
+        $exists = $DB->record_exists('local_mailwhistle_tag_assign', [
+            'userid' => $userid,
+            'tagid' => (int) $tagid,
+        ]);
+        if ($exists) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                "User '$username' still has tag '$tag'",
+                $this->getSession()
+            );
+        }
+    }
 }

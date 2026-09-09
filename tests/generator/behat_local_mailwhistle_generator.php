@@ -43,6 +43,18 @@ class behat_local_mailwhistle_generator extends behat_generator_base {
                 'required' => ['name'],
                 'switchids' => [],
             ],
+            'tag assignments' => [
+                'singular' => 'tag assignment',
+                'datagenerator' => 'tag_assignment',
+                'required' => ['tag', 'user'],
+                'switchids' => ['user' => 'userid'],
+            ],
+            'templates' => [
+                'singular' => 'template',
+                'datagenerator' => 'template',
+                'required' => ['name'],
+                'switchids' => [],
+            ],
         ];
     }
 }

@@ -18,7 +18,7 @@
  * Local plugin "Mail Whistle" - Language strings (English).
  *
  * @package   local_mailwhistle
- * @copyright 2024 Your Name/Organization
+ * @copyright 2024 Ldesign Media <developer@ldesignmedia.nl>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['campaign'] = 'Campaign';
 $string['campaigns'] = 'Campaigns';
 $string['pluginname']  = 'Mail Whistle';
-$string['plugindesc']  = 'A reusable boilerplate for creating Moodle local plugins on Moodle 5 LTS and above.';
+$string['plugindesc']  = 'Send email campaigns to tagged audiences of Moodle users.';
 
 // Settings page heading and description.
 $string['report:actions'] = 'Actions';
@@ -47,34 +47,11 @@ $string['report:timecreated'] = 'Time created';
 $string['setting_heading']      = 'Mail Whistle Settings';
 $string['setting_heading_desc']  = 'Configure the Mail Whistle plugin settings.';
 
-// Feature toggle setting (checkbox configuration).
-$string['enable']        = 'Enable Feature';
-$string['enable_desc']   = 'Enable or disable the main feature of this plugin.';
-
-// API key setting (text input configuration).
-$string['api_key']               = 'API Key';
-$string['api_key_desc']          = 'Enter your API key for external service integration.';
-
-// Select option setting (select menu configuration).
-$string['select_option']         = 'Select Option';
-$string['select_option_desc']    = 'Choose one of the available options.';
-$string['option1']               = 'Option 1';
-$string['option2']               = 'Option 2';
-$string['option3']               = 'Option 3';
-
-// Description setting (textarea configuration).
-$string['description']           = 'Description';
-$string['description_desc']      = 'Enter a description for this plugin configuration.';
-
 // Capability descriptions for role-based access control.
 $string['mailwhistle:view']        = 'View Mail Whistle plugin';
 $string['mailwhistle:manage']      = 'Manage Mail Whistle plugin';
 $string['mailwhistle:configure']   = 'Configure Mail Whistle plugin settings';
 $string['mailwhistle:managetags']  = 'Manage audience tags (create, assign, unassign)';
-
-// User-facing messages for operation feedback and error handling.
-$string['success_message']       = 'Operation completed successfully.';
-$string['error_message']         = 'An error occurred. Please try again.';
 
 // Event names.
 $string['event_data_created']    = 'Data record created';
@@ -151,7 +128,7 @@ $string['sendnow']                 = 'Send now';
 $string['sendqueued']              = 'Campaign queued for sending.';
 $string['sendnotready']            = 'This campaign is not ready to send.';
 $string['sendbatchsize']           = 'Send batch size';
-$string['sendbatchsize_desc']      = 'How many recipients each send task run delivers before re-queueing. Keep within your mail server limits.';
+$string['sendbatchsize_desc']      = 'How many recipients each send task run delivers before re-queueing (1–200). Keep within your mail server limits.';
 $string['task_requeue_stuck_sends'] = 'Resume stalled campaign sends';
 
 // Draft campaigns section (Option D2).
@@ -241,6 +218,12 @@ $string['privacy:metadata:local_mailwhistle_recipients:firstname'] = 'The recipi
 $string['privacy:metadata:local_mailwhistle_recipients:lastname'] = 'The recipient last name captured at send time.';
 $string['privacy:metadata:local_mailwhistle_recipients:status'] = 'The delivery status for the recipient.';
 $string['privacy:metadata:local_mailwhistle_recipients:timesent'] = 'The time the campaign was sent to the recipient.';
+$string['privacy:metadata:local_mailwhistle_sendlogs'] = 'Per-recipient send attempt logs for campaigns.';
+$string['privacy:metadata:local_mailwhistle_sendlogs:recipientid'] = 'The recipient the send log belongs to.';
+$string['privacy:metadata:local_mailwhistle_sendlogs:level'] = 'The log level (info or error).';
+$string['privacy:metadata:local_mailwhistle_sendlogs:message'] = 'The log message describing the send attempt.';
+$string['privacy:metadata:local_mailwhistle_sendlogs:timecreated'] = 'The time the send attempt was logged.';
+
 $string['privacy:metadata:local_mailwhistle_tracking'] = 'Open and click tracking events recorded for a recipient.';
 $string['privacy:metadata:local_mailwhistle_tracking:recipientid'] = 'The recipient the tracking event belongs to.';
 $string['privacy:metadata:local_mailwhistle_tracking:eventtype'] = 'The type of event (open or click).';

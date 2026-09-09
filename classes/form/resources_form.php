@@ -31,9 +31,13 @@ class resources_form extends \moodleform {
     /**
      * Define the resources selection form.
      */
-    protected function definition() {
+    protected function definition(): void {
         $mform = $this->_form;
-        $mform->addElement('filemanager', 'resources', get_string('resources', 'local_mailwhistle'));
+        $mform->addElement('filemanager', 'resources', get_string('resources', 'local_mailwhistle'), null, [
+            'subdirs' => 0,
+            'maxfiles' => 50,
+            'accepted_types' => ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
+        ]);
         $this->add_action_buttons();
     }
 
