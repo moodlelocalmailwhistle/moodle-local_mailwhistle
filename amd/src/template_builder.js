@@ -501,119 +501,152 @@ define([], function() {
         });
     };
 
-    var renderPreviewBlock = function(block) {
-        if (block.type === 'header') {
-            var headerPadding = getNumber(block.padding, 32, 8, 56);
-            var headerSize = getNumber(block.fontsize, 28, 16, 42);
-            return '<div style="padding:' + headerPadding + 'px 20px;text-align:' + escapeHtml(getAlign(block.align || 'center'))
-                + ';font-family:' + escapeHtml(getFontFamily(block.fontfamily))
-                + ';background:' + escapeHtml(block.background || '#1f4f82')
-                + ';color:' + escapeHtml(block.color || '#ffffff') + ';">'
-                + '<h2 style="margin:0 0 6px;font-size:' + headerSize + 'px;color:inherit;">'
-                + escapeHtml(block.title) + '</h2>'
-                + '<p style="margin:0;color:inherit;">' + escapeHtml(block.subtitle) + '</p></div>';
+    var escapeMultiline = function(value) {
+        return escapeHtml(value).replace(/\n/g, '<br>');
+    };
+
+    var previewPlaceholder = function(padding, innerPadding, background, message) {
+        return '<div style="margin:8px 20px ' + padding + 'px;padding:' + innerPadding
+            + 'px 16px;text-align:center;border:1px dashed #c8d0da;background:' + background
+            + ';color:#52616f;">' + escapeHtml(message) + '</div>';
+    };
+
+    var previewMedia = function(
+        block,
+        paddingDefault,
+        paddingMax,
+        widthDefault,
+        widthMax,
+        placeholderPadding,
+        placeholderBg,
+        placeholderKey
+    ) {
+        var padding = getNumber(block.padding, paddingDefault, 0, paddingMax);
+        var width = getNumber(block.width, widthDefault, 10, widthMax);
+        if (!block.url) {
+            return previewPlaceholder(padding, placeholderPadding, placeholderBg, getString(placeholderKey));
         }
-        if (block.type === 'text') {
-            var textPadding = getNumber(block.padding, 24, 8, 48);
-            var textSize = getNumber(block.fontsize, 16, 11, 28);
-            return '<div style="padding:' + textPadding + 'px 20px;font-family:' + escapeHtml(getFontFamily(block.fontfamily))
-                + ';font-size:' + textSize + 'px;line-height:1.55;text-align:' + escapeHtml(getAlign(block.align))
-                + ';color:' + escapeHtml(block.color || '#1f2933') + ';">'
-                + escapeHtml(block.content).replace(/\n/g, '<br>') + '</div>';
-        }
-        if (block.type === 'button') {
-            var buttonPadding = getNumber(block.padding, 24, 8, 48);
-            return '<div style="padding:8px 20px ' + buttonPadding + 'px;text-align:'
-                + escapeHtml(getAlign(block.align || 'center'))
-                + ';"><span style="display:inline-block;padding:10px 16px;'
-                + 'background:' + escapeHtml(block.background || '#1f4f82') + ';color:' + escapeHtml(block.color || '#ffffff')
-                + ';border-radius:4px;font-weight:bold;">' + escapeHtml(block.label) + '</span></div>';
-        }
-        if (block.type === 'image') {
-            var imagePadding = getNumber(block.padding, 24, 0, 48);
-            var imageWidth = getNumber(block.width, 100, 10, 100);
-            if (!block.url) {
-                return '<div style="margin:8px 20px ' + imagePadding
-                    + 'px;padding:42px 16px;text-align:center;border:1px dashed #c8d0da;'
-                    + 'background:#f3f5f8;color:#52616f;">' + escapeHtml(getString('imageplaceholder')) + '</div>';
-            }
-            return '<div style="padding:8px 20px ' + imagePadding + 'px;text-align:' + escapeHtml(getAlign(block.align || 'center'))
-                + ';"><img src="' + escapeHtml(block.url) + '" alt="'
-                + escapeHtml(block.alt) + '" style="display:inline-block;width:' + imageWidth
-                + '%;max-width:100%;height:auto;border:0;"></div>';
-        }
-        if (block.type === 'logo') {
-            var logoPadding = getNumber(block.padding, 18, 0, 40);
-            var logoWidth = getNumber(block.width, 35, 10, 60);
-            if (!block.url) {
-                return '<div style="margin:8px 20px ' + logoPadding
-                    + 'px;padding:22px 16px;text-align:center;border:1px dashed #c8d0da;'
-                    + 'background:#f8fafc;color:#52616f;">' + escapeHtml(getString('logoplaceholder')) + '</div>';
-            }
-            return '<div style="padding:8px 20px ' + logoPadding + 'px;text-align:' + escapeHtml(getAlign(block.align || 'center'))
-                + ';"><img src="' + escapeHtml(block.url) + '" alt="'
-                + escapeHtml(block.alt) + '" style="display:inline-block;width:' + logoWidth
-                + '%;max-width:100%;height:auto;border:0;"></div>';
-        }
-        if (block.type === 'highlight') {
-            var highlightPadding = getNumber(block.padding, 20, 8, 40);
-            var highlightSize = getNumber(block.fontsize, 16, 12, 24);
-            return '<div style="padding:8px 20px 20px;"><div style="padding:' + highlightPadding + 'px;border-left:5px solid '
-                + escapeHtml(block.bordercolor || '#1f4f82') + ';background:' + escapeHtml(block.background || '#f3f7fb')
-                + ';font-family:' + escapeHtml(getFontFamily(block.fontfamily))
-                + ';color:' + escapeHtml(block.color || '#1f2933') + ';">'
-                + '<strong style="display:block;margin-bottom:6px;font-size:' + highlightSize + 'px;">'
-                + escapeHtml(block.title) + '</strong>'
-                + '<div style="font-size:' + highlightSize + 'px;line-height:1.5;">'
-                + escapeHtml(block.content).replace(/\n/g, '<br>') + '</div>'
-                + '</div></div>';
-        }
-        if (block.type === 'social') {
-            var socialPadding = getNumber(block.padding, 20, 8, 40);
-            var links = [
-                [block.label1, block.url1],
-                [block.label2, block.url2],
-                [block.label3, block.url3]
-            ].filter(function(link) {
-                return link[0] || link[1];
-            }).map(function(link) {
-                return '<span style="display:inline-block;margin:0 8px 8px;"><a href="' + escapeHtml(link[1] || '#')
-                    + '" style="color:#1f4f82;text-decoration:underline;">'
-                    + escapeHtml(link[0] || link[1]) + '</a></span>';
-            }).join('');
-            return '<div style="padding:8px 20px ' + socialPadding + 'px;text-align:'
-                + escapeHtml(getAlign(block.align || 'center'))
-                + ';font-family:Arial,Helvetica,sans-serif;font-size:14px;">' + links + '</div>';
-        }
-        if (block.type === 'columns') {
-            var columnPadding = getNumber(block.padding, 20, 8, 40);
-            var columnSize = getNumber(block.fontsize, 15, 11, 22);
-            var columnStyle = 'padding:' + columnPadding + 'px;font-family:'
-                + escapeHtml(getFontFamily(block.fontfamily))
-                + ';font-size:' + columnSize + 'px;line-height:1.5;color:'
-                + escapeHtml(block.color || '#1f2933') + ';vertical-align:top;';
-            return '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:'
-                + escapeHtml(block.background || '#ffffff') + ';"><tr><td width="50%" style="' + columnStyle + '">'
-                + '<strong style="display:block;margin-bottom:6px;">' + escapeHtml(block.lefttitle) + '</strong>'
-                + escapeHtml(block.leftcontent).replace(/\n/g, '<br>') + '</td><td width="50%" style="' + columnStyle + '">'
-                + '<strong style="display:block;margin-bottom:6px;">' + escapeHtml(block.righttitle) + '</strong>'
-                + escapeHtml(block.rightcontent).replace(/\n/g, '<br>') + '</td></tr></table>';
-        }
-        if (block.type === 'divider') {
+        return '<div style="padding:8px 20px ' + padding + 'px;text-align:'
+            + escapeHtml(getAlign(block.align || 'center'))
+            + ';"><img src="' + escapeHtml(block.url) + '" alt="' + escapeHtml(block.alt)
+            + '" style="display:inline-block;width:' + width + '%;max-width:100%;height:auto;border:0;"></div>';
+    };
+
+    var previewHeader = function(block) {
+        var padding = getNumber(block.padding, 32, 8, 56);
+        var size = getNumber(block.fontsize, 28, 16, 42);
+        return '<div style="padding:' + padding + 'px 20px;text-align:'
+            + escapeHtml(getAlign(block.align || 'center'))
+            + ';font-family:' + escapeHtml(getFontFamily(block.fontfamily))
+            + ';background:' + escapeHtml(block.background || '#1f4f82')
+            + ';color:' + escapeHtml(block.color || '#ffffff') + ';">'
+            + '<h2 style="margin:0 0 6px;font-size:' + size + 'px;color:inherit;">'
+            + escapeHtml(block.title) + '</h2>'
+            + '<p style="margin:0;color:inherit;">' + escapeHtml(block.subtitle) + '</p></div>';
+    };
+
+    var previewText = function(block) {
+        var padding = getNumber(block.padding, 24, 8, 48);
+        var size = getNumber(block.fontsize, 16, 11, 28);
+        return '<div style="padding:' + padding + 'px 20px;font-family:'
+            + escapeHtml(getFontFamily(block.fontfamily))
+            + ';font-size:' + size + 'px;line-height:1.55;text-align:'
+            + escapeHtml(getAlign(block.align))
+            + ';color:' + escapeHtml(block.color || '#1f2933') + ';">'
+            + escapeMultiline(block.content) + '</div>';
+    };
+
+    var previewButton = function(block) {
+        var padding = getNumber(block.padding, 24, 8, 48);
+        return '<div style="padding:8px 20px ' + padding + 'px;text-align:'
+            + escapeHtml(getAlign(block.align || 'center'))
+            + ';"><span style="display:inline-block;padding:10px 16px;background:'
+            + escapeHtml(block.background || '#1f4f82') + ';color:'
+            + escapeHtml(block.color || '#ffffff')
+            + ';border-radius:4px;font-weight:bold;">' + escapeHtml(block.label) + '</span></div>';
+    };
+
+    var previewHighlight = function(block) {
+        var padding = getNumber(block.padding, 20, 8, 40);
+        var size = getNumber(block.fontsize, 16, 12, 24);
+        return '<div style="padding:8px 20px 20px;"><div style="padding:' + padding
+            + 'px;border-left:5px solid ' + escapeHtml(block.bordercolor || '#1f4f82')
+            + ';background:' + escapeHtml(block.background || '#f3f7fb')
+            + ';font-family:' + escapeHtml(getFontFamily(block.fontfamily))
+            + ';color:' + escapeHtml(block.color || '#1f2933') + ';">'
+            + '<strong style="display:block;margin-bottom:6px;font-size:' + size + 'px;">'
+            + escapeHtml(block.title) + '</strong>'
+            + '<div style="font-size:' + size + 'px;line-height:1.5;">'
+            + escapeMultiline(block.content) + '</div></div></div>';
+    };
+
+    var previewSocial = function(block) {
+        var padding = getNumber(block.padding, 20, 8, 40);
+        var links = [
+            [block.label1, block.url1],
+            [block.label2, block.url2],
+            [block.label3, block.url3]
+        ].filter(function(link) {
+            return link[0] || link[1];
+        }).map(function(link) {
+            return '<span style="display:inline-block;margin:0 8px 8px;"><a href="'
+                + escapeHtml(link[1] || '#') + '" style="color:#1f4f82;text-decoration:underline;">'
+                + escapeHtml(link[0] || link[1]) + '</a></span>';
+        }).join('');
+        return '<div style="padding:8px 20px ' + padding + 'px;text-align:'
+            + escapeHtml(getAlign(block.align || 'center'))
+            + ';font-family:Arial,Helvetica,sans-serif;font-size:14px;">' + links + '</div>';
+    };
+
+    var previewColumns = function(block) {
+        var padding = getNumber(block.padding, 20, 8, 40);
+        var size = getNumber(block.fontsize, 15, 11, 22);
+        var cellStyle = 'padding:' + padding + 'px;font-family:'
+            + escapeHtml(getFontFamily(block.fontfamily))
+            + ';font-size:' + size + 'px;line-height:1.5;color:'
+            + escapeHtml(block.color || '#1f2933') + ';vertical-align:top;';
+        return '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:'
+            + escapeHtml(block.background || '#ffffff') + ';"><tr><td width="50%" style="' + cellStyle + '">'
+            + '<strong style="display:block;margin-bottom:6px;">' + escapeHtml(block.lefttitle) + '</strong>'
+            + escapeMultiline(block.leftcontent) + '</td><td width="50%" style="' + cellStyle + '">'
+            + '<strong style="display:block;margin-bottom:6px;">' + escapeHtml(block.righttitle) + '</strong>'
+            + escapeMultiline(block.rightcontent) + '</td></tr></table>';
+    };
+
+    var previewFooter = function(block) {
+        var padding = getNumber(block.padding, 22, 8, 48);
+        var size = getNumber(block.fontsize, 13, 10, 18);
+        return '<div style="padding:' + padding + 'px 20px;text-align:'
+            + escapeHtml(getAlign(block.align || 'center'))
+            + ';font-family:' + escapeHtml(getFontFamily(block.fontfamily))
+            + ';background:' + escapeHtml(block.background || '#f3f5f8')
+            + ';color:' + escapeHtml(block.color || '#52616f')
+            + ';font-size:' + size + 'px;line-height:1.5;">'
+            + escapeMultiline(block.content) + '</div>';
+    };
+
+    var previewRenderers = {
+        header: previewHeader,
+        text: previewText,
+        button: previewButton,
+        image: function(block) {
+            return previewMedia(block, 24, 48, 100, 100, 42, '#f3f5f8', 'imageplaceholder');
+        },
+        logo: function(block) {
+            return previewMedia(block, 18, 40, 35, 60, 22, '#f8fafc', 'logoplaceholder');
+        },
+        highlight: previewHighlight,
+        social: previewSocial,
+        columns: previewColumns,
+        divider: function() {
             return '<div style="height:1px;margin:8px 20px;background:#d8dee6;"></div>';
-        }
-        if (block.type === 'footer') {
-            var footerPadding = getNumber(block.padding, 22, 8, 48);
-            var footerSize = getNumber(block.fontsize, 13, 10, 18);
-            return '<div style="padding:' + footerPadding + 'px 20px;text-align:'
-                + escapeHtml(getAlign(block.align || 'center'))
-                + ';font-family:' + escapeHtml(getFontFamily(block.fontfamily))
-                + ';background:' + escapeHtml(block.background || '#f3f5f8')
-                + ';color:' + escapeHtml(block.color || '#52616f')
-                + ';font-size:' + footerSize + 'px;line-height:1.5;">'
-                + escapeHtml(block.content).replace(/\n/g, '<br>') + '</div>';
-        }
-        return '';
+        },
+        footer: previewFooter
+    };
+
+    var renderPreviewBlock = function(block) {
+        var renderer = previewRenderers[block.type];
+        return renderer ? renderer(block) : '';
     };
 
     var renderPreview = function() {
