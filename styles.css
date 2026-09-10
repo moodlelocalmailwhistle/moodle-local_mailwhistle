@@ -720,3 +720,10 @@
     color: #6c757d;
     font-size: 0.875rem;
 }
+
+.local-mailwhistle-resource-thumb {
+    max-width: 12rem;
+    max-height: 6rem;
+    height: auto;
+    border: 1px solid var(--mail-whistle-border-color);
+}

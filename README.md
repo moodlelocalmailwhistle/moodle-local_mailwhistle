@@ -86,7 +86,7 @@ A sent-campaign preview on the Campaigns tab links through to the same report.
 
 ### Resources
 
-Upload images (JPEG, PNG, GIF, WebP) for use in templates and campaign HTML. Files are stored in the system context file area for the plugin.
+Upload images (JPEG, PNG, GIF, WebP) for use in templates and campaign HTML. Files are stored in the system context file area for the plugin. Image URLs from the Resources tab are public `pluginfile.php` links so they load in inboxes without a Moodle login. Non-image files still require login.
 
 ## Install
 
