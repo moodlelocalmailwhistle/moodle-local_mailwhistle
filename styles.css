@@ -687,3 +687,36 @@
 .local-mailwhistle-drafts {
     margin-bottom: 1.5rem;
 }
+
+/**
+ * Campaign report stats cards.
+ */
+.local-mailwhistle-report-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0 1.5rem;
+}
+
+.local-mailwhistle-report-stat {
+    background-color: var(--mail-whistle-bg-card);
+    border: 1px solid var(--mail-whistle-border-color);
+    box-shadow: var(--mail-whistle-shadow);
+}
+
+.local-mailwhistle-report-stat-value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--mail-whistle-text-color);
+}
+
+.local-mailwhistle-report-stat-label {
+    color: var(--mail-whistle-text-color);
+}
+
+.local-mailwhistle-report-stat-detail {
+    margin-top: 0.25rem;
+    color: #6c757d;
+    font-size: 0.875rem;
+}

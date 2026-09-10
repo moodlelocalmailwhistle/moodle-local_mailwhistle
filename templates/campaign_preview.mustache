@@ -21,6 +21,7 @@
 
     Context variables required for this template:
     * listurl - Back-to-list URL.
+    * reporturl - Reports detail URL.
     * notfound - True when the campaign is missing or not sent.
     * subject - format_string() subject.
     * metarows - Array of {label, value} where value is already escaped/HTML.
@@ -29,6 +30,7 @@
     Example context (json):
     {
         "listurl": "/local/mailwhistle/index.php?tab=send",
+        "reporturl": "/local/mailwhistle/index.php?tab=reports&campaignid=1",
         "notfound": false,
         "subject": "News",
         "metarows": [{"label": "Audience", "value": "Staff"}],
@@ -43,6 +45,11 @@
 {{/notfound}}
 {{^notfound}}
     <h3>{{{subject}}}</h3>
+    {{#reporturl}}
+        <p class="mb-3">
+            <a href="{{reporturl}}">{{#str}}report_view, local_mailwhistle{{/str}}</a>
+        </p>
+    {{/reporturl}}
     <table class="table generaltable w-auto local-mailwhistle-mailmeta mb-3">
         <tbody>
             {{#metarows}}

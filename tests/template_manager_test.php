@@ -16,6 +16,7 @@
 
 namespace local_mailwhistle;
 
+use local_mailwhistle\manager\campaign_manager;
 use local_mailwhistle\manager\template_manager;
 
 /**
@@ -99,5 +100,35 @@ final class template_manager_test extends \advanced_testcase {
         ];
         $this->assertSame(['firstname', 'lastname'], template_manager::extract_placeholders($template));
         $this->assertSame([], template_manager::extract_placeholders(null));
+    }
+
+    /**
+     * Usage is true only when a non-draft campaign stores the template id.
+     */
+    public function test_has_usage_for_non_draft_campaigns(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $generator = self::getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $template = $generator->create_template(['name' => 'Used layout']);
+        $tid = (int) $template->id;
+
+        $this->assertFalse(template_manager::has_usage($tid));
+
+        $draft = $generator->create_campaign([
+            'status' => campaign_manager::STATUS_DRAFT,
+            'templateid' => $tid,
+        ]);
+        $this->assertFalse(template_manager::has_usage($tid));
+        $this->assertNotEmpty($draft->id);
+
+        $generator->create_campaign([
+            'status' => campaign_manager::STATUS_SENT,
+            'templateid' => $tid,
+        ]);
+        $this->assertTrue(template_manager::has_usage($tid));
+
+        $this->expectException(\moodle_exception::class);
+        template_manager::delete($tid);
     }
 }

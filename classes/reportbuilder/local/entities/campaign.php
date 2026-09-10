@@ -28,6 +28,7 @@ use core\lang_string;
 use core_reportbuilder\local\entities\base;
 use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
+use local_mailwhistle\manager\tracking_manager;
 use local_mailwhistle\reportbuilder\local\helper\campaign as campaignhelper;
 
 /**
@@ -119,7 +120,8 @@ class campaign extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
-            ->add_field("'TODO'", 'audience');
+            ->add_field("$campaignsalias.id")
+            ->add_callback([campaignhelper::class, 'audience']);
 
         // Recipients.
         $columns[] = (new column(
@@ -128,10 +130,62 @@ class campaign extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_INTEGER)
             ->add_field(
                 "(SELECT COUNT(1) FROM {local_mailwhistle_recipients} WHERE campaignid = {$campaignsalias}.id)",
-                'recipents'
+                'recipients'
             );
+
+        // Template.
+        $columns[] = (new column(
+            'template',
+            new lang_string('report:template', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_field("$campaignsalias.templateid")
+            ->add_callback([campaignhelper::class, 'templatename']);
+
+        // Unique opens.
+        $open = tracking_manager::EVENT_OPEN;
+        $columns[] = (new column(
+            'uniqueopens',
+            new lang_string('report:opens', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_INTEGER)
+            ->add_field(
+                "(SELECT COUNT(1) FROM {local_mailwhistle_tracking}
+                  WHERE campaignid = {$campaignsalias}.id AND eventtype = '{$open}')",
+                'uniqueopens'
+            );
+
+        // Unique clickers.
+        $click = tracking_manager::EVENT_CLICK;
+        $columns[] = (new column(
+            'uniqueclicks',
+            new lang_string('report:clicks', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_INTEGER)
+            ->add_field(
+                "(SELECT COUNT(DISTINCT recipientid) FROM {local_mailwhistle_tracking}
+                  WHERE campaignid = {$campaignsalias}.id AND eventtype = '{$click}')",
+                'uniqueclicks'
+            );
+
+        // Name linked to the Reports detail page.
+        $columns[] = (new column(
+            'reportnamelink',
+            new lang_string('report:name', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_field("$campaignsalias.name")
+            ->add_field("$campaignsalias.id")
+            ->add_callback([campaignhelper::class, 'reportnamelink']);
 
         // Sent by.
         $columns[] = (new column(

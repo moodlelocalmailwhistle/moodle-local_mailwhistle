@@ -180,4 +180,24 @@ class campaign_manager {
             'timemodified' => time(),
         ]);
     }
+
+    /**
+     * Record the template last loaded into a campaign.
+     *
+     * Pass 0 to clear the stored template id. The body is not rewritten here;
+     * this is only the usage pointer used by reports and delete protection.
+     *
+     * @param int $campaignid The campaign to update.
+     * @param int $templateid Template id, or 0 to clear.
+     * @return void
+     */
+    public static function set_templateid(int $campaignid, int $templateid): void {
+        global $DB;
+
+        $DB->update_record('local_mailwhistle_campaigns', (object) [
+            'id' => $campaignid,
+            'templateid' => $templateid > 0 ? $templateid : null,
+            'timemodified' => time(),
+        ]);
+    }
 }

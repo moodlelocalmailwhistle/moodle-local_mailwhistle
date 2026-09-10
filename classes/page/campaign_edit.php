@@ -208,15 +208,21 @@ class campaign_edit {
                 'bodyhtml' => $bodyhtml,
                 'bodytext' => html_to_text($bodyhtml),
             ]);
+            $postedtemplateid = (int) ($data->templateid ?? 0);
+            if ($postedtemplateid > 0) {
+                campaign_manager::set_templateid((int) $campaign->id, $postedtemplateid);
+            }
             redirect(self::step_url($baseurl, self::next_step('content')));
         }
 
         $prefillsubject = (string) $campaign->subject;
         $prefillbody = (string) $campaign->bodyhtml;
+        $prefilltemplateid = (int) ($campaign->templateid ?? 0);
         if ($templateid) {
             $template = template_manager::get($templateid);
             if ($template) {
                 $prefillbody = (string) $template->bodyhtml;
+                $prefilltemplateid = $templateid;
                 if (trim($prefillsubject) === '') {
                     $prefillsubject = (string) $template->name;
                 }
@@ -224,6 +230,7 @@ class campaign_edit {
         }
         $mform->set_data([
             'campaignid' => $campaign->id,
+            'templateid' => $prefilltemplateid,
             'subject' => $prefillsubject,
             'body' => ['text' => $prefillbody, 'format' => FORMAT_HTML],
         ]);

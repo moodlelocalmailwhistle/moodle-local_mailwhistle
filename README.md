@@ -26,6 +26,7 @@ Moodle already has messaging, but it is built for notifications, not campaigns. 
 - sending a test copy to yourself before the real send
 - delivering in batches through Moodle messaging (so it respects each user's mail settings)
 - recording opens and clicks without requiring a Moodle session in the inbox
+- seeing who a campaign (and which template) was sent to, with open and click counts
 
 Open it at **Site administration → Mail Whistle**, or `/local/mailwhistle/index.php`.
 
@@ -39,7 +40,7 @@ Open it at **Site administration → Mail Whistle**, or `/local/mailwhistle/inde
 | Test mail to the current user | Working |
 | Open / click tracking | Working |
 | Image resources for templates | Working |
-| Reports and analytics | Coming soon |
+| Reports and analytics | Working |
 
 ### Campaigns
 
@@ -76,6 +77,12 @@ Load a template into a campaign from the content step. Placeholders such as `{{f
 - Live sends rewrite `http(s)` links through `click.php` and append a 1×1 open pixel (`pixel.php`). Tokens are HMAC-signed; click tokens are bound to the target URL (no open redirect).
 - Opens are stored once per recipient; clicks once per distinct link.
 - Batch size is configurable (**Site administration → Mail Whistle → Settings**, default 50). A scheduled task resumes stalled sends.
+
+### Reports
+
+The Reports tab lists sent and in-progress campaigns with audience tags, the template that was loaded (when one was used), recipient count, unique opens, and unique clicks. Open a campaign to see the snapshotted roster: name, email, send status, whether that person opened or clicked, and any send error. Opens are stored once per recipient; clicks once per person (unique clickers). Campaigns sent before this version have no stored template id.
+
+A sent-campaign preview on the Campaigns tab links through to the same report.
 
 ### Resources
 

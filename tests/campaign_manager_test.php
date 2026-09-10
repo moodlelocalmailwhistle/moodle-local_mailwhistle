@@ -144,4 +144,21 @@ final class campaign_manager_test extends \advanced_testcase {
         $this->expectException(\moodle_exception::class);
         campaign_manager::mark_complete($id);
     }
+
+    /**
+     * set_templateid stores a template id and clears it when passed 0.
+     */
+    public function test_set_templateid(): void {
+        $this->resetAfterTest();
+        global $DB;
+
+        $id = $this->create_campaign();
+        campaign_manager::set_templateid($id, 7);
+        $row = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id], '*', MUST_EXIST);
+        $this->assertSame(7, (int) $row->templateid);
+
+        campaign_manager::set_templateid($id, 0);
+        $row = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id], '*', MUST_EXIST);
+        $this->assertEmpty($row->templateid);
+    }
 }
