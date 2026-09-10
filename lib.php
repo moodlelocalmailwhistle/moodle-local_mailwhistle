@@ -46,29 +46,36 @@ function local_mailwhistle_pluginfile(
     $forcedownload,
     array $options = []
 ): bool {
-    require_login();
-
     if ($context->contextlevel != CONTEXT_SYSTEM) {
         return false;
     }
-    require_capability('local/mailwhistle:view', $context);
     if ($filearea !== \local_mailwhistle\output\resources::FILEAREA) {
         return false;
     }
+    $itemid = (int) array_shift($args);
     $filename = array_pop($args);
     if ($args) {
-        $filepath = '/' . implode('/', $args);
+        $filepath = '/' . implode('/', $args) . '/';
     } else {
         $filepath = '/';
     }
 
     $fs = get_file_storage();
-    if (!$file = $fs->get_file($context->id, 'local_mailwhistle', $filearea, 0, $filepath, $filename)) {
+    $file = $fs->get_file($context->id, 'local_mailwhistle', $filearea, $itemid, $filepath, $filename);
+    if (!$file || $file->is_directory()) {
         return false;
     }
 
-    $mimetype = $file->get_mimetype();
-    $safeinline = in_array($mimetype, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'], true);
-    send_stored_file($file, 0, 0, !$safeinline || $forcedownload, $options);
+    // JPEG/PNG/GIF/WebP in this file area are meant for newsletters, so email
+    // clients must fetch them with no Moodle session.
+    if (\local_mailwhistle\output\resources::is_public_image($file)) {
+        \core\session\manager::write_close();
+        send_stored_file($file, DAYSECS, 0, false, $options);
+        return true;
+    }
+
+    require_login();
+    require_capability('local/mailwhistle:view', $context);
+    send_stored_file($file, 0, 0, true, $options);
     return true;
 }

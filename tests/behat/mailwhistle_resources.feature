@@ -12,3 +12,5 @@ Feature: Using files as resources in mailwhistle
     And I upload "local/mailwhistle/tests/fixtures/image_640x480px.jpg" file to "Resources" filemanager
     And I press "Save changes"
     Then I should see "image_640x480px.jpg"
+    And I should see "Image URLs for templates"
+    And I should see "pluginfile.php"

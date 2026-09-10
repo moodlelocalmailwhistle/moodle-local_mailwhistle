@@ -167,6 +167,8 @@ $string['privacy:metadata:local_mailwhistle_campaigns:timecreated'] = 'The time 
 
 $string['settings'] = 'Settings';
 $string['resources'] = 'Resources';
+$string['resources_publicurls'] = 'Image URLs for templates';
+$string['resources_publicurls_desc'] = 'Paste these URLs into a template image or logo block. Email clients can load them without a Moodle login.';
 
 // Audience tab strings.
 

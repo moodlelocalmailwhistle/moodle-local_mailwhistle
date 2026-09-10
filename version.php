@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_mailwhistle';
-$plugin->version = 2026091000;      // YYYYMMDDxx format.
-$plugin->release = '1.3.0';         // Semantic versioning.
+$plugin->version = 2026091001;      // YYYYMMDDxx format.
+$plugin->release = '1.3.1';         // Semantic versioning.
 $plugin->requires = 2024100700;     // Moodle 4.5 LTS minimum.
 $plugin->maturity = MATURITY_ALPHA; // Development stability level.
 $plugin->supported = [405, 502];    // Supported branch range: Moodle 4.5 to 5.2.

@@ -38,6 +38,16 @@ class resources implements renderable, templatable {
     public const FILEAREA = 'resources';
 
     /**
+     * Image MIME types that may be embedded in outgoing mail.
+     */
+    public const PUBLIC_IMAGE_TYPES = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+    ];
+
+    /**
      * The constructor.
      *
      * @param \local_mailwhistle\form\resources_form $form The form.
@@ -64,17 +74,51 @@ class resources implements renderable, templatable {
         );
         $ret = [];
         foreach ($files as $file) {
+            if ($file->is_directory() || !self::is_public_image($file)) {
+                continue;
+            }
             $filename = $file->get_filename();
-            $ret[$filename] = \moodle_url::make_pluginfile_url(
-                $file->get_contextid(),
-                $file->get_component(),
-                $file->get_filearea(),
-                $file->get_itemid(),
-                $file->get_filepath(),
-                $filename
-            );
+            $ret[$filename] = self::public_url($file);
         }
         return $ret;
+    }
+
+    /**
+     * Whether this stored file can be fetched by an email client with no login.
+     *
+     * @param \stored_file $file File from the plugin file area.
+     * @return bool
+     */
+    public static function is_public_image(\stored_file $file): bool {
+        if ($file->is_directory()) {
+            return false;
+        }
+        if ($file->get_component() !== 'local_mailwhistle') {
+            return false;
+        }
+        if ($file->get_filearea() !== self::FILEAREA) {
+            return false;
+        }
+        return in_array($file->get_mimetype(), self::PUBLIC_IMAGE_TYPES, true);
+    }
+
+    /**
+     * Absolute pluginfile URL for a resource image (no user token).
+     *
+     * @param \stored_file $file File from the resources area.
+     * @return \moodle_url
+     */
+    public static function public_url(\stored_file $file): \moodle_url {
+        return \moodle_url::make_pluginfile_url(
+            $file->get_contextid(),
+            $file->get_component(),
+            $file->get_filearea(),
+            $file->get_itemid(),
+            $file->get_filepath(),
+            $file->get_filename(),
+            false,
+            false
+        );
     }
 
     /**
@@ -84,6 +128,17 @@ class resources implements renderable, templatable {
      * @return array Template context.
      */
     public function export_for_template(renderer_base $output) {
-        return ['form' => $this->form->render()];
+        $files = [];
+        foreach (self::get_available_files() as $filename => $url) {
+            $files[] = [
+                'filename' => $filename,
+                'url' => $url->out(false),
+            ];
+        }
+        return [
+            'form' => $this->form->render(),
+            'hasfiles' => !empty($files),
+            'files' => $files,
+        ];
     }
 }
