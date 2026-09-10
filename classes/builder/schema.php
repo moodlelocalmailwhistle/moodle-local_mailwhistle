@@ -242,6 +242,9 @@ class schema {
             'empty' => get_string('template_builder_empty', 'local_mailwhistle'),
             'imageplaceholder' => get_string('template_builder_image_placeholder', 'local_mailwhistle'),
             'logoplaceholder' => get_string('template_builder_logo_placeholder', 'local_mailwhistle'),
+            'chooseimage' => get_string('template_builder_chooseimage', 'local_mailwhistle'),
+            'chooseimageempty' => get_string('template_builder_chooseimageempty', 'local_mailwhistle'),
+            'uploadimages' => get_string('template_builder_uploadimages', 'local_mailwhistle'),
         ];
     }
 }

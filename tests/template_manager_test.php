@@ -65,6 +65,32 @@ final class template_manager_test extends \advanced_testcase {
     }
 
     /**
+     * Builder image URLs are written into the stored HTML body.
+     */
+    public function test_create_builder_template_keeps_image_url(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $url = 'https://example.com/pluginfile.php/1/local_mailwhistle/resources/0/hero.jpg';
+        $id = template_manager::create((object) [
+            'name' => 'With image',
+            'previewtext' => '',
+            'background' => '#ffffff',
+            'editormode' => 'builder',
+            'builderjson' => json_encode([
+                'blocks' => [
+                    ['type' => 'image', 'url' => $url, 'alt' => 'Hero'],
+                ],
+            ]),
+            'bodyhtml_editor' => ['text' => '', 'format' => FORMAT_HTML],
+        ]);
+        $template = template_manager::get($id);
+        $this->assertNotNull($template);
+        $this->assertStringContainsString('hero.jpg', (string) $template->bodyhtml);
+        $this->assertStringContainsString('local_mailwhistle/resources', (string) $template->bodyhtml);
+    }
+
+    /**
      * Import skips invalid JSON and duplicate names.
      */
     public function test_import_json_skips_invalid_and_duplicates(): void {

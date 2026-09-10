@@ -62,7 +62,7 @@ The campaign is sent to everyone tagged with **any** of the selected tags.
 
 ### Templates
 
-Reusable layouts for the content step. HTML mode for a pasted body, or **Builder mode** for drag-and-drop blocks (header, logo, text, button, image, highlight, two columns, social links, divider, footer). Templates can be previewed, archived, restored, exported as JSON, and deleted when unused.
+Reusable layouts for the content step. HTML mode for a pasted body, or **Builder mode** for drag-and-drop blocks (header, logo, text, button, image, highlight, two columns, social links, divider, footer). Image and logo blocks pick a file uploaded on the Resources tab. Templates can be previewed, archived, restored, exported as JSON, and deleted when unused.
 
 ![Email templates overview with card previews](docs/screenshots/04-templates.png)
 
@@ -86,7 +86,7 @@ A sent-campaign preview on the Campaigns tab links through to the same report.
 
 ### Resources
 
-Upload images (JPEG, PNG, GIF, WebP) for use in templates and campaign HTML. Files are stored in the system context file area for the plugin. Image URLs from the Resources tab are public `pluginfile.php` links so they load in inboxes without a Moodle login. Non-image files still require login.
+Upload images (JPEG, PNG, GIF, WebP) on the Resources tab, then choose them from **Uploaded image** on an Image or Logo block. You can still paste a URL for an external image. Resource files are public `pluginfile.php` links so they load in inboxes without a Moodle login. Non-image files still require login.
 
 ## Install
 
