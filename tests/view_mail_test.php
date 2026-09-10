@@ -64,6 +64,8 @@ final class view_mail_test extends \advanced_testcase {
         $this->assertStringContainsString('Read our exciting news', $html);
         $this->assertStringContainsString('Some important information', $html);
         $this->assertStringContainsString('Admin User', $html);
+        $this->assertStringContainsString(get_string('report_view', 'local_mailwhistle'), $html);
+        $this->assertStringContainsString('tab=reports', $html);
         $this->assertStringNotContainsString('Welcome to the Autumn term', $html);
     }
 

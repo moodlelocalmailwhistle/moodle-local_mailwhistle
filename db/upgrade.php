@@ -198,5 +198,20 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026070111, 'local', 'mailwhistle');
     }
 
+    if ($oldversion < 2026091000) {
+        $table = new xmldb_table('local_mailwhistle_campaigns');
+        $field = new xmldb_field('templateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'status');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $index = new xmldb_index('templateid', XMLDB_INDEX_NOTUNIQUE, ['templateid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026091000, 'local', 'mailwhistle');
+    }
+
     return true;
 }

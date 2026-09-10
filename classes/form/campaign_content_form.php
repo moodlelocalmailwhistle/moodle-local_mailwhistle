@@ -39,6 +39,9 @@ class campaign_content_form extends \moodleform {
         $mform->addElement('hidden', 'campaignid');
         $mform->setType('campaignid', PARAM_INT);
 
+        $mform->addElement('hidden', 'templateid');
+        $mform->setType('templateid', PARAM_INT);
+
         $mform->addElement('text', 'subject', get_string('subject', 'local_mailwhistle'), ['maxlength' => 255, 'size' => 50]);
         $mform->setType('subject', PARAM_TEXT);
         $mform->addRule('subject', get_string('required'), 'required', null, 'client');

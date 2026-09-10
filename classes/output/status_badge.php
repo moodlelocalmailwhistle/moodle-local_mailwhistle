@@ -53,6 +53,7 @@ class status_badge implements renderable, templatable {
             'sent' => 'badge bg-success text-white',
             'sending' => 'badge bg-info text-white',
             'scheduled' => 'badge bg-secondary text-white',
+            'pending' => 'badge bg-secondary text-white',
             'failed' => 'badge bg-danger text-white',
         ];
 

@@ -125,20 +125,14 @@ class template_manager {
     public static function has_usage(int $id): bool {
         global $DB;
 
-        $checks = [
-            'local_email_campaigns' => 'templateid',
-        ];
-
-        foreach ($checks as $table => $field) {
-            if ($DB->get_manager()->table_exists(new \xmldb_table($table))) {
-                $columns = $DB->get_columns($table);
-                if (array_key_exists($field, $columns) && $DB->record_exists($table, [$field => $id])) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return $DB->record_exists_select(
+            'local_mailwhistle_campaigns',
+            'templateid = :templateid AND status <> :draft',
+            [
+                'templateid' => $id,
+                'draft' => campaign_manager::STATUS_DRAFT,
+            ]
+        );
     }
 
     /**

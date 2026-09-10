@@ -89,6 +89,8 @@ class index {
         $params = ['tab' => $tab];
         if ($tab === 'templates') {
             $params += templates::url_params();
+        } else if ($tab === 'reports') {
+            $params += reports::url_params();
         }
 
         $PAGE->set_url(new \moodle_url('/local/mailwhistle/index.php', $params));

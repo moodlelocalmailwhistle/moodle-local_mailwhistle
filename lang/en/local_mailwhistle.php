@@ -37,12 +37,15 @@ $string['plugindesc']  = 'Send email campaigns to tagged audiences of Moodle use
 // Settings page heading and description.
 $string['report:actions'] = 'Actions';
 $string['report:audience'] = 'Audience';
+$string['report:clicks'] = 'Unique clicks';
 $string['report:name'] = 'Name';
+$string['report:opens'] = 'Unique opens';
 $string['report:recipients'] = 'Recipients';
 $string['report:sentat'] = 'Sent at';
 $string['report:sentby'] = 'Sent by';
 $string['report:status'] = 'Status';
 $string['report:subject'] = 'Subject';
+$string['report:template'] = 'Template';
 $string['report:timecreated'] = 'Time created';
 $string['setting_heading']      = 'Mail Whistle Settings';
 $string['setting_heading_desc']  = 'Configure the Mail Whistle plugin settings.';
@@ -75,6 +78,7 @@ $string['status_draft']         = 'Draft';
 $string['status_sent']          = 'Sent';
 $string['status_sending']       = 'Sending';
 $string['status_scheduled']     = 'Scheduled';
+$string['status_pending']       = 'Pending';
 $string['status_failed']        = 'Failed';
 $string['nosentmails']          = 'No newsletters have been sent yet.';
 
@@ -83,9 +87,25 @@ $string['backtolist']           = 'Back to sent newsletters';
 $string['mailnotfound']         = 'The requested newsletter could not be found.';
 $string['mailpreview']          = 'Newsletter preview';
 
-// Placeholder messages for tabs not yet implemented.
-$string['templates_placeholder']    = 'Template management is coming soon.';
-$string['reports_placeholder']      = 'Reporting and analytics are coming soon.';
+// Reports tab.
+$string['reports_heading']          = 'Campaign reports';
+$string['report_view']              = 'View report';
+$string['report_back']              = 'Back to reports';
+$string['report_recipients']        = 'Who was sent this campaign';
+$string['stat_recipients']          = 'Recipients';
+$string['stat_sent']                = 'Sent';
+$string['stat_failedcount']         = '{$a} failed';
+$string['stat_uniqueopens']         = 'Unique opens';
+$string['stat_uniqueclicks']        = 'Unique clicks';
+$string['stat_openrate']            = '{$a}% open rate';
+$string['stat_clickrate']           = '{$a}% click rate';
+$string['col_opened']               = 'Opened';
+$string['col_clicked']              = 'Clicked';
+$string['col_error']                = 'Error';
+$string['col_template']             = 'Template';
+$string['notemplaterecorded']       = 'No template recorded';
+$string['unknowntemplate']          = 'Unknown template';
+$string['campaignsusingtemplate']   = 'Campaigns using {$a}';
 
 // Campaign creation.
 $string['createcampaign']          = 'Create a campaign';

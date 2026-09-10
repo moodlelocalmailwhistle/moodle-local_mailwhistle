@@ -76,9 +76,14 @@ class campaign_preview implements renderable, templatable {
             ? implode(', ', $tagnames)
             : get_string('audiencetags_none', 'local_mailwhistle');
         $sentat = (int) $campaign->timesent > 0 ? (int) $campaign->timesent : (int) $campaign->timemodified;
+        $reporturl = new \moodle_url('/local/mailwhistle/index.php', [
+            'tab' => 'reports',
+            'campaignid' => $this->id,
+        ]);
 
         return [
             'listurl' => $listurl->out(false),
+            'reporturl' => $reporturl->out(false),
             'notfound' => false,
             'subject' => format_string($campaign->subject, true, ['context' => $systemcontext]),
             'metarows' => [

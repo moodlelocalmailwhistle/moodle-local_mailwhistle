@@ -65,6 +65,7 @@ class local_mailwhistle_generator extends \component_generator_base {
             'timemodified' => $now,
             'timescheduled' => 0,
             'timesent' => 0,
+            'templateid' => null,
         ];
         $record = array_merge($defaults, $record);
         $this->campaignnum++;
@@ -140,6 +141,47 @@ class local_mailwhistle_generator extends \component_generator_base {
         ];
         $record = array_merge($defaults, $record);
         $record['id'] = $DB->insert_record('local_mailwhistle_templates', (object) $record);
+
+        return (object) $record;
+    }
+
+    /**
+     * Create a campaign recipient snapshot row.
+     *
+     * Accepts campaign (name) or campaignid, and optional user/userid.
+     *
+     * @param array|\stdClass $record Recipient fields.
+     * @return \stdClass The created recipient record.
+     */
+    public function create_recipient($record = []): \stdClass {
+        global $DB;
+
+        $record = (array) $record;
+        if (empty($record['campaignid']) && !empty($record['campaign'])) {
+            $record['campaignid'] = (int) $DB->get_field(
+                'local_mailwhistle_campaigns',
+                'id',
+                ['name' => $record['campaign']],
+                MUST_EXIST
+            );
+        }
+        unset($record['campaign'], $record['user']);
+
+        $now = time();
+        $defaults = [
+            'campaignid' => 0,
+            'userid' => 0,
+            'email' => 'recipient@example.com',
+            'firstname' => 'Test',
+            'lastname' => 'Recipient',
+            'status' => 'sent',
+            'attempts' => 1,
+            'timesent' => $now,
+            'timemodified' => $now,
+            'error' => null,
+        ];
+        $record = array_merge($defaults, $record);
+        $record['id'] = $DB->insert_record('local_mailwhistle_recipients', (object) $record);
 
         return (object) $record;
     }

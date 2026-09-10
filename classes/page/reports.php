@@ -16,8 +16,11 @@
 
 namespace local_mailwhistle\page;
 
+use local_mailwhistle\output\campaign_report;
+use local_mailwhistle\output\reports_overview;
+
 /**
- * Reports tab placeholder.
+ * Reports tab: campaign analytics and recipient roster.
  *
  * @package   local_mailwhistle
  * @copyright 2026 onwards MoodleDach project
@@ -25,16 +28,36 @@ namespace local_mailwhistle\page;
  */
 class reports {
     /**
-     * Render the coming-soon notice.
+     * Extra URL params so list filters and the detail id survive.
+     *
+     * @return array<string, int>
+     */
+    public static function url_params(): array {
+        $campaignid = optional_param('campaignid', 0, PARAM_INT);
+        $templateid = optional_param('templateid', 0, PARAM_INT);
+        $params = [];
+        if ($campaignid > 0) {
+            $params['campaignid'] = $campaignid;
+        } else if ($templateid > 0) {
+            $params['templateid'] = $templateid;
+        }
+        return $params;
+    }
+
+    /**
+     * Render the campaign list or a single campaign report.
      *
      * @return string
      */
     public static function render(): string {
         global $OUTPUT;
 
-        return $OUTPUT->notification(
-            get_string('reports_placeholder', 'local_mailwhistle'),
-            \core\output\notification::NOTIFY_INFO
-        );
+        $campaignid = optional_param('campaignid', 0, PARAM_INT);
+        if ($campaignid > 0) {
+            return $OUTPUT->render(new campaign_report($campaignid));
+        }
+
+        $templateid = optional_param('templateid', 0, PARAM_INT);
+        return $OUTPUT->render(new reports_overview($templateid));
     }
 }
