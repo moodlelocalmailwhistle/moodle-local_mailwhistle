@@ -151,4 +151,76 @@ class behat_local_mailwhistle extends behat_base {
             );
         }
     }
+
+    /**
+     * Assert an image inside a CSS region uses a Mail Whistle pluginfile URL.
+     *
+     * @Then /^the image in "(?P<selector_string>(?:[^"]|\\")*)" should use a Mail Whistle resource URL$/
+     * @param string $selector CSS selector for the region that contains the image.
+     * @return void
+     */
+    public function the_image_should_use_a_resource_url(string $selector): void {
+        $src = $this->get_preview_image_src($selector);
+        if (!str_contains($src, 'pluginfile.php') || !str_contains($src, 'local_mailwhistle')) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                "Image src is not a Mail Whistle pluginfile URL: $src",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Fetch the template preview image with no session cookie.
+     *
+     * @Then /^the preview image should load without a Moodle login$/
+     * @return void
+     */
+    public function the_preview_image_should_load_without_login(): void {
+        $src = $this->get_preview_image_src('.local-mailwhistle-email-preview');
+        if (!preg_match('#^https?://#', $src)) {
+            $src = $this->locate_path($src);
+        }
+
+        $client = new \curl();
+        $client->setopt([
+            'CURLOPT_FOLLOWLOCATION' => 0,
+            'CURLOPT_TIMEOUT' => 10,
+        ]);
+        $body = $client->get($src);
+        $info = $client->get_info();
+        $httpcode = (int) ($info['http_code'] ?? 0);
+        $contenttype = (string) ($info['content_type'] ?? '');
+
+        if ($httpcode !== 200 || $body === '' || $body === false) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                "Public image fetch failed: HTTP $httpcode from $src",
+                $this->getSession()
+            );
+        }
+        if (!str_contains(strtolower($contenttype), 'image/')) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                "Expected image content-type, got '$contenttype' from $src",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Read the first image src from a CSS region.
+     *
+     * @param string $selector CSS selector for the region.
+     * @return string Image src attribute.
+     */
+    protected function get_preview_image_src(string $selector): string {
+        $node = $this->find('css', $selector);
+        $img = $node->find('css', 'img');
+        if (!$img) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                "No image found in $selector",
+                $this->getSession()
+            );
+        }
+
+        return trim((string) $img->getAttribute('src'));
+    }
 }

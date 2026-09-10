@@ -168,7 +168,7 @@ $string['privacy:metadata:local_mailwhistle_campaigns:timecreated'] = 'The time 
 $string['settings'] = 'Settings';
 $string['resources'] = 'Resources';
 $string['resources_publicurls'] = 'Image URLs for templates';
-$string['resources_publicurls_desc'] = 'Paste these URLs into a template image or logo block. Email clients can load them without a Moodle login.';
+$string['resources_publicurls_desc'] = 'In builder mode, pick a file from Uploaded image on an Image or Logo block. In HTML mode, paste a URL below. Email clients can load these without a Moodle login.';
 
 // Audience tab strings.
 
@@ -345,6 +345,9 @@ $string['template_builder_button_default'] = 'Learn more';
 $string['template_builder_loading'] = 'Template builder is loading. If this message stays visible, purge Moodle caches and reload the page.';
 $string['template_builder_image_placeholder'] = 'Image placeholder';
 $string['template_builder_logo_placeholder'] = 'Logo placeholder';
+$string['template_builder_chooseimage'] = 'Uploaded image';
+$string['template_builder_chooseimageempty'] = 'Choose an image';
+$string['template_builder_uploadimages'] = 'Upload images on the Resources tab, then choose one here.';
 
 // Campaign: use an email template for the content.
 $string['campaign_usetemplate'] = 'Use a template';
