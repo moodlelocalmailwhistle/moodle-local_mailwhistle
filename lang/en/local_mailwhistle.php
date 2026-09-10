@@ -169,6 +169,14 @@ $string['settings'] = 'Settings';
 $string['resources'] = 'Resources';
 $string['resources_publicurls'] = 'Image URLs for templates';
 $string['resources_publicurls_desc'] = 'In builder mode, pick a file from Uploaded image on an Image or Logo block. In HTML mode, paste a URL below. Email clients can load these without a Moodle login.';
+$string['resources_attachments'] = 'Files for email attachments';
+$string['resources_attachments_desc'] = 'PDFs and other documents can be attached to a campaign on the content step. They are sent with the email, not as public URLs.';
+
+$string['campaign_attachments'] = 'Attachments';
+$string['campaign_attachments_help'] = 'Choose files uploaded on the Resources tab. They are sent as email attachments (for example a PDF). Images can still be embedded in the HTML body.';
+$string['campaign_attachments_none'] = 'None';
+$string['campaign_attachments_empty'] = 'Upload a PDF or other document on the Resources tab, then choose it here.';
+$string['campaign_attachments_invalid'] = 'One or more selected attachments are not available.';
 
 // Audience tab strings.
 

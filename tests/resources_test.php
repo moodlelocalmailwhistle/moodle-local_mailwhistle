@@ -73,6 +73,27 @@ final class resources_test extends \advanced_testcase {
     }
 
     /**
+     * Non-image resources are listed for attachments, not as public image URLs.
+     */
+    public function test_all_files_includes_documents(): void {
+        $this->resetAfterTest();
+        $this->create_resource('logo.jpg', file_get_contents(__DIR__ . '/fixtures/image_640x480px.jpg'));
+        $this->create_resource('handbook.pdf', file_get_contents(__DIR__ . '/fixtures/handbook.pdf'));
+
+        $all = resources::get_all_files();
+        $this->assertArrayHasKey('logo.jpg', $all);
+        $this->assertArrayHasKey('handbook.pdf', $all);
+
+        $images = resources::get_available_files();
+        $this->assertArrayHasKey('logo.jpg', $images);
+        $this->assertArrayNotHasKey('handbook.pdf', $images);
+
+        $picked = resources::get_files_by_filenames(['handbook.pdf', 'missing.doc']);
+        $this->assertCount(1, $picked);
+        $this->assertSame('handbook.pdf', $picked['handbook.pdf']->get_filename());
+    }
+
+    /**
      * Uploaded images appear in the copyable URL list.
      */
     public function test_available_files_lists_public_urls(): void {

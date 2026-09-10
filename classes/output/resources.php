@@ -38,6 +38,11 @@ class resources implements renderable, templatable {
     public const FILEAREA = 'resources';
 
     /**
+     * Temporary zip of multiple campaign attachments.
+     */
+    public const ZIP_FILEAREA = 'attachmentzips';
+
+    /**
      * Image MIME types that may be embedded in outgoing mail.
      */
     public const PUBLIC_IMAGE_TYPES = [
@@ -45,6 +50,15 @@ class resources implements renderable, templatable {
         'image/png',
         'image/gif',
         'image/webp',
+    ];
+
+    /**
+     * File picker types: images for templates, documents for email attachments.
+     */
+    public const ACCEPTED_TYPES = [
+        '.jpg', '.jpeg', '.png', '.gif', '.webp',
+        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+        '.odt', '.ods', '.odp', '.txt', '.csv', '.zip',
     ];
 
     /**
@@ -59,11 +73,11 @@ class resources implements renderable, templatable {
     }
 
     /**
-     * Get a list of available resources.
+     * All non-directory files in the resources area, keyed by filename.
      *
-     * @return string[] $filename => $url
+     * @return \stored_file[] $filename => $file
      */
-    public static function get_available_files(): array {
+    public static function get_all_files(): array {
         $fs = get_file_storage();
         $files = $fs->get_area_files(
             \context_system::instance()->id,
@@ -74,11 +88,43 @@ class resources implements renderable, templatable {
         );
         $ret = [];
         foreach ($files as $file) {
-            if ($file->is_directory() || !self::is_public_image($file)) {
+            if ($file->is_directory()) {
                 continue;
             }
-            $filename = $file->get_filename();
-            $ret[$filename] = self::public_url($file);
+            $ret[$file->get_filename()] = $file;
+        }
+        ksort($ret, SORT_NATURAL | SORT_FLAG_CASE);
+        return $ret;
+    }
+
+    /**
+     * Public image URLs for template embedding.
+     *
+     * @return \moodle_url[] $filename => $url
+     */
+    public static function get_available_files(): array {
+        $ret = [];
+        foreach (self::get_all_files() as $filename => $file) {
+            if (self::is_public_image($file)) {
+                $ret[$filename] = self::public_url($file);
+            }
+        }
+        return $ret;
+    }
+
+    /**
+     * Resource files matching the given filenames, preserving request order.
+     *
+     * @param string[] $filenames Stored filenames.
+     * @return \stored_file[] $filename => $file
+     */
+    public static function get_files_by_filenames(array $filenames): array {
+        $all = self::get_all_files();
+        $ret = [];
+        foreach ($filenames as $filename) {
+            if (isset($all[$filename])) {
+                $ret[$filename] = $all[$filename];
+            }
         }
         return $ret;
     }
@@ -135,10 +181,18 @@ class resources implements renderable, templatable {
                 'url' => $url->out(false),
             ];
         }
+        $documents = [];
+        foreach (self::get_all_files() as $filename => $file) {
+            if (!self::is_public_image($file)) {
+                $documents[] = ['filename' => $filename];
+            }
+        }
         return [
             'form' => $this->form->render(),
             'hasfiles' => !empty($files),
             'files' => $files,
+            'hasdocuments' => !empty($documents),
+            'documents' => $documents,
         ];
     }
 }

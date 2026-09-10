@@ -95,6 +95,24 @@ final class campaign_manager_test extends \advanced_testcase {
     }
 
     /**
+     * Attachment filenames are stored as JSON and ignore unsafe names.
+     */
+    public function test_encode_decode_attachments(): void {
+        $this->resetAfterTest();
+        global $DB;
+
+        $json = campaign_manager::encode_attachments(['handbook.pdf', '../etc/passwd', '', 'handbook.pdf']);
+        $this->assertSame(['handbook.pdf'], campaign_manager::decode_attachments($json));
+        $this->assertSame([], campaign_manager::decode_attachments(null));
+        $this->assertSame([], campaign_manager::decode_attachments('not-json'));
+
+        $id = $this->create_campaign();
+        campaign_manager::update_fields($id, ['attachmentsjson' => $json]);
+        $row = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id], '*', MUST_EXIST);
+        $this->assertSame($json, $row->attachmentsjson);
+    }
+
+    /**
      * Test: is_complete is false while any required part is missing and true
      * once name, subject, body and an audience tag are all present.
      */

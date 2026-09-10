@@ -16,6 +16,8 @@
 
 namespace local_mailwhistle\manager;
 
+use local_mailwhistle\output\resources;
+
 /**
  * Send manager for Mail Whistle campaigns.
  *
@@ -102,6 +104,7 @@ class send_manager {
         $message->fullmessagehtml = $bodyhtml;
         $message->smallmessage = '';
         $message->notification = 1;
+        self::apply_attachments($message, $campaign);
 
         try {
             $messageid = message_send($message);
@@ -160,6 +163,7 @@ class send_manager {
         $message->fullmessagehtml = placeholder_manager::apply((string) $campaign->bodyhtml, $to, true);
         $message->smallmessage = '';
         $message->notification = 1;
+        self::apply_attachments($message, $campaign);
 
         try {
             $messageid = message_send($message);
@@ -191,5 +195,84 @@ class send_manager {
             }
         }
         return \core_user::get_support_user();
+    }
+
+    /**
+     * Attach selected resource files to a campaign message.
+     *
+     * Moodle's email processor accepts one stored_file. A single selection is
+     * attached as-is; several files are zipped first.
+     *
+     * @param \core\message\message $message Message being sent.
+     * @param \stdClass $campaign Campaign record.
+     * @return void
+     */
+    private static function apply_attachments(\core\message\message $message, \stdClass $campaign): void {
+        global $CFG;
+
+        if (empty($CFG->allowattachments)) {
+            return;
+        }
+
+        $files = resources::get_files_by_filenames(
+            campaign_manager::decode_attachments($campaign->attachmentsjson ?? '')
+        );
+        if (!$files) {
+            return;
+        }
+
+        if (count($files) === 1) {
+            $file = reset($files);
+            $message->attachment = $file;
+            $message->attachname = $file->get_filename();
+            return;
+        }
+
+        $zip = self::zip_attachment_files($files, (int) $campaign->id);
+        if ($zip) {
+            $message->attachment = $zip;
+            $message->attachname = 'attachments.zip';
+            return;
+        }
+
+        $file = reset($files);
+        $message->attachment = $file;
+        $message->attachname = $file->get_filename();
+    }
+
+    /**
+     * Pack several resource files into one zip stored_file for this campaign.
+     *
+     * @param \stored_file[] $files Resource files.
+     * @param int $campaignid Campaign id used as the zip itemid.
+     * @return \stored_file|null Zip file, or null when packing fails.
+     */
+    private static function zip_attachment_files(array $files, int $campaignid): ?\stored_file {
+        $fs = get_file_storage();
+        $contextid = \context_system::instance()->id;
+        $fs->delete_area_files($contextid, 'local_mailwhistle', resources::ZIP_FILEAREA, $campaignid);
+
+        $pack = [];
+        foreach ($files as $file) {
+            $pack[$file->get_filename()] = $file;
+        }
+
+        $zippath = make_request_directory() . '/attachments.zip';
+        $packer = get_file_packer('application/zip');
+        if (!$packer->archive_to_pathname($pack, $zippath) || !file_exists($zippath)) {
+            return null;
+        }
+
+        return $fs->create_file_from_pathname(
+            [
+                'contextid' => $contextid,
+                'component' => 'local_mailwhistle',
+                'filearea' => resources::ZIP_FILEAREA,
+                'itemid' => $campaignid,
+                'filepath' => '/',
+                'filename' => 'attachments.zip',
+            ],
+            $zippath
+        );
     }
 }

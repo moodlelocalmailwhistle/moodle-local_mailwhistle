@@ -16,6 +16,8 @@
 
 namespace local_mailwhistle\form;
 
+use local_mailwhistle\output\resources;
+
 /**
  * Wizard step 2: campaign content (subject and body).
  *
@@ -50,6 +52,25 @@ class campaign_content_form extends \moodleform {
         $mform->addElement('editor', 'body', get_string('body', 'local_mailwhistle'), null, ['enable_filemanagement' => false]);
         $mform->setType('body', PARAM_RAW);
 
+        $options = [];
+        foreach (array_keys(resources::get_all_files()) as $filename) {
+            $options[$filename] = $filename;
+        }
+        $mform->addElement(
+            'autocomplete',
+            'attachments',
+            get_string('campaign_attachments', 'local_mailwhistle'),
+            $options,
+            [
+                'multiple' => true,
+                'noselectionstring' => get_string('campaign_attachments_none', 'local_mailwhistle'),
+            ]
+        );
+        $mform->addHelpButton('attachments', 'campaign_attachments', 'local_mailwhistle');
+        if (empty($options)) {
+            $mform->addElement('static', 'attachmentsempty', '', get_string('campaign_attachments_empty', 'local_mailwhistle'));
+        }
+
         $this->add_action_buttons(true, get_string('wizard_savecontinue', 'local_mailwhistle'));
     }
 
@@ -65,6 +86,18 @@ class campaign_content_form extends \moodleform {
 
         if (trim($data['subject'] ?? '') === '') {
             $errors['subject'] = get_string('required');
+        }
+
+        $posted = $data['attachments'] ?? [];
+        if (!is_array($posted)) {
+            $posted = ($posted === '' || $posted === null) ? [] : [$posted];
+        }
+        $allowed = array_keys(resources::get_all_files());
+        foreach ($posted as $filename) {
+            if ($filename !== '' && !in_array($filename, $allowed, true)) {
+                $errors['attachments'] = get_string('campaign_attachments_invalid', 'local_mailwhistle');
+                break;
+            }
         }
 
         return $errors;

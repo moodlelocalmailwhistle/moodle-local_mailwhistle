@@ -62,10 +62,22 @@ class behat_local_mailwhistle extends behat_base {
      * @return void
      */
     public function i_visit_the_review_step_for_campaign(string $campaign): void {
+        $this->i_visit_the_step_for_campaign('review', $campaign);
+    }
+
+    /**
+     * Visit a wizard step for a campaign.
+     *
+     * @When /^I visit the "(?P<step_string>(?:[^"]|\\")*)" step for campaign "(?P<campaign_string>(?:[^"]|\\")*)"$/
+     * @param string $step Wizard step key.
+     * @param string $campaign The campaign name.
+     * @return void
+     */
+    public function i_visit_the_step_for_campaign(string $step, string $campaign): void {
         $campaignid = $this->get_campaign_id($campaign);
         $url = new moodle_url('/local/mailwhistle/campaign_edit.php', [
             'campaignid' => $campaignid,
-            'step' => 'review',
+            'step' => $step,
         ]);
         $this->execute('behat_general::i_visit', [$url]);
     }

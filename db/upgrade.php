@@ -213,5 +213,15 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026091000, 'local', 'mailwhistle');
     }
 
+    if ($oldversion < 2026091100) {
+        $table = new xmldb_table('local_mailwhistle_campaigns');
+        $field = new xmldb_field('attachmentsjson', XMLDB_TYPE_TEXT, null, null, null, null, null, 'templateid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026091100, 'local', 'mailwhistle');
+    }
+
     return true;
 }

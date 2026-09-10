@@ -66,6 +66,7 @@ class local_mailwhistle_generator extends \component_generator_base {
             'timescheduled' => 0,
             'timesent' => 0,
             'templateid' => null,
+            'attachmentsjson' => null,
         ];
         $record = array_merge($defaults, $record);
         $this->campaignnum++;

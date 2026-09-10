@@ -104,7 +104,56 @@ class campaign_manager {
         'bodytext',
         'sendername',
         'senderemail',
+        'attachmentsjson',
     ];
+
+    /**
+     * Encode selected resource filenames for storage.
+     *
+     * @param string[] $filenames Resource filenames.
+     * @return string JSON list.
+     */
+    public static function encode_attachments(array $filenames): string {
+        return json_encode(self::decode_attachments_list($filenames));
+    }
+
+    /**
+     * Decode stored attachment filenames.
+     *
+     * @param string|null $json Stored JSON.
+     * @return string[] Filenames.
+     */
+    public static function decode_attachments(?string $json): array {
+        if ($json === null || $json === '') {
+            return [];
+        }
+        $decoded = json_decode($json, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+        return self::decode_attachments_list($decoded);
+    }
+
+    /**
+     * Filter a posted filename list down to safe resource names.
+     *
+     * @param array $filenames Posted values.
+     * @return string[] Filenames.
+     */
+    private static function decode_attachments_list(array $filenames): array {
+        $clean = [];
+        foreach ($filenames as $filename) {
+            if (!is_string($filename)) {
+                continue;
+            }
+            $filename = trim($filename);
+            if ($filename === '' || $filename === '.' || $filename === '..' || str_contains($filename, '/')) {
+                continue;
+            }
+            $clean[$filename] = $filename;
+        }
+        return array_values($clean);
+    }
 
     /**
      * Update whitelisted campaign fields and bump the modified time.
