@@ -68,7 +68,18 @@ Reusable layouts for the content step. HTML mode for a pasted body, or **Builder
 
 ![Visual template builder with block palette and live preview](docs/screenshots/05-template-builder.png)
 
-Load a template into a campaign from the content step. Placeholders such as `{{firstname}}`, `{{lastname}}`, `{{fullname}}`, and `{{email}}` are filled per recipient at send time. A test copy uses the reviewer's profile so you can see how it looks, without writing tracking events.
+Load a template into a campaign from the content step. Personalisation variables are filled at send time (a test copy uses the reviewer's profile, without tracking):
+
+| Variable | Replaced with |
+|---|---|
+| `{{firstname}}` | Recipient first name |
+| `{{lastname}}` | Recipient last name |
+| `{{fullname}}` | First and last name |
+| `{{email}}` | Recipient email |
+| `{{sitename}}` | This Moodle site's full name |
+| `{{siteurl}}` | This Moodle site's URL |
+
+`{{university}}` is an older name for `{{sitename}}`. Unknown variables are removed so they never appear in the inbox. These are Mail Whistle variables, not Moodle text filters.
 
 ### Sending and tracking
 

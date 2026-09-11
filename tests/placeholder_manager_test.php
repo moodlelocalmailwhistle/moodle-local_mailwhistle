@@ -65,8 +65,25 @@ final class placeholder_manager_test extends \advanced_testcase {
         $r = $this->recipient('Sofia', 'Ng', 'x@y.z');
         $this->assertSame(
             'Hi Sofia, welcome to ',
-            placeholder_manager::apply('Hi {{firstname}}, welcome to {{university}}', $r, false)
+            placeholder_manager::apply('Hi {{firstname}}, welcome to {{notatoken}}', $r, false)
         );
+    }
+
+    /**
+     * Site tokens come from the current Moodle site; university aliases sitename.
+     */
+    public function test_site_tokens(): void {
+        global $CFG, $SITE;
+
+        $this->resetAfterTest();
+        $r = $this->recipient('Sofia', 'Ng', 'x@y.z');
+        $sitename = format_string((string) $SITE->fullname, true, ['context' => \context_system::instance()]);
+        $this->assertSame($sitename, placeholder_manager::apply('{{sitename}}', $r, false));
+        $this->assertSame($sitename, placeholder_manager::apply('{{university}}', $r, false));
+        $this->assertSame(rtrim((string) $CFG->wwwroot, '/'), placeholder_manager::apply('{{siteurl}}', $r, false));
+        $this->assertContains('sitename', placeholder_manager::supported_tokens());
+        $this->assertStringContainsString('{{firstname}}', placeholder_manager::cheatsheet_text());
+        $this->assertStringContainsString('{{sitename}}', placeholder_manager::cheatsheet_text());
     }
 
     /**

@@ -16,7 +16,9 @@ Feature: Email templates
   Scenario: Create a template in HTML mode
     When I am on the Mail Whistle "templates" tab
     And I follow "Create template"
-    And I set the field "Template name" to "Plain HTML"
+    Then I should see "{{firstname}}"
+    And I should see "{{sitename}}"
+    When I set the field "Template name" to "Plain HTML"
     And I set the field "Preview text" to "A simple layout"
     And I set the field "Editor mode" to "HTML mode"
     And I set the field "HTML body" to "<p>Hello from a template</p>"
@@ -28,7 +30,9 @@ Feature: Email templates
   Scenario: Create a template in builder mode
     When I am on the Mail Whistle "templates" tab
     And I follow "Create template"
-    And I set the field "Template name" to "Visual layout"
+    Then I should see "{{firstname}}"
+    And I should see "{{sitename}}"
+    When I set the field "Template name" to "Visual layout"
     And I set the field "Preview text" to "Built visually"
     And I click on "Header" "button" in the ".local-mailwhistle-builder-toolbar" "css_element"
     And I click on "Button" "button" in the ".local-mailwhistle-builder-toolbar" "css_element"

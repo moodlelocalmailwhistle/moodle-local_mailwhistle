@@ -101,7 +101,7 @@ define([], function() {
         },
         footer: {
             type: 'footer',
-            content: 'You are receiving this email from {{university}}.',
+            content: 'You are receiving this email from {{sitename}}.',
             color: '#52616f',
             fontfamily: 'arial',
             fontsize: 13,
@@ -810,6 +810,12 @@ define([], function() {
         });
 
         header.appendChild(toolbar);
+
+        var hint = document.createElement('p');
+        hint.className = 'local-mailwhistle-builder-placeholders';
+        hint.textContent = getString('placeholdershint');
+        header.appendChild(hint);
+
         root.appendChild(header);
 
         var body = document.createElement('div');

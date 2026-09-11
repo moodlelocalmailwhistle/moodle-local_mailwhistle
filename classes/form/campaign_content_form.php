@@ -47,10 +47,21 @@ class campaign_content_form extends \moodleform {
         $mform->addElement('text', 'subject', get_string('subject', 'local_mailwhistle'), ['maxlength' => 255, 'size' => 50]);
         $mform->setType('subject', PARAM_TEXT);
         $mform->addRule('subject', get_string('required'), 'required', null, 'client');
+        $mform->addHelpButton('subject', 'placeholders', 'local_mailwhistle');
 
         // Plain HTML editor; no file areas needed for the draft body preview.
         $mform->addElement('editor', 'body', get_string('body', 'local_mailwhistle'), null, ['enable_filemanagement' => false]);
         $mform->setType('body', PARAM_RAW);
+        $mform->addHelpButton('body', 'placeholders', 'local_mailwhistle');
+        $mform->addElement(
+            'static',
+            'placeholdershint',
+            '',
+            \html_writer::div(
+                \local_mailwhistle\manager\placeholder_manager::cheatsheet_text(),
+                'local-mailwhistle-placeholders-hint'
+            )
+        );
 
         $options = [];
         foreach (array_keys(resources::get_all_files()) as $filename) {

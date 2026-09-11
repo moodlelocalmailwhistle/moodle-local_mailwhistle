@@ -20,6 +20,8 @@ Feature: Create a campaign through the edit wizard
     And I set the field "Sender email" to "news@example.com"
     And I press "Save and continue"
     Then I should see "2. Content"
+    And I should see "{{firstname}}"
+    And I should see "{{sitename}}"
     When I set the field "Subject" to "Spring is here"
     And I set the field "Email body" to "<p>Hello everyone</p>"
     And I press "Save and continue"
