@@ -30,24 +30,56 @@ namespace local_mailwhistle\manager;
  */
 class placeholder_manager {
     /**
+     * Tokens editors may type, in display order (university is a sitename alias).
+     *
+     * @return string[] Token names.
+     */
+    public static function supported_tokens(): array {
+        return [
+            'firstname',
+            'lastname',
+            'fullname',
+            'email',
+            'sitename',
+            'siteurl',
+        ];
+    }
+
+    /**
+     * Short visible list of tokens for forms and the builder.
+     *
+     * @return string Localised cheatsheet.
+     */
+    public static function cheatsheet_text(): string {
+        return get_string('placeholders_cheatsheet', 'local_mailwhistle');
+    }
+
+    /**
      * Build the token => value map for one recipient.
      *
-     * Values come from the recipient snapshot (frozen at send time), so a later
-     * profile edit never changes an already-sent campaign.
+     * Recipient values come from the snapshot (frozen at send time). Site
+     * tokens come from the current Moodle site.
      *
      * @param \stdClass $recipient A local_mailwhistle_recipients row.
      * @return array<string, string> Lower-cased token => replacement value.
      */
     public static function build_map(\stdClass $recipient): array {
+        global $CFG, $SITE;
+
         $firstname = trim((string) ($recipient->firstname ?? ''));
         $lastname  = trim((string) ($recipient->lastname ?? ''));
         $email     = (string) ($recipient->email ?? '');
+        $sitename  = format_string((string) ($SITE->fullname ?? ''), true, ['context' => \context_system::instance()]);
+        $siteurl   = rtrim((string) ($CFG->wwwroot ?? ''), '/');
 
         return [
             'firstname' => $firstname,
             'lastname'  => $lastname,
             'fullname'  => trim($firstname . ' ' . $lastname),
             'email'     => $email,
+            'sitename'  => $sitename,
+            'siteurl'   => $siteurl,
+            'university' => $sitename,
         ];
     }
 

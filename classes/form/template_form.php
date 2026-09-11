@@ -59,6 +59,16 @@ class template_form extends \moodleform {
         $mform->setType('editormode', PARAM_ALPHA);
         $mform->setDefault('editormode', 'builder');
 
+        $mform->addElement(
+            'static',
+            'placeholdershint',
+            '',
+            \html_writer::div(
+                \local_mailwhistle\manager\placeholder_manager::cheatsheet_text(),
+                'local-mailwhistle-placeholders-hint'
+            )
+        );
+
         $mform->addElement('hidden', 'builderjson');
         $mform->setType('builderjson', PARAM_RAW);
 
@@ -104,6 +114,7 @@ class template_form extends \moodleform {
         ];
         $mform->addElement('editor', 'bodyhtml_editor', get_string('template_bodyhtml', 'local_mailwhistle'), null, $editoroptions);
         $mform->setType('bodyhtml_editor', PARAM_RAW);
+        $mform->addHelpButton('bodyhtml_editor', 'placeholders', 'local_mailwhistle');
 
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);

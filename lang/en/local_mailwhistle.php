@@ -139,6 +139,14 @@ $string['wizardstep_review']       = '4. Review';
 $string['wizard_savecontinue']     = 'Save and continue';
 $string['subject']                 = 'Subject';
 $string['body']                    = 'Email body';
+$string['placeholders']            = 'Personalisation variables';
+$string['placeholders_help']       = 'Type these in the subject or body. They are replaced when the campaign is sent (or in a test copy, using your profile for name and email).
+
+Recipient: {{firstname}}, {{lastname}}, {{fullname}}, {{email}}.
+Site: {{sitename}}, {{siteurl}}.
+
+{{university}} is an older name for {{sitename}}. Unknown variables are removed so they never appear in the inbox. These are Mail Whistle variables, not Moodle text filters.';
+$string['placeholders_cheatsheet'] = 'Use {{firstname}}, {{lastname}}, {{fullname}}, {{email}}, {{sitename}}, {{siteurl}} — replaced when the campaign is sent.';
 $string['sendername']              = 'Sender name';
 $string['senderemail']             = 'Sender email';
 
