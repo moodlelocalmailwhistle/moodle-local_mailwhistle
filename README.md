@@ -62,7 +62,7 @@ The campaign is sent to everyone tagged with **any** of the selected tags.
 
 ### Templates
 
-Reusable layouts for the content step. HTML mode for a pasted body, or **Builder mode** for drag-and-drop blocks (header, logo, text, button, image, highlight, two columns, social links, divider, footer). Templates can be previewed, archived, restored, exported as JSON, and deleted when unused.
+Reusable layouts for the content step. HTML mode for a pasted body, or **Builder mode** for drag-and-drop blocks (header, logo, text, button, image, highlight, two columns, social links, divider, footer). Image and logo blocks pick a file uploaded on the Resources tab. Templates can be previewed, archived, restored, exported as JSON, and deleted when unused.
 
 ![Email templates overview with card previews](docs/screenshots/04-templates.png)
 
@@ -73,6 +73,7 @@ Load a template into a campaign from the content step. Placeholders such as `{{f
 ### Sending and tracking
 
 - Outgoing mail goes through Moodle's `message_send` campaign provider (email by default).
+- Campaigns can attach files uploaded on the Resources tab (one file as-is, several as `attachments.zip`).
 - The subject of a test copy is prefixed with `[Test]`.
 - Live sends rewrite `http(s)` links through `click.php` and append a 1×1 open pixel (`pixel.php`). Tokens are HMAC-signed; click tokens are bound to the target URL (no open redirect).
 - Opens are stored once per recipient; clicks once per distinct link.
@@ -86,7 +87,9 @@ A sent-campaign preview on the Campaigns tab links through to the same report.
 
 ### Resources
 
-Upload images (JPEG, PNG, GIF, WebP) for use in templates and campaign HTML. Files are stored in the system context file area for the plugin.
+Upload images (JPEG, PNG, GIF, WebP) on the Resources tab, then choose them from **Uploaded image** on an Image or Logo block. You can still paste a URL for an external image. Resource images are public `pluginfile.php` links so they load in inboxes without a Moodle login.
+
+PDFs and other documents uploaded there can be attached on the campaign content step. They are sent as email attachments, not as public URLs. Non-image files still require a Moodle login if opened from the site.
 
 ## Install
 

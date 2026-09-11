@@ -133,6 +133,9 @@ define([], function() {
 
     var state = {blocks: []};
     var strings = {};
+    var resourceFiles = [];
+    var resourcesUrl = '';
+    var resourceFieldSeq = 0;
     var root = null;
     var hiddenInput = null;
     var modeSelect = null;
@@ -360,6 +363,69 @@ define([], function() {
         return wrapper;
     };
 
+    var createImageSourceField = function(block) {
+        var fragment = document.createDocumentFragment();
+        var urlField = createField(block, 'url', getString('url'), 'url', {wide: true});
+        var urlInput = urlField.querySelector('input');
+
+        if (resourceFiles.length) {
+            var wrapper = document.createElement('div');
+            wrapper.className = 'local-mailwhistle-builder-field local-mailwhistle-builder-field-wide';
+
+            resourceFieldSeq += 1;
+            var selectId = 'mw-resource-' + resourceFieldSeq;
+            var labelNode = document.createElement('label');
+            labelNode.setAttribute('for', selectId);
+            labelNode.textContent = getString('chooseimage');
+            wrapper.appendChild(labelNode);
+
+            var select = document.createElement('select');
+            select.id = selectId;
+            select.className = 'local-mailwhistle-builder-resource';
+            var empty = document.createElement('option');
+            empty.value = '';
+            empty.textContent = getString('chooseimageempty');
+            select.appendChild(empty);
+            resourceFiles.forEach(function(item) {
+                var option = document.createElement('option');
+                option.value = item.url;
+                option.textContent = item.filename;
+                if (item.url === (block.url || '')) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+            select.addEventListener('change', function() {
+                block.url = select.value;
+                if (urlInput) {
+                    urlInput.value = select.value;
+                }
+                saveState();
+                renderPreview();
+            });
+            wrapper.appendChild(select);
+            fragment.appendChild(wrapper);
+        } else {
+            var emptyNote = document.createElement('p');
+            emptyNote.className = 'local-mailwhistle-builder-resource-empty';
+            if (resourcesUrl) {
+                var link = document.createElement('a');
+                link.href = resourcesUrl;
+                link.textContent = getString('uploadimages');
+                emptyNote.appendChild(link);
+            } else {
+                emptyNote.textContent = getString('uploadimages');
+            }
+            var noteWrap = document.createElement('div');
+            noteWrap.className = 'local-mailwhistle-builder-field local-mailwhistle-builder-field-wide';
+            noteWrap.appendChild(emptyNote);
+            fragment.appendChild(noteWrap);
+        }
+
+        fragment.appendChild(urlField);
+        return fragment;
+    };
+
     var renderBlockFields = function(block, body) {
         body.className = 'local-mailwhistle-builder-block-body';
 
@@ -387,13 +453,13 @@ define([], function() {
             body.appendChild(createField(block, 'background', getString('background'), 'color'));
             body.appendChild(createField(block, 'color', getString('color'), 'color'));
         } else if (block.type === 'image') {
-            body.appendChild(createField(block, 'url', getString('url'), 'url', {wide: true}));
+            body.appendChild(createImageSourceField(block));
             body.appendChild(createField(block, 'alt', getString('alt'), 'text', {wide: true}));
             body.appendChild(createField(block, 'width', getString('width'), 'number', {min: 10, max: 100}));
             body.appendChild(createField(block, 'align', getString('align'), 'select', {choices: alignOptions}));
             body.appendChild(createField(block, 'padding', getString('padding'), 'number', {min: 0, max: 48}));
         } else if (block.type === 'logo') {
-            body.appendChild(createField(block, 'url', getString('url'), 'url', {wide: true}));
+            body.appendChild(createImageSourceField(block));
             body.appendChild(createField(block, 'alt', getString('alt'), 'text', {wide: true}));
             body.appendChild(createField(block, 'width', getString('width'), 'number', {min: 10, max: 60}));
             body.appendChild(createField(block, 'align', getString('align'), 'select', {choices: alignOptions}));
@@ -766,6 +832,22 @@ define([], function() {
         root.appendChild(body);
     };
 
+    var readEmbeddedConfig = function() {
+        var node = document.getElementById('local-mailwhistle-template-builder');
+        if (!node) {
+            return {};
+        }
+        var raw = node.getAttribute('data-config');
+        if (!raw) {
+            return {};
+        }
+        try {
+            return JSON.parse(raw);
+        } catch (error) {
+            return {};
+        }
+    };
+
     var init = function(config) {
         if (initialized) {
             return;
@@ -775,8 +857,10 @@ define([], function() {
         hiddenInput = document.getElementById('id_builderjson') || document.querySelector('[name="builderjson"]');
         modeSelect = document.getElementById('id_editormode') || document.querySelector('[name="editormode"]');
         backgroundInput = document.getElementById('id_background') || document.querySelector('[name="background"]');
-        config = config || {};
+        config = Object.assign({}, readEmbeddedConfig(), config || {});
         strings = config.strings || {};
+        resourceFiles = Array.isArray(config.resources) ? config.resources : [];
+        resourcesUrl = config.resourcesurl || '';
 
         if (!root || !hiddenInput || !modeSelect) {
             return;

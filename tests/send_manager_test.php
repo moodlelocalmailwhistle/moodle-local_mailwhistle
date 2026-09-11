@@ -210,4 +210,83 @@ final class send_manager_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('local_mailwhistle_recipients', ['campaignid' => $campaignid]));
         $this->assertFalse($DB->record_exists('local_mailwhistle_tracking', ['campaignid' => $campaignid]));
     }
+
+    /**
+     * Create a stored file in the resources area.
+     *
+     * @param string $filename Stored filename.
+     * @param string $content File bytes.
+     * @return \stored_file
+     */
+    private function create_resource(string $filename, string $content): \stored_file {
+        $fs = get_file_storage();
+        return $fs->create_file_from_string(
+            [
+                'contextid' => \context_system::instance()->id,
+                'component' => 'local_mailwhistle',
+                'filearea' => \local_mailwhistle\output\resources::FILEAREA,
+                'itemid' => 0,
+                'filepath' => '/',
+                'filename' => $filename,
+            ],
+            $content
+        );
+    }
+
+    /**
+     * A selected PDF is sent as an email attachment.
+     */
+    public function test_process_attaches_pdf(): void {
+        $this->resetAfterTest();
+        global $CFG;
+
+        $this->preventResetByRollback();
+        $CFG->allowattachments = true;
+        unset_config('noemailever');
+
+        [$campaignid] = $this->make_ready_campaign_with_recipient();
+        $this->create_resource('handbook.pdf', file_get_contents(__DIR__ . '/fixtures/handbook.pdf'));
+        campaign_manager::update_fields($campaignid, [
+            'attachmentsjson' => campaign_manager::encode_attachments(['handbook.pdf']),
+        ]);
+
+        $sink = $this->redirectEmails();
+        campaign_manager::begin_sending($campaignid);
+        send_manager::process_campaign($campaignid, 50);
+        $emails = $sink->get_messages();
+        $sink->close();
+
+        $this->assertNotEmpty($emails);
+        $this->assertStringContainsString('Content-Disposition: attachment;', $emails[0]->body);
+        $this->assertStringContainsString('handbook.pdf', $emails[0]->body);
+    }
+
+    /**
+     * Several selected files are sent as one zip attachment.
+     */
+    public function test_process_zips_multiple_attachments(): void {
+        $this->resetAfterTest();
+        global $CFG;
+
+        $this->preventResetByRollback();
+        $CFG->allowattachments = true;
+        unset_config('noemailever');
+
+        [$campaignid] = $this->make_ready_campaign_with_recipient();
+        $this->create_resource('handbook.pdf', file_get_contents(__DIR__ . '/fixtures/handbook.pdf'));
+        $this->create_resource('notes.txt', 'Notes');
+        campaign_manager::update_fields($campaignid, [
+            'attachmentsjson' => campaign_manager::encode_attachments(['handbook.pdf', 'notes.txt']),
+        ]);
+
+        $sink = $this->redirectEmails();
+        campaign_manager::begin_sending($campaignid);
+        send_manager::process_campaign($campaignid, 50);
+        $emails = $sink->get_messages();
+        $sink->close();
+
+        $this->assertNotEmpty($emails);
+        $this->assertStringContainsString('Content-Disposition: attachment;', $emails[0]->body);
+        $this->assertStringContainsString('attachments.zip', $emails[0]->body);
+    }
 }

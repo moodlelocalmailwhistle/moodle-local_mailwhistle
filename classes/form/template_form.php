@@ -16,6 +16,8 @@
 
 namespace local_mailwhistle\form;
 
+use local_mailwhistle\output\resources;
+
 /**
  * Template create/edit form.
  *
@@ -60,23 +62,40 @@ class template_form extends \moodleform {
         $mform->addElement('hidden', 'builderjson');
         $mform->setType('builderjson', PARAM_RAW);
 
+        $resourcelist = [];
+        foreach (resources::get_available_files() as $filename => $url) {
+            $resourcelist[] = [
+                'filename' => $filename,
+                'url' => $url->out(false),
+            ];
+        }
         $config = [
             'builderjson' => $this->_customdata['builderjson'] ?? '',
             'strings' => $this->_customdata['builderstrings'] ?? [],
+            'resources' => $resourcelist,
+            'resourcesurl' => (new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'resources']))->out(false),
         ];
+        $configjson = json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($configjson === false) {
+            $configjson = '{}';
+        }
         $builderid = 'local-mailwhistle-template-builder';
+        // Resource URLs make this config larger than js_call_amd's 1024-character argument warning.
         $builderhtml = \html_writer::div(
             \html_writer::div(
                 get_string('template_builder_loading', 'local_mailwhistle'),
                 'local-mailwhistle-builder-empty'
             ),
             'local-mailwhistle-builder',
-            ['id' => $builderid]
+            [
+                'id' => $builderid,
+                'data-config' => $configjson,
+            ]
         );
         $mform->addElement('html', $builderhtml);
 
         global $PAGE;
-        $PAGE->requires->js_call_amd('local_mailwhistle/template_builder', 'init', [$config]);
+        $PAGE->requires->js_call_amd('local_mailwhistle/template_builder', 'init');
 
         $editoroptions = [
             'maxfiles' => 0,

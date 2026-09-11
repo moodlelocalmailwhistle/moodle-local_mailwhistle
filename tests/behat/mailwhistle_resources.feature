@@ -12,3 +12,15 @@ Feature: Using files as resources in mailwhistle
     And I upload "local/mailwhistle/tests/fixtures/image_640x480px.jpg" file to "Resources" filemanager
     And I press "Save changes"
     Then I should see "image_640x480px.jpg"
+    And I should see "Image URLs for templates"
+    And I should see "pluginfile.php"
+
+  Scenario: Upload a PDF for campaign attachments
+    When I log in as "admin"
+    And I navigate to "General > Mail Whistle > Campaigns" in site administration
+    And I follow "Resources"
+    And I upload "local/mailwhistle/tests/fixtures/handbook.pdf" file to "Resources" filemanager
+    And I press "Save changes"
+    Then I should see "handbook.pdf"
+    And I should see "Files for email attachments"
+    And I should not see "Image URLs for templates"

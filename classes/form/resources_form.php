@@ -36,7 +36,7 @@ class resources_form extends \moodleform {
         $mform->addElement('filemanager', 'resources', get_string('resources', 'local_mailwhistle'), null, [
             'subdirs' => 0,
             'maxfiles' => 50,
-            'accepted_types' => ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
+            'accepted_types' => \local_mailwhistle\output\resources::ACCEPTED_TYPES,
         ]);
         $this->add_action_buttons();
     }

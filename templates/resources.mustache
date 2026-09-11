@@ -21,10 +21,44 @@
 
     Context variables required for this template:
     * form - The rendered resources form HTML.
+    * hasfiles - True when uploaded images exist.
+    * files - Array of {filename, url} public pluginfile URLs.
+    * hasdocuments - True when non-image files exist.
+    * documents - Array of {filename} for email attachments.
 
     Example context (json):
     {
-        "form": "<form></form>"
+        "form": "<form></form>",
+        "hasfiles": true,
+        "files": [{"filename": "logo.png", "url": "https://example.edu/pluginfile.php/1/local_mailwhistle/resources/0/logo.png"}],
+        "hasdocuments": true,
+        "documents": [{"filename": "handbook.pdf"}]
     }
 }}
 {{{form}}}
+{{#hasfiles}}
+<div class="local-mailwhistle-resource-urls mt-4">
+    <h3>{{#str}}resources_publicurls, local_mailwhistle{{/str}}</h3>
+    <p>{{#str}}resources_publicurls_desc, local_mailwhistle{{/str}}</p>
+    <ul class="list-unstyled">
+        {{#files}}
+            <li class="local-mailwhistle-resource-url mb-3">
+                <div class="mb-1">{{filename}}</div>
+                <img src="{{url}}" alt="{{filename}}" class="local-mailwhistle-resource-thumb d-block mb-1">
+                <code class="d-block text-break">{{url}}</code>
+            </li>
+        {{/files}}
+    </ul>
+</div>
+{{/hasfiles}}
+{{#hasdocuments}}
+<div class="local-mailwhistle-resource-attachments mt-4">
+    <h3>{{#str}}resources_attachments, local_mailwhistle{{/str}}</h3>
+    <p>{{#str}}resources_attachments_desc, local_mailwhistle{{/str}}</p>
+    <ul>
+        {{#documents}}
+            <li>{{filename}}</li>
+        {{/documents}}
+    </ul>
+</div>
+{{/hasdocuments}}

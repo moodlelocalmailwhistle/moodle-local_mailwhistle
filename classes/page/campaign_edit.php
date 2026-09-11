@@ -25,6 +25,7 @@ use local_mailwhistle\manager\campaign_manager;
 use local_mailwhistle\manager\send_manager;
 use local_mailwhistle\manager\tag_manager;
 use local_mailwhistle\manager\template_manager;
+use local_mailwhistle\output\resources;
 use local_mailwhistle\output\template_picker;
 
 /**
@@ -203,10 +204,16 @@ class campaign_edit {
             redirect($returnurl);
         } else if ($data = $mform->get_data()) {
             $bodyhtml = $data->body['text'] ?? '';
+            $attachments = $data->attachments ?? [];
+            if (!is_array($attachments)) {
+                $attachments = $attachments === '' || $attachments === null ? [] : [$attachments];
+            }
+            $attachments = array_values(array_intersect($attachments, array_keys(resources::get_all_files())));
             campaign_manager::update_fields((int) $campaign->id, [
                 'subject' => $data->subject,
                 'bodyhtml' => $bodyhtml,
                 'bodytext' => html_to_text($bodyhtml),
+                'attachmentsjson' => campaign_manager::encode_attachments($attachments),
             ]);
             $postedtemplateid = (int) ($data->templateid ?? 0);
             if ($postedtemplateid > 0) {
@@ -233,6 +240,7 @@ class campaign_edit {
             'templateid' => $prefilltemplateid,
             'subject' => $prefillsubject,
             'body' => ['text' => $prefillbody, 'format' => FORMAT_HTML],
+            'attachments' => campaign_manager::decode_attachments($campaign->attachmentsjson ?? ''),
         ]);
 
         echo $OUTPUT->header();
@@ -361,6 +369,7 @@ class campaign_edit {
             [get_string('sendername', 'local_mailwhistle'), format_string($campaign->sendername, true, ['context' => $context])],
             [get_string('senderemail', 'local_mailwhistle'), s($campaign->senderemail)],
             [get_string('audiencetags_label', 'local_mailwhistle'), count($tagids)],
+            [get_string('campaign_attachments', 'local_mailwhistle'), self::format_attachment_names($campaign)],
             [get_string('body', 'local_mailwhistle'), format_text(
                 (string) $campaign->bodyhtml,
                 FORMAT_HTML,
@@ -406,5 +415,19 @@ class campaign_edit {
         );
         echo \html_writer::end_div();
         echo $OUTPUT->footer();
+    }
+
+    /**
+     * Comma-separated attachment filenames for the review table.
+     *
+     * @param \stdClass $campaign Campaign record.
+     * @return string Escaped filename list, or a none-selected string.
+     */
+    private static function format_attachment_names(\stdClass $campaign): string {
+        $names = campaign_manager::decode_attachments($campaign->attachmentsjson ?? '');
+        if (!$names) {
+            return get_string('campaign_attachments_none', 'local_mailwhistle');
+        }
+        return s(implode(', ', $names));
     }
 }

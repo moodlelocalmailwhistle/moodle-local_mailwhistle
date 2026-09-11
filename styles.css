@@ -611,6 +611,11 @@
     grid-column: 1 / -1;
 }
 
+.local-mailwhistle-builder-resource-empty {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
 .local-mailwhistle-builder-field-colour input[type="color"] {
     width: 100%;
     height: 34px;
@@ -719,4 +724,11 @@
     margin-top: 0.25rem;
     color: #6c757d;
     font-size: 0.875rem;
+}
+
+.local-mailwhistle-resource-thumb {
+    max-width: 12rem;
+    max-height: 6rem;
+    height: auto;
+    border: 1px solid var(--mail-whistle-border-color);
 }

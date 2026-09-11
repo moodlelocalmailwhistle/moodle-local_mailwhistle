@@ -26,6 +26,21 @@ Feature: Create a campaign through the edit wizard
     Then I should see "3. Audience"
     And I should see "The campaign will be sent to everyone tagged with any of the selected tags."
 
+  @javascript @_file_upload
+  Scenario: Attach a PDF from Resources on the content step
+    Given the following "local_mailwhistle > campaigns" exist:
+      | name        | subject      | bodyhtml    | status |
+      | Autumn news | Hello Autumn | <p>Body</p> | draft  |
+    And I am on the Mail Whistle "resources" tab
+    And I upload "local/mailwhistle/tests/fixtures/handbook.pdf" file to "Resources" filemanager
+    And I press "Save changes"
+    And I should see "handbook.pdf"
+    When I visit the "content" step for campaign "Autumn news"
+    And I set the field "Attachments" to "handbook.pdf"
+    And I press "Save and continue"
+    And I visit the review step for campaign "Autumn news"
+    Then I should see "handbook.pdf"
+
   Scenario: Draft campaigns appear on the campaigns tab
     Given the following "local_mailwhistle > campaigns" exist:
       | name         | subject      | bodyhtml        | status |

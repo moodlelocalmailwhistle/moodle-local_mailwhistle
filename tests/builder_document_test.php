@@ -81,6 +81,20 @@ final class builder_document_test extends \advanced_testcase {
     }
 
     /**
+     * Builder strings include the uploaded-image picker labels.
+     */
+    public function test_schema_strings_include_image_picker(): void {
+        $this->resetAfterTest();
+        $strings = schema::strings();
+        $this->assertSame(get_string('template_builder_chooseimage', 'local_mailwhistle'), $strings['chooseimage']);
+        $this->assertSame(
+            get_string('template_builder_chooseimageempty', 'local_mailwhistle'),
+            $strings['chooseimageempty']
+        );
+        $this->assertSame(get_string('template_builder_uploadimages', 'local_mailwhistle'), $strings['uploadimages']);
+    }
+
+    /**
      * Builder HTML includes the header title.
      */
     public function test_html_renderer_outputs_header(): void {
@@ -95,6 +109,25 @@ final class builder_document_test extends \advanced_testcase {
         $html = html_renderer::render(document::normalise_json($json));
         $this->assertStringContainsString('Campus news', $html);
         $this->assertStringContainsString('Week 1', $html);
+    }
+
+    /**
+     * Image blocks keep a public pluginfile URL in the rendered HTML.
+     */
+    public function test_html_renderer_outputs_image_src(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $url = 'https://example.com/pluginfile.php/1/local_mailwhistle/resources/0/hero.jpg';
+        $json = json_encode([
+            'blocks' => [
+                ['type' => 'image', 'url' => $url, 'alt' => 'Hero'],
+            ],
+        ]);
+        $html = html_renderer::render(document::normalise_json($json));
+        $this->assertStringContainsString('hero.jpg', $html);
+        $this->assertStringContainsString('local_mailwhistle/resources', $html);
+        $this->assertStringContainsString('alt="Hero"', $html);
     }
 
     /**
