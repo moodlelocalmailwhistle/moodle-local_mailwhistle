@@ -127,7 +127,7 @@ class schema {
             ],
             'footer' => [
                 'type' => 'footer',
-                'content' => 'You are receiving this email from {{university}}.',
+                'content' => 'You are receiving this email from {{sitename}}.',
                 'color' => '#52616f',
                 'fontfamily' => 'arial',
                 'fontsize' => 13,
@@ -245,6 +245,7 @@ class schema {
             'chooseimage' => get_string('template_builder_chooseimage', 'local_mailwhistle'),
             'chooseimageempty' => get_string('template_builder_chooseimageempty', 'local_mailwhistle'),
             'uploadimages' => get_string('template_builder_uploadimages', 'local_mailwhistle'),
+            'placeholdershint' => \local_mailwhistle\manager\placeholder_manager::cheatsheet_text(),
         ];
     }
 }
