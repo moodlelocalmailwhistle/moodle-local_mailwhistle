@@ -43,7 +43,7 @@
         <label for="mw-campaign-templateid" class="d-block">
             {{#str}}campaign_usetemplate, local_mailwhistle{{/str}}
         </label>
-        <select name="templateid" id="mw-campaign-templateid">
+        <select name="templateid" class="form-control" id="mw-campaign-templateid">
             <option value="">{{#str}}campaign_template_choose, local_mailwhistle{{/str}}</option>
             {{#options}}
                 <option value="{{id}}" {{#selected}}selected{{/selected}}>{{{name}}}</option>
