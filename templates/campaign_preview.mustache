@@ -38,7 +38,7 @@
     }
 }}
 <div class="local-mailwhistle-back mb-3">
-    <a href="{{listurl}}">{{#str}}backtolist, local_mailwhistle{{/str}}</a>
+    <a href="{{listurl}}" class="btn btn-secondary">{{#str}}backtolist, local_mailwhistle{{/str}}</a>
 </div>
 {{#notfound}}
     <div class="alert alert-warning">{{#str}}mailnotfound, local_mailwhistle{{/str}}</div>
@@ -47,7 +47,7 @@
     <h3>{{{subject}}}</h3>
     {{#reporturl}}
         <p class="mb-3">
-            <a href="{{reporturl}}">{{#str}}report_view, local_mailwhistle{{/str}}</a>
+            <a href="{{reporturl}}" class="btn btn-secondary">{{#str}}report_view, local_mailwhistle{{/str}}</a>
         </p>
     {{/reporturl}}
     <table class="table generaltable w-auto local-mailwhistle-mailmeta mb-3">

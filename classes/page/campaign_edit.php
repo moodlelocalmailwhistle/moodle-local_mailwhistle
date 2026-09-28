@@ -87,7 +87,11 @@ class campaign_edit {
                 \core\output\notification::NOTIFY_INFO
             );
             echo \html_writer::div(
-                \html_writer::link($returnurl, get_string('backtolist', 'local_mailwhistle'))
+                \html_writer::link(
+                    $returnurl,
+                    get_string('backtolist', 'local_mailwhistle'),
+                    ["class" => "btn btn-secondary"],
+                )
             );
             echo $OUTPUT->footer();
             return;
