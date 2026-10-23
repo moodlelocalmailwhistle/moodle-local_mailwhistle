@@ -26,7 +26,6 @@ use local_mailwhistle\manager\send_manager;
 use local_mailwhistle\manager\tag_manager;
 use local_mailwhistle\manager\template_manager;
 use local_mailwhistle\output\resources;
-use local_mailwhistle\output\template_picker;
 
 /**
  * Draft campaign edit wizard.
@@ -55,16 +54,19 @@ class campaign_edit {
         if (empty($campaignid)) {
             helper::require_post();
             require_sesskey();
-            $campaignid = helper::create_campaign('');
-            redirect(new \moodle_url('/local/mailwhistle/campaign_edit.php', [
-                'campaignid' => $campaignid,
-                'step' => 'details',
-            ]));
+            $campaign = (object) [
+                'id' => 0,
+                'name' => '',
+                'sendername' => '',
+                'senderemail' => '',
+                'status' => campaign_manager::STATUS_DRAFT,
+            ];
+        } else {
+            $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
         }
 
-        $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
         $step = optional_param('step', 'details', PARAM_ALPHA);
-        if (!in_array($step, self::STEPS, true)) {
+        if (empty($campaignid) || !in_array($step, self::STEPS, true)) {
             $step = 'details';
         }
 
@@ -148,7 +150,8 @@ class campaign_edit {
                 get_string('wizardstep_' . $step, 'local_mailwhistle')
             );
         }
-        return $OUTPUT->tabtree($tabs, $active);
+        $inactive = empty($baseurl->get_param('campaignid')) ? array_slice(self::STEPS, 1) : [];
+        return $OUTPUT->tabtree($tabs, $active, $inactive);
     }
 
     /**
@@ -166,7 +169,12 @@ class campaign_edit {
         if ($mform->is_cancelled()) {
             redirect($returnurl);
         } else if ($data = $mform->get_data()) {
-            campaign_manager::update_fields((int) $campaign->id, [
+            $campaignid = (int) $campaign->id;
+            if (empty($campaignid)) {
+                $campaignid = helper::create_campaign($data->name);
+                $baseurl = new \moodle_url($baseurl, ['campaignid' => $campaignid]);
+            }
+            campaign_manager::update_fields($campaignid, [
                 'name' => $data->name,
                 'sendername' => $data->sendername,
                 'senderemail' => $data->senderemail,
@@ -203,7 +211,9 @@ class campaign_edit {
         global $OUTPUT;
 
         $templateid = optional_param('templateid', 0, PARAM_INT);
-        $mform = new campaign_content_form(self::step_url($baseurl, 'content')->out(false));
+        $mform = new campaign_content_form(self::step_url($baseurl, 'content')->out(false), [
+            'campaignid' => (int) $campaign->id,
+        ]);
         if ($mform->is_cancelled()) {
             redirect($returnurl);
         } else if ($data = $mform->get_data()) {
@@ -242,6 +252,7 @@ class campaign_edit {
         $mform->set_data([
             'campaignid' => $campaign->id,
             'templateid' => $prefilltemplateid,
+            'templatechoice' => $prefilltemplateid,
             'subject' => $prefillsubject,
             'body' => ['text' => $prefillbody, 'format' => FORMAT_HTML],
             'attachments' => campaign_manager::decode_attachments($campaign->attachmentsjson ?? ''),
@@ -250,7 +261,6 @@ class campaign_edit {
         echo $OUTPUT->header();
         echo $OUTPUT->heading(get_string('editcampaign', 'local_mailwhistle'));
         echo self::render_tabs('content', $baseurl);
-        echo $OUTPUT->render(new template_picker((int) $campaign->id, $templateid));
         $mform->display();
         echo $OUTPUT->footer();
     }

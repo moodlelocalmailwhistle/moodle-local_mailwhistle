@@ -19,10 +19,12 @@ namespace local_mailwhistle\output;
 use core\output\renderable;
 use core\output\renderer_base;
 use core\output\templatable;
+use local_mailwhistle\builder\document;
+use local_mailwhistle\builder\preview;
 use local_mailwhistle\manager\template_manager;
 
 /**
- * "Use a template" picker shown above the campaign content step.
+ * Preview data for the campaign content form's template picker.
  *
  * @package   local_mailwhistle
  * @copyright 2026 onwards MoodleDach project
@@ -35,15 +37,20 @@ class template_picker implements renderable, templatable {
     /** @var int Currently selected template id, if any. */
     private int $selectedid;
 
+    /** @var array|null Active templates, when already loaded by the form. */
+    private ?array $templates;
+
     /**
      * Create the campaign template picker.
      *
      * @param int $campaignid Campaign being edited.
      * @param int $selectedid Currently selected template id, if any.
+     * @param array|null $templates Active templates, or null to load them.
      */
-    public function __construct(int $campaignid, int $selectedid = 0) {
+    public function __construct(int $campaignid, int $selectedid = 0, ?array $templates = null) {
         $this->campaignid = $campaignid;
         $this->selectedid = $selectedid;
+        $this->templates = $templates;
     }
 
     /**
@@ -53,26 +60,48 @@ class template_picker implements renderable, templatable {
      * @return array
      */
     public function export_for_template(renderer_base $output): array {
-        $templates = template_manager::get_list(template_manager::FILTER_ACTIVE);
+        global $CFG;
+
+        require_once($CFG->libdir . '/editorlib.php');
+        $templates = $this->templates ?? template_manager::get_list(template_manager::FILTER_ACTIVE);
         if (empty($templates)) {
             return ['hastemplates' => false];
         }
 
         $options = [];
         foreach ($templates as $template) {
+            $body = preview::prepare_html((string) $template->bodyhtml);
+            $background = document::normalise_background((string) ($template->background ?? ''));
+            $previewhtml = '<!doctype html><html><head><meta charset="utf-8"><style>' .
+                'body{margin:0;padding:16px;background:' . $background . ';font-family:Arial,sans-serif;}' .
+                'img{max-width:100%;height:auto;}table{max-width:100%;}' .
+                '</style></head><body>' . $body . '</body></html>';
+            $previewurl = new \moodle_url('/local/mailwhistle/index.php', [
+                'tab' => 'templates', 'action' => 'preview', 'id' => $template->id,
+            ]);
             $options[] = [
                 'id' => (int) $template->id,
-                'name' => format_string($template->name),
+                'name' => html_entity_decode(strip_tags(format_string($template->name)), ENT_QUOTES, 'UTF-8'),
                 'selected' => (int) $template->id === $this->selectedid,
+                'body' => (string) $template->bodyhtml,
+                'preview' => $previewhtml,
+                'summary' => trim((string) $template->previewtext),
+                'previewurl' => $previewurl->out(false),
             ];
         }
 
-        $actionurl = new \moodle_url('/local/mailwhistle/campaign_edit.php');
+        $editor = editors_get_preferred_editor(FORMAT_HTML);
+        $editortype = match (true) {
+            $editor instanceof \tiny_texteditor => 'tiny',
+            $editor instanceof \atto_texteditor => 'atto',
+            $editor instanceof \textarea_texteditor => 'textarea',
+            default => 'unknown',
+        };
 
         return [
             'hastemplates' => true,
-            'actionurl' => $actionurl->out(false),
-            'campaignid' => $this->campaignid,
+            'pickerid' => 'local-mailwhistle-template-picker-' . $this->campaignid,
+            'editor' => $editortype,
             'options' => $options,
         ];
     }

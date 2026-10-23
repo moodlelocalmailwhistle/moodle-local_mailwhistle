@@ -17,6 +17,8 @@
 namespace local_mailwhistle\form;
 
 use local_mailwhistle\output\resources;
+use local_mailwhistle\output\template_picker;
+use local_mailwhistle\manager\template_manager;
 
 /**
  * Wizard step 2: campaign content (subject and body).
@@ -36,6 +38,7 @@ class campaign_content_form extends \moodleform {
      * @return void
      */
     protected function definition(): void {
+        global $PAGE;
         $mform = $this->_form;
 
         $mform->addElement('hidden', 'campaignid');
@@ -43,6 +46,29 @@ class campaign_content_form extends \moodleform {
 
         $mform->addElement('hidden', 'templateid');
         $mform->setType('templateid', PARAM_INT);
+
+        $templates = template_manager::get_list(template_manager::FILTER_ACTIVE);
+        if ($templates) {
+            $label = get_string('campaign_usetemplate', 'local_mailwhistle');
+            $choices = [0 => get_string('campaign_template_choose', 'local_mailwhistle')];
+            foreach ($templates as $template) {
+                $choices[$template->id] = format_string($template->name);
+            }
+            $controls = [
+                $mform->createElement('select', 'templatechoice', $label, $choices, [
+                    'aria-label' => $label,
+                    'class' => 'ignoredirty',
+                ]),
+                $mform->createElement('button', 'loadtemplate', get_string('campaign_template_load', 'local_mailwhistle'), [
+                    'disabled' => 'disabled',
+                ]),
+            ];
+            $mform->addGroup($controls, 'templatepickercontrols', $label, ' ', false);
+            $mform->setType('templatechoice', PARAM_INT);
+            $renderer = $PAGE->get_renderer('local_mailwhistle');
+            $picker = new template_picker((int) ($this->_customdata['campaignid'] ?? 0), 0, $templates);
+            $mform->addElement('static', 'templatepreview', '', $renderer->render($picker));
+        }
 
         $mform->addElement('text', 'subject', get_string('subject', 'local_mailwhistle'), ['maxlength' => 255, 'size' => 50]);
         $mform->setType('subject', PARAM_TEXT);

@@ -17,40 +17,53 @@
 {{!
     @template local_mailwhistle/template_picker
 
-    Campaign content-step template picker. GET form copies a template into the
-    body editor (not a write).
+    Preview and safely escaped template data for the native campaign form picker.
 
     Context variables required for this template:
     * hastemplates - False when there are no active templates.
-    * actionurl - campaign_edit.php URL.
-    * campaignid - Campaign id.
-    * options - Array of {id, name, selected}.
+    * pickerid - Unique preview region id.
+    * options - Template id, name, body, preview document, summary and previewurl.
 
     Example context (json):
     {
         "hastemplates": true,
-        "actionurl": "/local/mailwhistle/campaign_edit.php",
-        "campaignid": 1,
-        "options": [{"id": 2, "name": "Default", "selected": false}]
+        "pickerid": "local-mailwhistle-template-picker-1",
+        "options": [{"id": 2, "name": "Default", "body": "<p>Hello</p>",
+            "preview": "<p>Hello</p>", "summary": "A simple newsletter", "previewurl": "#"}]
     }
 }}
 {{#hastemplates}}
-<form method="get" action="{{actionurl}}"
-      class="local-mailwhistle-campaign-template-picker d-flex align-items-end mb-3">
-    <input type="hidden" name="campaignid" value="{{campaignid}}">
-    <input type="hidden" name="step" value="content">
-    <div class="me-2">
-        <label for="mw-campaign-templateid" class="d-block">
-            {{#str}}campaign_usetemplate, local_mailwhistle{{/str}}
-        </label>
-        <select name="templateid" class="form-control" id="mw-campaign-templateid">
-            <option value="">{{#str}}campaign_template_choose, local_mailwhistle{{/str}}</option>
-            {{#options}}
-                <option value="{{id}}" {{#selected}}selected{{/selected}}>{{{name}}}</option>
-            {{/options}}
-        </select>
+<div id="{{pickerid}}" class="local-mailwhistle-campaign-template-picker" data-region="template-picker"
+     data-editor="{{editor}}">
+    {{#options}}
+        <span hidden data-template-id="{{id}}" data-name="{{name}}" data-body="{{body}}"
+              data-preview="{{preview}}" data-summary="{{summary}}" data-previewurl="{{previewurl}}"></span>
+    {{/options}}
+    <p class="text-muted small mb-0" data-region="preview-hint">
+        {{#str}}campaign_template_hint, local_mailwhistle{{/str}}
+    </p>
+    <div class="local-mailwhistle-picker-preview border rounded p-3" data-region="template-preview" hidden>
+        <div class="local-mailwhistle-picker-thumbnail border rounded" aria-hidden="true">
+            <iframe id="local-mailwhistle-template-preview" data-region="preview-frame" sandbox="" tabindex="-1"
+                    title="{{#str}}template_preview, local_mailwhistle{{/str}}"></iframe>
+        </div>
+        <div class="local-mailwhistle-picker-description">
+            <strong data-region="template-name"></strong>
+            <p class="text-muted small mb-2" data-region="template-summary"></p>
+            <a href="#" data-region="full-preview" target="_blank" rel="noopener noreferrer">
+                {{#str}}campaign_template_fullpreview, local_mailwhistle{{/str}}
+            </a>
+            <p class="text-muted small mt-2 mb-0">{{#str}}campaign_template_replacehint, local_mailwhistle{{/str}}</p>
+        </div>
     </div>
-    <input type="submit" class="btn btn-secondary"
-           value="{{#str}}campaign_template_load, local_mailwhistle{{/str}}">
-</form>
+    <p class="small text-success mt-2 mb-0" data-region="template-status" role="status" aria-live="polite"
+       data-loaded-message="{{#str}}campaign_template_loaded, local_mailwhistle{{/str}}"
+       data-editor-error="{{#str}}campaign_template_editorloading, local_mailwhistle{{/str}}"></p>
+    <noscript><p class="text-muted small">{{#str}}campaign_template_requiresjs, local_mailwhistle{{/str}}</p></noscript>
+</div>
+{{#js}}
+require(['local_mailwhistle/template_picker'], function(Picker) {
+    Picker.init('{{pickerid}}');
+});
+{{/js}}
 {{/hastemplates}}

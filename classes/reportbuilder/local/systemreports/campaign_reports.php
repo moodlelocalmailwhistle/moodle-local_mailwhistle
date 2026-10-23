@@ -57,6 +57,7 @@ class campaign_reports extends system_report {
         $this->add_entity($entitycampaign);
 
         $this->add_columns();
+        $this->set_initial_sort_column('campaign:reportsentat', SORT_DESC);
 
         $this->set_default_no_results_notice(new lang_string('nosentmails', 'local_mailwhistle'));
     }
@@ -67,13 +68,13 @@ class campaign_reports extends system_report {
      * @return void
      */
     protected function add_columns(): void {
-        $this->add_column_from_entity('campaign:reportnamelink');
-        $this->add_column_from_entity('campaign:audience');
-        $this->add_column_from_entity('campaign:template');
-        $this->add_column_from_entity('campaign:recipients');
-        $this->add_column_from_entity('campaign:uniqueopens');
-        $this->add_column_from_entity('campaign:uniqueclicks');
-        $this->add_column_from_entity('campaign:status');
+        $this->add_column_from_entity('campaign:reportsummary');
+        $this->add_column_from_entity('campaign:reportsentat');
+        $this->add_column_from_entity('campaign:reportdelivery');
+        $this->add_column_from_entity('campaign:reportopens');
+        $this->add_column_from_entity('campaign:reportclicks');
+        $this->add_column_from_entity('campaign:status')
+            ->add_attributes(['class' => 'local-mailwhistle-report-col-status']);
     }
 
     #[\Override]

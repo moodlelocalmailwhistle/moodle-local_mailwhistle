@@ -45,7 +45,7 @@ class audience {
         require_sesskey();
         require_capability('local/mailwhistle:managetags', \context_system::instance());
 
-        $audienceurl = new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'audience']);
+        $audienceurl = self::return_url();
 
         match ($action) {
             'applytag' => self::apply_tag($audienceurl),
@@ -75,30 +75,50 @@ class audience {
      * @return void
      */
     private static function apply_tag(\moodle_url $audienceurl): void {
+        global $CFG, $DB;
+
         $userids = optional_param_array('userids', [], PARAM_INT);
         $applytagid = optional_param('applytagid', 0, PARAM_INT);
         $newtagname = trim(optional_param('newtagname', '', PARAM_TEXT));
+        $mode = optional_param('tagmode', 'existing', PARAM_ALPHA);
 
-        $tagid = 0;
-        if ($newtagname !== '') {
-            $tagid = tag_manager::get_or_create_tag($newtagname);
-        } else if ($applytagid > 0) {
-            $tagid = $applytagid;
+        // Check selection before creating a tag, including requests without JavaScript.
+        $userids = array_values(array_unique(array_filter($userids, static fn($id) => $id > 0)));
+        if ($userids) {
+            [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+            $params['guestid'] = $CFG->siteguest;
+            $userids = $DB->get_fieldset_select('user', 'id', "id $insql AND deleted = 0 AND id <> :guestid", $params);
         }
-
-        if ($tagid <= 0 || empty($userids)) {
+        if (!$userids) {
             redirect(
                 $audienceurl,
-                get_string('noselection', 'local_mailwhistle'),
+                get_string('audience_selectpeople', 'local_mailwhistle'),
                 null,
                 \core\output\notification::NOTIFY_WARNING
             );
         }
 
+        $validtag = $mode === 'new' ? $newtagname !== '' && \core_text::strlen($newtagname) <= 255
+            : $mode === 'existing' && $DB->record_exists('local_mailwhistle_tag', ['id' => $applytagid]);
+        if (!$validtag) {
+            redirect(
+                $audienceurl,
+                get_string('audience_choosetag', 'local_mailwhistle'),
+                null,
+                \core\output\notification::NOTIFY_WARNING
+            );
+        }
+
+        $tagid = $mode === 'new' ? tag_manager::get_or_create_tag($newtagname) : $applytagid;
         $count = tag_manager::assign_tag_to_users($tagid, $userids);
+        $tagname = format_string($DB->get_field('local_mailwhistle_tag', 'name', ['id' => $tagid], MUST_EXIST));
+        $message = $count ? get_string($count === 1 ? 'audience_tagadded_one' : 'audience_tagadded', 'local_mailwhistle', (object) [
+            'tag' => $tagname,
+            'count' => $count,
+        ]) : get_string('audience_alreadytagged', 'local_mailwhistle', $tagname);
         redirect(
             $audienceurl,
-            get_string('tag_assigned_n', 'local_mailwhistle', $count),
+            $message,
             null,
             \core\output\notification::NOTIFY_SUCCESS
         );
@@ -129,7 +149,15 @@ class audience {
      * @return void
      */
     private static function create_tag(\moodle_url $audienceurl): void {
-        $newtagname = required_param('newtagname', PARAM_TEXT);
+        $newtagname = trim(required_param('newtagname', PARAM_TEXT));
+        if ($newtagname === '' || \core_text::strlen($newtagname) > 255) {
+            redirect(
+                $audienceurl,
+                get_string('audience_choosetag', 'local_mailwhistle'),
+                null,
+                \core\output\notification::NOTIFY_WARNING
+            );
+        }
         tag_manager::get_or_create_tag($newtagname);
         redirect(
             $audienceurl,
@@ -152,9 +180,10 @@ class audience {
 
         $tagid = required_param('tagid', PARAM_INT);
         $userid = required_param('userid', PARAM_INT);
+        $cancel = self::return_url();
         $continue = new \single_button(
-            new \moodle_url('/local/mailwhistle/index.php', [
-                'tab' => 'audience',
+            new \moodle_url($cancel, [
+                'filtertagid' => $cancel->get_param('tagid'),
                 'action' => 'removetagconfirm',
                 'tagid' => $tagid,
                 'userid' => $userid,
@@ -163,9 +192,23 @@ class audience {
             get_string('remove_tag', 'local_mailwhistle'),
             'post'
         );
-        $cancel = new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'audience']);
-
         return $OUTPUT->confirm(get_string('confirm_remove_tag', 'local_mailwhistle'), $continue, $cancel);
+    }
+
+    /**
+     * Keep the user's filters after a tag action.
+     *
+     * @return \moodle_url Audience listing URL.
+     */
+    private static function return_url(): \moodle_url {
+        return new \moodle_url('/local/mailwhistle/index.php', [
+            'tab' => 'audience',
+            'search' => optional_param('search', '', PARAM_TEXT),
+            'tagid' => optional_param('filtertagid', 0, PARAM_INT),
+            'suspended' => optional_param('suspended', 'any', PARAM_ALPHA),
+            'auth' => optional_param('auth', 'any', PARAM_PLUGIN),
+            'perpage' => min(max(optional_param('perpage', 25, PARAM_INT), 1), 100),
+        ]);
     }
 
     /**
@@ -174,7 +217,7 @@ class audience {
      * @return string
      */
     private static function listing(): string {
-        global $CFG;
+        global $CFG, $OUTPUT;
 
         require_once($CFG->libdir . '/tablelib.php');
         require_once($CFG->libdir . '/formslib.php');
@@ -203,7 +246,7 @@ class audience {
 
         $filterform = new audience_filter_form(
             $baseurl->out(false),
-            ['tags' => $tags, 'auths' => $authplugins],
+            ['tags' => $tags, 'auths' => $authplugins, 'suspended' => $suspended, 'auth' => $auth, 'perpage' => $perpage],
             'get'
         );
         $filterform->set_data([
@@ -227,11 +270,16 @@ class audience {
         $table->build_sql();
 
         ob_start();
+        echo $OUTPUT->heading(get_string('audience_build', 'local_mailwhistle'), 3);
+        echo \html_writer::tag('p', get_string('audience_intro', 'local_mailwhistle'));
+        echo $OUTPUT->heading(get_string('audience_findpeople', 'local_mailwhistle'), 4);
         $filterform->display();
         if ($canmanage) {
-            echo self::apply_tag_form_start();
-            echo self::apply_tag_controls($tags);
+            echo self::apply_tag_form_start($baseurl);
+            echo $OUTPUT->heading(get_string('audience_selectheading', 'local_mailwhistle'), 4);
+            echo \html_writer::tag('p', get_string('audience_selectionhint', 'local_mailwhistle'), ['class' => 'text-muted']);
             $table->out($perpage, true);
+            echo self::apply_tag_controls($tags);
             echo \html_writer::end_tag('form');
         } else {
             $table->out($perpage, true);
@@ -242,13 +290,22 @@ class audience {
     /**
      * Open the POST form that wraps row checkboxes and apply-tag controls.
      *
+     * @param \moodle_url $baseurl Current filters.
      * @return string
      */
-    private static function apply_tag_form_start(): string {
+    private static function apply_tag_form_start(\moodle_url $baseurl): string {
         $action = (new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'audience']))->out(false);
-        return \html_writer::start_tag('form', ['method' => 'post', 'action' => $action])
+        $html = \html_writer::start_tag('form', [
+            'method' => 'post', 'action' => $action, 'id' => 'local-mailwhistle-audience-form',
+        ])
             . \html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()])
             . \html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'applytag']);
+        foreach ($baseurl->params() as $name => $value) {
+            $html .= \html_writer::empty_tag('input', [
+                'type' => 'hidden', 'name' => $name === 'tagid' ? 'filtertagid' : $name, 'value' => $value,
+            ]);
+        }
+        return $html;
     }
 
     /**
@@ -258,36 +315,15 @@ class audience {
      * @return string
      */
     private static function apply_tag_controls(array $tags): string {
-        $tagselectoptions = ['' => get_string('apply_tag_choose', 'local_mailwhistle')];
-        foreach ($tags as $tag) {
-            $tagselectoptions[(int) $tag->id] = format_string($tag->name);
-        }
+        global $OUTPUT;
 
-        $html = \html_writer::start_div('mw-apply-tag-controls d-flex align-items-center mb-3');
-        $html .= \html_writer::label(
-            get_string('apply_tag', 'local_mailwhistle'),
-            'applytagid',
-            true,
-            ['class' => 'me-1']
-        );
-        $html .= \html_writer::select($tagselectoptions, 'applytagid', '', false, [
-            'id' => 'applytagid',
-            'class' => 'me-1',
+        return $OUTPUT->render_from_template('local_mailwhistle/audience_tag_controls', [
+            'hastags' => !empty($tags),
+            'tags' => array_map(static fn($tag) => [
+                'id' => (int) $tag->id,
+                'name' => html_entity_decode(strip_tags(format_string($tag->name)), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+            ], $tags),
+            'counttemplate' => get_string('audience_selectedcount', 'local_mailwhistle', '{$a}'),
         ]);
-        $html .= ' ' . get_string('new_tag', 'local_mailwhistle') . ' ';
-        $html .= \html_writer::empty_tag('input', [
-            'type' => 'text',
-            'name' => 'newtagname',
-            'id' => 'newtagname',
-            'placeholder' => get_string('new_tag', 'local_mailwhistle'),
-            'class' => 'mx-1 form-control',
-        ]);
-        $html .= \html_writer::empty_tag('input', [
-            'type' => 'submit',
-            'value' => get_string('applybtn', 'local_mailwhistle'),
-            'class' => 'btn btn-primary',
-        ]);
-        $html .= \html_writer::end_div();
-        return $html;
     }
 }

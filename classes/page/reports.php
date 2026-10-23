@@ -38,6 +38,10 @@ class reports {
         $params = [];
         if ($campaignid > 0) {
             $params['campaignid'] = $campaignid;
+            $recipientid = optional_param('recipientid', 0, PARAM_INT);
+            if ($recipientid !== 0) {
+                $params['recipientid'] = $recipientid;
+            }
         } else if ($templateid > 0) {
             $params['templateid'] = $templateid;
         }
@@ -54,7 +58,8 @@ class reports {
 
         $campaignid = optional_param('campaignid', 0, PARAM_INT);
         if ($campaignid > 0) {
-            return $OUTPUT->render(new campaign_report($campaignid));
+            $recipientid = optional_param('recipientid', 0, PARAM_INT);
+            return $OUTPUT->render(new campaign_report($campaignid, $recipientid));
         }
 
         $templateid = optional_param('templateid', 0, PARAM_INT);

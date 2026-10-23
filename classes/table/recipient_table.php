@@ -17,6 +17,7 @@
 namespace local_mailwhistle\table;
 
 use local_mailwhistle\manager\tracking_manager;
+use local_mailwhistle\manager\recipient_manager;
 use local_mailwhistle\output\status_badge;
 
 /**
@@ -53,6 +54,7 @@ class recipient_table extends \table_sql {
         $this->define_baseurl($baseurl);
         $this->define_columns([
             'recipientname',
+            'emailpreview',
             'email',
             'status',
             'timesent',
@@ -62,6 +64,7 @@ class recipient_table extends \table_sql {
         ]);
         $this->define_headers([
             get_string('col_user', 'local_mailwhistle'),
+            get_string('report_email', 'local_mailwhistle'),
             get_string('col_email', 'local_mailwhistle'),
             get_string('col_status', 'local_mailwhistle'),
             get_string('col_sentat', 'local_mailwhistle'),
@@ -72,6 +75,7 @@ class recipient_table extends \table_sql {
         $this->no_sorting('opened');
         $this->no_sorting('clicked');
         $this->no_sorting('error');
+        $this->no_sorting('emailpreview');
         $this->no_sorting('recipientname');
         $this->sortable(true, 'lastname', SORT_ASC);
         $this->is_downloadable(false);
@@ -220,5 +224,28 @@ class recipient_table extends \table_sql {
      */
     public function col_error(\stdClass $row): string {
         return s((string) $row->error);
+    }
+
+    /**
+     * Link to this sent recipient's saved email preview.
+     *
+     * @param \stdClass $row Recipient snapshot row.
+     * @return string Preview link, or an empty cell for recipients not sent.
+     */
+    public function col_emailpreview(\stdClass $row): string {
+        if ($row->status !== recipient_manager::STATUS_SENT) {
+            return '';
+        }
+        $url = new \moodle_url('/local/mailwhistle/index.php', [
+            'tab' => 'reports',
+            'campaignid' => $this->campaignid,
+            'recipientid' => $row->id,
+        ]);
+        $url->set_anchor('local-mailwhistle-report-email');
+        $name = trim($row->firstname . ' ' . $row->lastname);
+        $label = trim($name . ' <' . $row->email . '>');
+        return \html_writer::link($url, get_string('report_viewemail', 'local_mailwhistle'), [
+            'aria-label' => get_string('report_viewemailfor', 'local_mailwhistle', $label),
+        ]);
     }
 }
