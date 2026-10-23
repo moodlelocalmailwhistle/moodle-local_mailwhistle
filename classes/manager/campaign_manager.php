@@ -135,9 +135,11 @@ class campaign_manager {
             $html = $campaign->bodyhtml;
             $text = $campaign->bodytext;
             if (trim((string) $html) !== '') {
+                $html = subscription_manager::replace_unsubscribe_links($html, '{{unsubscribe}}', true);
                 $html = subscription_manager::add_footer($html, '{{unsubscribe}}', true);
             }
             if (trim((string) $text) !== '') {
+                $text = subscription_manager::replace_unsubscribe_links($text, '{{unsubscribe}}', false);
                 $text = subscription_manager::add_footer($text, '{{unsubscribe}}', false);
             }
             $DB->update_record('local_mailwhistle_campaigns', (object) [

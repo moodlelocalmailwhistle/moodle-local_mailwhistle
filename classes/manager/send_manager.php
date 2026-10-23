@@ -353,9 +353,11 @@ class send_manager {
         }
         $text = placeholder_manager::apply((string) $campaign->bodytext, $values, false);
         $html = placeholder_manager::apply((string) $campaign->bodyhtml, $values, true);
+        $html = subscription_manager::replace_unsubscribe_links($html, $values->unsubscribeurl, true);
         if ($text === '' && $html !== '') {
             $text = html_to_text($html);
         }
+        $text = subscription_manager::replace_unsubscribe_links($text, $values->unsubscribeurl, false);
         $message->fullmessage = subscription_manager::add_footer($text, $values->unsubscribeurl, false);
         $message->fullmessageformat = FORMAT_HTML;
         $message->fullmessagehtml = '';

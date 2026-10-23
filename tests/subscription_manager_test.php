@@ -253,6 +253,73 @@ final class subscription_manager_test extends \advanced_testcase {
     }
 
     /**
+     * Copied links target the current recipient, or an inert preview, without rewriting unrelated HTML.
+     */
+    public function test_copied_unsubscribe_links_are_reassigned(): void {
+        [$campaign, $user, $recipient] = $this->make_delivery();
+        $previoususer = $this->getDataGenerator()->create_user(['email' => 'previous@example.com']);
+        $previous = $this->getDataGenerator()->get_plugin_generator('local_mailwhistle')->create_recipient([
+            'campaignid' => $campaign->id, 'userid' => $previoususer->id, 'email' => $previoususer->email,
+        ]);
+        $this->assertNotNull(subscription_manager::verify_token(subscription_manager::unsubscribe_url($previous)->get_param('t')));
+        $oldurl = subscription_manager::unsubscribe_url($previous)->out(false);
+        $oldurl .= '&source=copy';
+        $external = 'https://example.com/?next=' . $oldurl;
+        $unchanged = '<p title=\'href="' . s($oldurl) . '"\'>Original content &amp; formatting</p>'
+            . '<a href="' . s($external) . '">External link</a>'
+            . '<!-- <a href="' . s($oldurl) . '">Comment</a> -->';
+        $campaign->bodyhtml = '<a class="footer" href = "' . s($oldurl) . '">Manage subscription</a>'
+            . "<a href='" . str_replace('?', '&#63;', s($oldurl)) . "'>Stop email</a>" . $unchanged;
+        $campaign->bodytext = 'Stop email: ' . $oldurl . ".\nExternal: " . $external;
+        $builder = new \ReflectionMethod(send_manager::class, 'make_message');
+        $test = $builder->invoke(null, $campaign, $user, $recipient, true);
+        $previewurl = subscription_manager::preview_url()->out(false);
+        $expectedhtml = '<a class="footer" href = "' . s($previewurl) . '">Manage subscription</a>'
+            . "<a href='" . s($previewurl) . "'>Stop email</a>" . $unchanged;
+        $this->assertSame($expectedhtml, $test->fullmessagehtml);
+        $this->assertSame('Stop email: ' . $previewurl . ".\nExternal: " . $external, $test->fullmessage);
+        $this->assertStringNotContainsString('pixel.php', $test->fullmessagehtml);
+
+        // Remove unrelated links before checking that only the unsubscribe links bypass click tracking.
+        $campaign->bodyhtml = '<a href="' . s($oldurl) . '">Manage subscription</a>';
+        $campaign->bodytext = 'Stop email: ' . $oldurl;
+        $live = $builder->invoke(null, $campaign, $user, $recipient, false);
+        $currenturl = subscription_manager::unsubscribe_url($recipient)->out(false);
+        $this->assertStringContainsString('href="' . s($currenturl) . '"', $live->fullmessagehtml);
+        $this->assertSame('Stop email: ' . $currenturl, $live->fullmessage);
+        $this->assertStringNotContainsString($oldurl, $live->fullmessagehtml);
+        $this->assertStringNotContainsString('click.php', $live->fullmessagehtml);
+        $this->assertSame(1, substr_count($live->fullmessagehtml, '<a '));
+
+        // HTML-to-text conversion must also replace old URLs used as visible labels.
+        $campaign->bodyhtml = '<a href="' . s($oldurl) . '">' . s($oldurl) . '</a>';
+        $campaign->bodytext = '';
+        foreach ([true, false] as $istest) {
+            $message = $builder->invoke(null, $campaign, $user, $recipient, $istest);
+            $this->assertStringNotContainsString($oldurl, $message->fullmessage);
+            $this->assertStringContainsString($istest ? $previewurl : $currenturl, $message->fullmessage);
+        }
+    }
+
+    /**
+     * Dispatch freezes copied recipient links as placeholders rather than saving a second footer.
+     */
+    public function test_dispatch_freezes_copied_unsubscribe_links(): void {
+        global $DB;
+        [$campaign, , $recipient] = $this->make_delivery();
+        $oldurl = subscription_manager::unsubscribe_url($recipient)->out(false);
+        $DB->update_record('local_mailwhistle_campaigns', (object) [
+            'id' => $campaign->id,
+            'bodyhtml' => '<p>News</p><a href="' . s($oldurl) . '">Stop email</a>',
+            'bodytext' => 'News. Stop email: ' . $oldurl,
+        ]);
+        $this->assertTrue(campaign_manager::begin_sending($campaign->id));
+        $saved = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaign->id], '*', MUST_EXIST);
+        $this->assertSame('<p>News</p><a href="{{unsubscribe}}">Stop email</a>', $saved->bodyhtml);
+        $this->assertSame('News. Stop email: {{unsubscribe}}', $saved->bodytext);
+    }
+
+    /**
      * A footer must not replace the content when one message alternative is absent.
      */
     public function test_footer_preserves_plain_only_and_html_only_content(): void {

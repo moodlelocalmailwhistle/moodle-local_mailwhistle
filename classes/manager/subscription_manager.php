@@ -168,6 +168,46 @@ class subscription_manager {
     }
 
     /**
+     * Replace privacy links copied from an earlier delivery without rewriting the author's HTML.
+     *
+     * Only actual local link targets are replaced. External URLs containing a local
+     * URL in their query, visible HTML text, comments and other attributes remain intact.
+     *
+     * @param string $body Saved HTML or plain text.
+     * @param string $url Current recipient URL, inert preview URL or unsubscribe placeholder.
+     * @param bool $html Whether the body contains HTML.
+     * @return string Body with copied unsubscribe targets replaced.
+     */
+    public static function replace_unsubscribe_links(string $body, string $url, bool $html): string {
+        if (!$html) {
+            return (string) preg_replace_callback('~https?://[^\s<>"\']+~i', static function ($match) use ($url): string {
+                $target = rtrim($match[0], '.,;:!?)]}');
+                return self::is_unsubscribe_url($target) ? $url . substr($match[0], strlen($target)) : $match[0];
+            }, $body);
+        }
+
+        // Tokenise complete tags so apparent anchors inside comments or quoted attributes are not changed.
+        $tags = '~<!--.*?-->|<(script|style|textarea)\b[^>]*>.*?</\1\s*>|<(?:[^\'"<>]|"[^"]*"|\'[^\']*\')*>~is';
+        $attributes = '~(\s+)([^\s=/>]+)(\s*=\s*)(?:(["\'])(.*?)\4|([^\s>"\']+))~s';
+        return (string) preg_replace_callback($tags, static function ($tag) use ($url, $attributes): string {
+            if (!preg_match('/^<a\s/i', $tag[0])) {
+                return $tag[0];
+            }
+            return (string) preg_replace_callback($attributes, static function ($attribute) use ($url): string {
+                if (strtolower($attribute[2]) !== 'href') {
+                    return $attribute[0];
+                }
+                $quote = $attribute[4];
+                $target = $quote !== '' ? $attribute[5] : $attribute[6];
+                if (!self::is_unsubscribe_url(html_entity_decode($target, ENT_QUOTES | ENT_HTML5, 'UTF-8'))) {
+                    return $attribute[0];
+                }
+                return $attribute[1] . $attribute[2] . $attribute[3] . $quote . s($url) . $quote;
+            }, $tag[0]);
+        }, $body);
+    }
+
+    /**
      * Include an unsubscribe link even when the author did not add a placeholder.
      *
      * @param string $body Personalised HTML or plain text.

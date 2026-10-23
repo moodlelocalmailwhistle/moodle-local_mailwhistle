@@ -30,7 +30,7 @@ Feature: Recipients control their campaign email preference
     Given I open the unsubscribe link for "alice" in campaign "Autumn news"
     And I press "Unsubscribe from campaign emails"
     And I log in as "alice"
-    When I am on "/local/mailwhistle/preferences.php"
+    When I visit "/local/mailwhistle/preferences.php"
     Then I should see "You have opted out"
     When I press "Allow campaign emails"
     Then I should see "You have not opted out"
@@ -40,7 +40,7 @@ Feature: Recipients control their campaign email preference
     Given I open the unsubscribe link for "alice" in campaign "Autumn news"
     And I press "Unsubscribe from campaign emails"
     And I log in as "admin"
-    When I am on "/local/mailwhistle/index.php?tab=audience"
+    When I visit "/local/mailwhistle/index.php?tab=audience"
     And I set the field "Campaign email preference" to "Opted out"
     And I press "Filter users"
     Then I should see "alice@example.com"
@@ -49,6 +49,6 @@ Feature: Recipients control their campaign email preference
     Then I should not see "alice@example.com"
 
   Scenario: Test unsubscribe links never change preferences
-    When I am on "/local/mailwhistle/unsubscribe.php?preview=1"
+    When I visit "/local/mailwhistle/unsubscribe.php?preview=1"
     Then I should see "This is a preview unsubscribe link"
     And user "alice" should not be opted out of campaign emails
