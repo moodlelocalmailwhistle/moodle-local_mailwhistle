@@ -29,6 +29,20 @@ require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
  */
 class behat_local_mailwhistle extends behat_base {
     /**
+     * Enable the standard email processor in the isolated Behat site.
+     *
+     * Behat's email transport is intercepted by core; no external mail is sent.
+     *
+     * @Given /^campaign email delivery is enabled$/
+     * @return void
+     */
+    public function campaign_email_delivery_is_enabled(): void {
+        global $DB;
+        $DB->set_field('message_processors', 'enabled', 1, ['name' => 'email']);
+        set_config('noemailever', 0);
+    }
+
+    /**
      * Get a campaign id by its name.
      *
      * @param string $name Campaign name.

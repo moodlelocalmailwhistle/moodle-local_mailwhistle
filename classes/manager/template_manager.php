@@ -144,6 +144,9 @@ class template_manager {
     public static function create(\stdClass $data): int {
         global $DB;
 
+        if ($error = self::validate_editor_content($data)) {
+            throw new \moodle_exception($error, 'local_mailwhistle');
+        }
         $now = time();
         $record = self::record_from_form($data);
         $record->timecreated = $now;
@@ -162,11 +165,70 @@ class template_manager {
     public static function update(int $id, \stdClass $data): void {
         global $DB;
 
+        $template = self::get($id);
+        if (!$template) {
+            throw new \moodle_exception('templatenotfound', 'local_mailwhistle');
+        }
+        if ($error = self::validate_editor_content($data, $template)) {
+            throw new \moodle_exception($error, 'local_mailwhistle');
+        }
         $record = self::record_from_form($data);
         $record->id = $id;
         $record->timemodified = time();
 
         $DB->update_record('local_mailwhistle_templates', $record);
+    }
+
+    /**
+     * Create an HTML copy of the submitted builder content without changing the original.
+     *
+     * @param int $id Original builder template id.
+     * @param \stdClass $data Current form data, including unsaved block edits.
+     * @return int New HTML template id.
+     */
+    public static function create_html_copy(int $id, \stdClass $data): int {
+        $template = self::get($id);
+        if (!$template) {
+            throw new \moodle_exception('templatenotfound', 'local_mailwhistle');
+        }
+        if (($template->editormode ?? 'html') !== 'builder' || ($data->editormode ?? '') !== 'builder') {
+            throw new \moodle_exception('template_mode_locked', 'local_mailwhistle');
+        }
+
+        $record = self::record_from_form($data);
+        $record->name = \core_text::substr(get_string('template_html_copy_name', 'local_mailwhistle', $record->name), 0, 255);
+        $record->editormode = 'html';
+        $record->builderjson = schema::default_json();
+        $record->bodyhtml_editor = ['text' => $record->bodyhtml, 'format' => FORMAT_HTML];
+        return self::create($record);
+    }
+
+    /**
+     * Reject editor changes that would discard a template's other representation.
+     *
+     * @param \stdClass $data Submitted form data.
+     * @param \stdClass|null $template Saved template, or null for a new template.
+     * @return string|null Error string identifier, or null when content is safe to save.
+     */
+    public static function validate_editor_content(\stdClass $data, ?\stdClass $template = null): ?string {
+        $mode = $data->editormode ?? '';
+        if (!in_array($mode, ['builder', 'html'], true)) {
+            return 'template_mode_locked';
+        }
+        if ($template) {
+            return $mode === ($template->editormode ?? 'html') ? null : 'template_mode_locked';
+        }
+
+        $builder = json_decode((string) ($data->builderjson ?? ''), true);
+        $hasblocks = !empty($builder['blocks']);
+        $html = (string) ($data->bodyhtml_editor['text'] ?? '');
+        // Rich-text editors can submit an empty paragraph even when no content was entered.
+        $hashtml = trim(str_replace("\xc2\xa0", ' ', html_to_text($html))) !== ''
+            || preg_match('/<(?:img|iframe|video|audio|object|embed|hr|table|a)\b/i', $html);
+        if (($mode === 'html' && $hasblocks) || ($mode === 'builder' && $hashtml)) {
+            return 'template_mode_unsaved';
+        }
+        return null;
     }
 
     /**
@@ -325,6 +387,12 @@ class template_manager {
      * @return \stdClass Template record.
      */
     private static function record_from_form(\stdClass $data): \stdClass {
+        if (
+            ($data->editormode ?? '') === 'builder'
+            && document::validate_json((string) ($data->builderjson ?? ''))
+        ) {
+            throw new \moodle_exception('template_builder_invalid', 'local_mailwhistle');
+        }
         $record = new \stdClass();
         $record->name = trim((string) $data->name);
         $record->previewtext = trim((string) ($data->previewtext ?? ''));

@@ -81,6 +81,13 @@ class campaign_edit {
         $PAGE->set_heading(get_string('pluginname', 'local_mailwhistle'));
         $PAGE->requires->css(new \moodle_url('/local/mailwhistle/styles.css'));
 
+        if ($campaignid && optional_param('action', '', PARAM_ALPHA) === 'returntodraft') {
+            helper::require_post();
+            require_sesskey();
+            campaign_manager::return_to_draft($campaignid);
+            redirect(self::step_url($baseurl, 'details'), get_string('campaignreopened', 'local_mailwhistle'));
+        }
+
         if ($campaign->status !== campaign_manager::STATUS_DRAFT) {
             echo $OUTPUT->header();
             echo $OUTPUT->heading(get_string('editcampaign', 'local_mailwhistle'));
@@ -88,6 +95,10 @@ class campaign_edit {
                 get_string('editcampaign_notdraft', 'local_mailwhistle'),
                 \core\output\notification::NOTIFY_INFO
             );
+            if ($campaign->status === campaign_manager::STATUS_READY) {
+                $reopenurl = new \moodle_url($baseurl, ['action' => 'returntodraft', 'sesskey' => sesskey()]);
+                echo $OUTPUT->single_button($reopenurl, get_string('campaignreturntodraft', 'local_mailwhistle'), 'post');
+            }
             echo \html_writer::div(
                 \html_writer::link(
                     $returnurl,
@@ -223,16 +234,13 @@ class campaign_edit {
                 $attachments = $attachments === '' || $attachments === null ? [] : [$attachments];
             }
             $attachments = array_values(array_intersect($attachments, array_keys(resources::get_all_files())));
+            $postedtemplateid = (int) ($data->templateid ?? 0);
             campaign_manager::update_fields((int) $campaign->id, [
                 'subject' => $data->subject,
                 'bodyhtml' => $bodyhtml,
                 'bodytext' => html_to_text($bodyhtml),
                 'attachmentsjson' => campaign_manager::encode_attachments($attachments),
-            ]);
-            $postedtemplateid = (int) ($data->templateid ?? 0);
-            if ($postedtemplateid > 0) {
-                campaign_manager::set_templateid((int) $campaign->id, $postedtemplateid);
-            }
+            ], $postedtemplateid > 0 ? $postedtemplateid : null);
             redirect(self::step_url($baseurl, self::next_step('content')));
         }
 
@@ -309,7 +317,9 @@ class campaign_edit {
         if ($mform->is_cancelled()) {
             redirect($returnurl);
         } else if ($data = $mform->get_data()) {
-            audience_manager::set_campaign_tags($campaignid, campaign_audience_form::get_checked_tagids($data));
+            campaign_manager::with_draft_lock($campaignid, static function () use ($campaignid, $data): void {
+                audience_manager::set_campaign_tags($campaignid, campaign_audience_form::get_checked_tagids($data));
+            });
             redirect(self::step_url($baseurl, self::next_step('audience')));
         }
         $mform->set_data(['campaignid' => $campaignid]);
@@ -346,20 +356,26 @@ class campaign_edit {
         if ($action === 'complete') {
             helper::require_post();
             require_sesskey();
-            campaign_manager::mark_complete($campaignid);
-            redirect(
-                $returnurl,
-                get_string('editcampaign_completed', 'local_mailwhistle'),
-                null,
-                \core\output\notification::NOTIFY_SUCCESS
-            );
+            try {
+                campaign_manager::mark_complete($campaignid);
+                redirect(
+                    $returnurl,
+                    get_string('editcampaign_completed', 'local_mailwhistle'),
+                    null,
+                    \core\output\notification::NOTIFY_SUCCESS
+                );
+            } catch (\moodle_exception $exception) {
+                if ($exception->errorcode !== 'campaignincomplete') {
+                    throw $exception;
+                }
+            }
         }
         if ($action === 'sendtest') {
             helper::require_post();
             require_sesskey();
             $sent = send_manager::send_test($campaignid, $user);
             if ($sent) {
-                $testmsg = get_string('testmail_sent', 'local_mailwhistle', s($user->email));
+                $testmsg = get_string('testmail_sent', 'local_mailwhistle', s(send_manager::get_destination($user)));
                 $testtype = \core\output\notification::NOTIFY_SUCCESS;
             } else {
                 $testmsg = get_string('testmail_failed', 'local_mailwhistle');
@@ -368,8 +384,15 @@ class campaign_edit {
             redirect(self::step_url($baseurl, 'review'), $testmsg, null, $testtype);
         }
 
-        $iscomplete = campaign_manager::is_complete($campaignid);
+        $readiness = campaign_manager::get_readiness($campaignid);
+        $iscomplete = empty($readiness['errors']);
         $tagids = audience_manager::get_campaign_tagids($campaignid);
+        $tagnames = [];
+        foreach (tag_manager::get_all_tags() as $tag) {
+            if (in_array((int) $tag->id, $tagids)) {
+                $tagnames[] = format_string($tag->name, true, ['context' => $context]);
+            }
+        }
 
         echo $OUTPUT->header();
         echo $OUTPUT->heading(get_string('editcampaign', 'local_mailwhistle'));
@@ -382,7 +405,8 @@ class campaign_edit {
             [get_string('subject', 'local_mailwhistle'), format_string($campaign->subject, true, ['context' => $context])],
             [get_string('sendername', 'local_mailwhistle'), format_string($campaign->sendername, true, ['context' => $context])],
             [get_string('senderemail', 'local_mailwhistle'), s($campaign->senderemail)],
-            [get_string('audiencetags_label', 'local_mailwhistle'), count($tagids)],
+            [get_string('audiencetags_label', 'local_mailwhistle'), implode(', ', $tagnames)],
+            [get_string('campaigneligiblecount', 'local_mailwhistle'), $readiness['recipientcount']],
             [get_string('campaign_attachments', 'local_mailwhistle'), self::format_attachment_names($campaign)],
             [get_string('body', 'local_mailwhistle'), format_text(
                 (string) $campaign->bodyhtml,
@@ -391,7 +415,13 @@ class campaign_edit {
             )],
         ];
         echo \html_writer::table($summary);
-        echo \html_writer::start_tag('div', ['class' => 'd-flex gap-2']);
+        if (!$iscomplete) {
+            echo $OUTPUT->notification(
+                \html_writer::alist(array_map('s', $readiness['errors'])),
+                \core\output\notification::NOTIFY_WARNING
+            );
+        }
+        echo \html_writer::start_tag('div', ['class' => 'd-flex flex-wrap gap-2']);
 
         $testurl = new \moodle_url($baseurl, ['step' => 'review', 'action' => 'sendtest', 'sesskey' => sesskey()]);
         echo \html_writer::div(
@@ -412,11 +442,6 @@ class campaign_edit {
                     'post'
                 ),
                 'local-mailwhistle-complete mb-3'
-            );
-        } else {
-            echo $OUTPUT->notification(
-                get_string('editcampaign_incomplete', 'local_mailwhistle'),
-                \core\output\notification::NOTIFY_WARNING
             );
         }
 

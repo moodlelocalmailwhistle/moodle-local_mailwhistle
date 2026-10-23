@@ -139,6 +139,7 @@ class templates {
             'submitlabel' => get_string('template_save', 'local_mailwhistle'),
             'builderjson' => $template->builderjson ?? schema::default_json(),
             'builderstrings' => schema::strings(),
+            'template' => $template,
         ]);
 
         if ($mform->is_cancelled()) {
@@ -146,7 +147,10 @@ class templates {
         }
 
         if ($data = $mform->get_data()) {
-            if ($id > 0) {
+            $iscopy = $id > 0 && !empty($data->savehtmlcopy);
+            if ($iscopy) {
+                $id = template_manager::create_html_copy($id, $data);
+            } else if ($id > 0) {
                 template_manager::update($id, $data);
             } else {
                 $id = template_manager::create($data);
@@ -155,10 +159,10 @@ class templates {
             redirect(
                 new \moodle_url('/local/mailwhistle/index.php', [
                     'tab' => 'templates',
-                    'action' => 'preview',
+                    'action' => $iscopy ? 'edit' : 'preview',
                     'id' => $id,
                 ]),
-                get_string('template_saved', 'local_mailwhistle'),
+                get_string($iscopy ? 'template_html_copy_created' : 'template_saved', 'local_mailwhistle'),
                 null,
                 \core\output\notification::NOTIFY_SUCCESS
             );

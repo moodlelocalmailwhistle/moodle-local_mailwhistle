@@ -203,7 +203,7 @@ class campaign extends base {
 
         $columns[] = (new column(
             'reportsentat',
-            new lang_string('report:sentat', 'local_mailwhistle'),
+            new lang_string('col_completedat', 'local_mailwhistle'),
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
@@ -229,7 +229,11 @@ class campaign extends base {
             ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
                           WHERE campaignid = {$campaignsalias}.id AND status = 'failed')", 'failedcount')
             ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
-                          WHERE campaignid = {$campaignsalias}.id AND status = 'pending')", 'pendingcount')
+                          WHERE campaignid = {$campaignsalias}.id AND status IN ('pending', 'sending'))", 'pendingcount')
+            ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
+                          WHERE campaignid = {$campaignsalias}.id AND status = 'skipped')", 'skippedcount')
+            ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
+                          WHERE campaignid = {$campaignsalias}.id AND status = 'uncertain')", 'uncertaincount')
             ->set_is_sortable(true, ['sentcount'])
             ->add_attributes(['class' => 'local-mailwhistle-report-col-delivery'])
             ->add_callback([campaignhelper::class, 'reportdelivery']);
@@ -271,10 +275,10 @@ class campaign extends base {
             ->add_joins($this->get_joins())
             ->add_field("$campaignsalias.sendername");
 
-        // Sent at.
+        // Campaign completion time.
         $columns[] = (new column(
             'sentat',
-            new lang_string('report:sentat', 'local_mailwhistle'),
+            new lang_string('col_completedat', 'local_mailwhistle'),
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())

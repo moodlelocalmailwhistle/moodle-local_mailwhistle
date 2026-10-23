@@ -221,4 +221,113 @@ final class campaign_edit_page_test extends \advanced_testcase {
         );
         $this->assertStringNotContainsString('$_SERVER', $src);
     }
+
+    /**
+     * Reopening requires both a real POST and a valid session key.
+     *
+     * @dataProvider invalid_reopen_request_provider
+     * @param bool $post Whether to use POST.
+     * @param bool $validsesskey Whether the session key is valid.
+     * @param string $errorcode Expected rejection.
+     */
+    public function test_reopening_rejects_unprotected_requests(bool $post, bool $validsesskey, string $errorcode): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $campaign = $this->getDataGenerator()->get_plugin_generator('local_mailwhistle')->create_campaign(['status' => 'ready']);
+        $params = [
+            'campaignid' => $campaign->id,
+            'action' => 'returntodraft',
+            'sesskey' => $validsesskey ? sesskey() : 'invalid',
+        ];
+        $_POST = $post ? $params : [];
+        $_GET = $post ? [] : $params;
+        try {
+            $this->execute_request();
+            $this->fail('An unprotected reopen request must be rejected.');
+        } catch (\moodle_exception $exception) {
+            $this->assertSame($errorcode, $exception->errorcode);
+        }
+        $this->assertSame('ready', $DB->get_field('local_mailwhistle_campaigns', 'status', ['id' => $campaign->id]));
+    }
+
+    /**
+     * Requests without POST or a valid session key must not reopen campaigns.
+     *
+     * @return array
+     */
+    public static function invalid_reopen_request_provider(): array {
+        return [
+            'get' => [false, true, 'invalidrequest'],
+            'invalid session key' => [true, false, 'invalidsesskey'],
+        ];
+    }
+
+    /**
+     * An authorised POST reopens a ready campaign and returns to its details.
+     */
+    public function test_reopening_ready_campaign(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $campaign = $this->getDataGenerator()->get_plugin_generator('local_mailwhistle')->create_campaign(['status' => 'ready']);
+        $_GET = [];
+        $_POST = ['campaignid' => $campaign->id, 'action' => 'returntodraft', 'sesskey' => sesskey()];
+        $this->execute_request(true);
+        $this->assertSame('draft', $DB->get_field('local_mailwhistle_campaigns', 'status', ['id' => $campaign->id]));
+    }
+
+    /**
+     * A user without the manage capability cannot reopen an otherwise-ready campaign.
+     */
+    public function test_reopening_requires_manage_capability(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setUser($this->getDataGenerator()->create_user());
+        $campaign = $this->getDataGenerator()->get_plugin_generator('local_mailwhistle')->create_campaign(['status' => 'ready']);
+        $_GET = [];
+        $_POST = ['campaignid' => $campaign->id, 'action' => 'returntodraft', 'sesskey' => sesskey()];
+        try {
+            $this->execute_request();
+            $this->fail('Only a manager can reopen the campaign.');
+        } catch (\required_capability_exception $exception) {
+            $this->assertSame('nopermissions', $exception->errorcode);
+        }
+        $this->assertSame('ready', $DB->get_field('local_mailwhistle_campaigns', 'status', ['id' => $campaign->id]));
+    }
+
+    /**
+     * A submitted editor opened before completion cannot update a now-ready campaign.
+     */
+    public function test_stale_details_submission_preserves_ready_campaign(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $campaign = $this->getDataGenerator()->get_plugin_generator('local_mailwhistle')->create_campaign([
+            'name' => 'Saved name', 'status' => 'ready',
+        ]);
+        campaign_details_form::mock_submit(['campaignid' => $campaign->id, 'name' => 'Stale edit']);
+        $html = $this->execute_request();
+        $this->assertStringContainsString('Return to draft', $html);
+        $this->assertSame('Saved name', $DB->get_field('local_mailwhistle_campaigns', 'name', ['id' => $campaign->id]));
+        $this->assertSame('ready', $DB->get_field('local_mailwhistle_campaigns', 'status', ['id' => $campaign->id]));
+    }
+
+    /**
+     * Content form validation rejects empty editor markup before any write.
+     */
+    public function test_content_form_requires_meaningful_body(): void {
+        global $PAGE;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $PAGE->set_context(\context_system::instance());
+        $PAGE->set_url(new \moodle_url('/local/mailwhistle/campaign_edit.php'));
+        $form = new \local_mailwhistle\form\campaign_content_form(null);
+        $errors = $form->validation(['subject' => 'News', 'body' => ['text' => '<p>&nbsp;<br></p>']], []);
+        $this->assertArrayHasKey('body', $errors);
+        $errors = $form->validation([
+            'subject' => 'News', 'body' => ['text' => '<img src="https://example.test/banner.png" alt="News">'],
+        ], []);
+        $this->assertArrayNotHasKey('body', $errors);
+    }
 }

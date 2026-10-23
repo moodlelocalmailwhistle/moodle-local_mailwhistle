@@ -40,11 +40,15 @@ class campaign_reports extends system_report {
 
         $sent = database::generate_param_name();
         $sending = database::generate_param_name();
+        $completedwitherrors = database::generate_param_name();
+        $failed = database::generate_param_name();
         $this->add_base_condition_sql(
-            "campaigns.status IN (:$sent, :$sending)",
+            "campaigns.status IN (:$sent, :$sending, :$completedwitherrors, :$failed)",
             [
                 $sent => campaign_manager::STATUS_SENT,
                 $sending => campaign_manager::STATUS_SENDING,
+                $completedwitherrors => campaign_manager::STATUS_COMPLETED_WITH_ERRORS,
+                $failed => campaign_manager::STATUS_FAILED,
             ]
         );
 

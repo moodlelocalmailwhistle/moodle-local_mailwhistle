@@ -100,7 +100,7 @@ class campaign_preview implements renderable, templatable {
                     'value' => format_string($campaign->sendername, true, ['context' => $systemcontext]),
                 ],
                 [
-                    'label' => get_string('col_sentat', 'local_mailwhistle'),
+                    'label' => get_string('col_completedat', 'local_mailwhistle'),
                     'value' => userdate($sentat),
                 ],
                 [

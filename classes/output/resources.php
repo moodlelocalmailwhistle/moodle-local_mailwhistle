@@ -174,17 +174,22 @@ class resources implements renderable, templatable {
      * @return array Template context.
      */
     public function export_for_template(renderer_base $output) {
+        $usage = \local_mailwhistle\manager\resource_manager::get_usage();
         $files = [];
         foreach (self::get_available_files() as $filename => $url) {
             $files[] = [
                 'filename' => $filename,
                 'url' => $url->out(false),
+                'usage' => isset($usage[$filename]) ? implode('; ', $usage[$filename]) : '',
             ];
         }
         $documents = [];
         foreach (self::get_all_files() as $filename => $file) {
             if (!self::is_public_image($file)) {
-                $documents[] = ['filename' => $filename];
+                $documents[] = [
+                    'filename' => $filename,
+                    'usage' => isset($usage[$filename]) ? implode('; ', $usage[$filename]) : '',
+                ];
             }
         }
         return [

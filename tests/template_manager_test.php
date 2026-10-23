@@ -18,6 +18,9 @@ namespace local_mailwhistle;
 
 use local_mailwhistle\manager\campaign_manager;
 use local_mailwhistle\manager\template_manager;
+use local_mailwhistle\builder\document;
+use local_mailwhistle\builder\html_renderer;
+use local_mailwhistle\builder\schema;
 
 /**
  * Tests for template persistence.
@@ -28,6 +31,145 @@ use local_mailwhistle\manager\template_manager;
  * @covers    \local_mailwhistle\manager\template_manager
  */
 final class template_manager_test extends \advanced_testcase {
+    /**
+     * A saved HTML template cannot be replaced by stale builder blocks.
+     */
+    public function test_update_cannot_switch_saved_html_to_builder(): void {
+        $this->resetAfterTest();
+        $generator = self::getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $template = $generator->create_template(['bodyhtml' => '<p>Keep this HTML</p>']);
+        try {
+            template_manager::update($template->id, (object) [
+                'name' => 'Changed name',
+                'editormode' => 'builder',
+                'builderjson' => schema::default_json(),
+            ]);
+            $this->fail('Changing a saved editor mode must be rejected.');
+        } catch (\moodle_exception $exception) {
+            $this->assertSame('template_mode_locked', $exception->errorcode);
+        }
+        $this->assertEquals($template, template_manager::get($template->id));
+    }
+
+    /**
+     * A saved builder template cannot silently switch to an older HTML body.
+     */
+    public function test_update_cannot_switch_saved_builder_to_html(): void {
+        $this->resetAfterTest();
+        $generator = self::getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $template = $generator->create_template(['editormode' => 'builder']);
+        try {
+            template_manager::update($template->id, (object) [
+                'name' => 'Changed name',
+                'editormode' => 'html',
+                'bodyhtml_editor' => ['text' => '<p>Stale content</p>'],
+            ]);
+            $this->fail('Changing a saved editor mode must be rejected.');
+        } catch (\moodle_exception $exception) {
+            $this->assertSame('template_mode_locked', $exception->errorcode);
+        }
+        $this->assertEquals($template, template_manager::get($template->id));
+    }
+
+    /**
+     * An HTML copy uses the current blocks and preserves the original builder template.
+     */
+    public function test_html_copy_renders_unsaved_blocks_and_keeps_original(): void {
+        $this->resetAfterTest();
+        $generator = self::getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $template = $generator->create_template(['name' => 'Original', 'editormode' => 'builder']);
+        $json = json_encode(['blocks' => [['type' => 'text', 'content' => 'Unsaved block change']]]);
+        $id = template_manager::create_html_copy($template->id, (object) [
+            'name' => 'Original',
+            'previewtext' => 'New preview',
+            'background' => '#123456',
+            'editormode' => 'builder',
+            'builderjson' => $json,
+            'bodyhtml_editor' => ['text' => '<p>Stale HTML</p>'],
+        ]);
+        $copy = template_manager::get($id);
+        $this->assertNotEquals($template->id, $id);
+        $this->assertEquals($template, template_manager::get($template->id));
+        $this->assertSame('HTML copy of Original', $copy->name);
+        $this->assertSame('html', $copy->editormode);
+        $this->assertSame('New preview', $copy->previewtext);
+        $this->assertSame('#123456', $copy->background);
+        $this->assertSame(schema::default_json(), $copy->builderjson);
+        $this->assertSame(html_renderer::render(document::normalise_json($json), '#123456'), $copy->bodyhtml);
+        $this->assertStringContainsString('Unsaved block change', $copy->bodyhtml);
+        $this->assertStringNotContainsString('Stale HTML', $copy->bodyhtml);
+
+        template_manager::update($id, (object) [
+            'name' => $copy->name,
+            'editormode' => 'html',
+            'bodyhtml_editor' => ['text' => '<p>Edited HTML copy</p>'],
+        ]);
+        $this->assertSame('<p>Edited HTML copy</p>', template_manager::get($id)->bodyhtml);
+        $this->assertEquals($template, template_manager::get($template->id));
+    }
+
+    /**
+     * Invalid submitted blocks cannot be normalised away during conversion.
+     */
+    public function test_invalid_builder_copy_does_not_write(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $generator = self::getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $template = $generator->create_template(['editormode' => 'builder']);
+        $count = $DB->count_records('local_mailwhistle_templates');
+        try {
+            template_manager::create_html_copy($template->id, (object) [
+                'name' => 'Invalid copy',
+                'editormode' => 'builder',
+                'builderjson' => '{invalid',
+            ]);
+            $this->fail('Invalid content must not create a copy.');
+        } catch (\moodle_exception $exception) {
+            $this->assertSame('template_builder_invalid', $exception->errorcode);
+        }
+        $this->assertSame($count, $DB->count_records('local_mailwhistle_templates'));
+        $this->assertEquals($template, template_manager::get($template->id));
+    }
+
+    /**
+     * New templates cannot discard unsaved content from the unselected editor.
+     *
+     * @dataProvider conflicting_content_provider
+     * @param string $mode Selected mode.
+     * @param string $json Builder content.
+     * @param string $html HTML content.
+     */
+    public function test_create_rejects_unsaved_mode_changes(string $mode, string $json, string $html): void {
+        global $DB;
+        $this->resetAfterTest();
+        $count = $DB->count_records('local_mailwhistle_templates');
+        try {
+            template_manager::create((object) [
+                'name' => 'Conflicting editors',
+                'editormode' => $mode,
+                'builderjson' => $json,
+                'bodyhtml_editor' => ['text' => $html],
+            ]);
+            $this->fail('Content in the other editor must not be discarded.');
+        } catch (\moodle_exception $exception) {
+            $this->assertSame('template_mode_unsaved', $exception->errorcode);
+        }
+        $this->assertSame($count, $DB->count_records('local_mailwhistle_templates'));
+    }
+
+    /**
+     * Content that would be lost by selecting the other mode.
+     *
+     * @return array
+     */
+    public static function conflicting_content_provider(): array {
+        return [
+            'builder blocks' => ['html', '{"blocks":[{"type":"text","content":"Keep me"}]}', ''],
+            'html text' => ['builder', '{"blocks":[]}', '<p>Keep me</p>'],
+            'html image' => ['builder', '{"blocks":[]}', '<img src="https://example.com/image.png" alt="">'],
+        ];
+    }
+
     /**
      * Create, fetch, archive, and restore a template.
      */

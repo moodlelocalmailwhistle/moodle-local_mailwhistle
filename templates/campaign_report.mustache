@@ -27,6 +27,7 @@
     * stats - Array of {label, value, detail}.
     * metarows - Array of {label, value} where value is already escaped/HTML.
     * table - Rendered recipient table HTML.
+    * retrybutton - Optional POST button for retrying known failures.
     * previewunavailable - True when a requested recipient cannot be previewed.
     * emailpreview - Subject, recipientlabel, hasrecipient, previewhtml, hasbody,
       bodytext, hasplaintext, attachments and hasattachments for the saved campaign.
@@ -40,6 +41,7 @@
         "stats": [{"label": "Recipients", "value": "12", "detail": ""}],
         "metarows": [{"label": "Audience", "value": "Staff"}],
         "table": "<table></table>",
+        "retrybutton": "<form method=\"post\"><button type=\"submit\">Retry failed recipients</button></form>",
         "previewunavailable": false,
         "emailpreview": {
             "subject": "Spring news",
@@ -66,6 +68,12 @@
             <h2 class="h3 mb-0">{{{campaignname}}}</h2>
             <div>{{{statushtml}}}</div>
         </div>
+        {{#retrybutton}}
+            <div class="mb-3">
+                <p>{{#str}}retryfailed_help, local_mailwhistle{{/str}}</p>
+                {{{retrybutton}}}
+            </div>
+        {{/retrybutton}}
         <div class="local-mailwhistle-report-stats">
             {{#stats}}
                 <div class="local-mailwhistle-report-stat card">

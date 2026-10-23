@@ -18,11 +18,10 @@ namespace local_mailwhistle\page;
 
 use local_mailwhistle\helper;
 use local_mailwhistle\manager\campaign_manager;
-use local_mailwhistle\manager\recipient_manager;
+use local_mailwhistle\manager\send_manager;
 use local_mailwhistle\output\campaign_preview;
 use local_mailwhistle\output\draft_campaigns;
 use local_mailwhistle\output\sent_campaigns;
-use local_mailwhistle\task\send_campaign;
 
 /**
  * Campaigns tab: drafts, send now, and sent-mail preview.
@@ -39,7 +38,7 @@ class send {
      * @return void
      */
     public static function handle_write(string $action): void {
-        if ($action !== 'sendnow') {
+        if (!in_array($action, ['sendnow', 'retryfailed'], true)) {
             return;
         }
 
@@ -50,11 +49,12 @@ class send {
         $campaignid = required_param('campaignid', PARAM_INT);
         $sendurl = new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'send']);
 
-        if (campaign_manager::begin_sending($campaignid)) {
-            recipient_manager::snapshot_recipients($campaignid);
-            $task = new send_campaign();
-            $task->set_custom_data(['campaignid' => $campaignid]);
-            \core\task\manager::queue_adhoc_task($task, true);
+        if ($action === 'retryfailed') {
+            $sendurl = new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'reports', 'campaignid' => $campaignid]);
+        }
+        $queued = $action === 'retryfailed' ? send_manager::retry_failed($campaignid)
+            : campaign_manager::begin_sending($campaignid);
+        if ($queued) {
             redirect(
                 $sendurl,
                 get_string('sendqueued', 'local_mailwhistle'),

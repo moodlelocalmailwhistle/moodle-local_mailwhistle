@@ -63,6 +63,13 @@ class campaign {
             $url = new \moodle_url('/local/mailwhistle/campaign_edit.php', ['campaignid' => $row->id]);
         } else if ($row->status === \local_mailwhistle\manager\campaign_manager::STATUS_SENT) {
             $url = new \moodle_url('/local/mailwhistle/index.php', ['view' => $row->id, 'tab' => 'send']);
+        } else if (
+            in_array($row->status, [
+            \local_mailwhistle\manager\campaign_manager::STATUS_COMPLETED_WITH_ERRORS,
+            \local_mailwhistle\manager\campaign_manager::STATUS_FAILED,
+            ], true)
+        ) {
+            $url = new \moodle_url('/local/mailwhistle/index.php', ['campaignid' => $row->id, 'tab' => 'reports']);
         }
         if (trim((string) $name) === '') {
             $name = get_string('untitledcampaign', 'local_mailwhistle');
@@ -204,6 +211,15 @@ class campaign {
                 s(get_string('stat_pendingcount', 'local_mailwhistle', $row->pendingcount)),
                 'local-mailwhistle-report-metric-note'
             );
+        }
+        foreach (['skipped', 'uncertain'] as $status) {
+            $count = (int) ($row->{$status . 'count'} ?? 0);
+            if ($count > 0) {
+                $html .= \html_writer::div(
+                    s(get_string('stat_' . $status . 'count', 'local_mailwhistle', $count)),
+                    'local-mailwhistle-report-metric-note'
+                );
+            }
         }
         return \html_writer::div($html, 'local-mailwhistle-report-delivery');
     }

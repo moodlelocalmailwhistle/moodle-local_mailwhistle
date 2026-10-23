@@ -101,6 +101,12 @@ class campaign_report implements renderable, templatable {
         $table->out(50, false);
         $tablehtml = ob_get_clean();
 
+        $deliverynotes = [];
+        foreach (['failed', 'skipped', 'uncertain'] as $status) {
+            if ($stats->$status > 0) {
+                $deliverynotes[] = get_string('stat_' . $status . 'count', 'local_mailwhistle', $stats->$status);
+            }
+        }
         $statcards = [
             [
                 'label' => get_string('stat_recipients', 'local_mailwhistle'),
@@ -112,9 +118,7 @@ class campaign_report implements renderable, templatable {
             [
                 'label' => get_string('stat_sent', 'local_mailwhistle'),
                 'value' => number_format($stats->sent),
-                'detail' => $stats->failed > 0
-                    ? get_string('stat_failedcount', 'local_mailwhistle', $stats->failed)
-                    : '',
+                'detail' => implode('; ', $deliverynotes),
             ],
             [
                 'label' => get_string('stat_uniqueopens', 'local_mailwhistle'),
@@ -155,7 +159,7 @@ class campaign_report implements renderable, templatable {
                     'value' => format_string($campaign->sendername, true, ['context' => $systemcontext]),
                 ],
                 [
-                    'label' => get_string('col_sentat', 'local_mailwhistle'),
+                    'label' => get_string('col_completedat', 'local_mailwhistle'),
                     'value' => $sentat > 0 ? userdate($sentat) : '',
                 ],
                 [
@@ -167,6 +171,15 @@ class campaign_report implements renderable, templatable {
         ];
         if (!$previewunavailable) {
             $data['emailpreview'] = $this->export_email_preview($campaign, $recipient ?: null);
+        }
+        if (
+            $stats->failed > 0 && $campaign->status !== campaign_manager::STATUS_SENDING
+                && has_capability('local/mailwhistle:manage', $systemcontext)
+        ) {
+            $retryurl = new \moodle_url('/local/mailwhistle/index.php', [
+                'tab' => 'send', 'action' => 'retryfailed', 'campaignid' => $this->id,
+            ]);
+            $data['retrybutton'] = $output->single_button($retryurl, get_string('retryfailed', 'local_mailwhistle'), 'post');
         }
         return $data;
     }

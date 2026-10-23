@@ -136,12 +136,16 @@ define([], function() {
     var resourceFiles = [];
     var resourcesUrl = '';
     var resourceFieldSeq = 0;
+    var fieldSeq = 0;
     var root = null;
     var hiddenInput = null;
     var modeSelect = null;
     var backgroundInput = null;
     var draggedIndex = null;
     var initialized = false;
+    var currentMode = '';
+    var savedMode = '';
+    var modeMessage = null;
 
     var clone = function(value) {
         return JSON.parse(JSON.stringify(value));
@@ -351,6 +355,8 @@ define([], function() {
         }
 
         input.value = block[field] || '';
+        input.id = 'local-mailwhistle-builder-field-' + (++fieldSeq);
+        labelNode.htmlFor = input.id;
         var update = function() {
             block[field] = input.value;
             saveState();
@@ -503,8 +509,20 @@ define([], function() {
         }
     };
 
-    var moveBlock = function(fromIndex, toIndex) {
-        if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) {
+    var focusBlock = function(index, action) {
+        var item = root.querySelector('[data-index="' + index + '"]');
+        if (item) {
+            var target = action ? item.querySelector('[data-action="' + action + '"]')
+                : item.querySelector('input, textarea, select');
+            (target || item).focus();
+        } else {
+            root.querySelector('.local-mailwhistle-builder-toolbar button').focus();
+        }
+    };
+
+    var moveBlock = function(fromIndex, toIndex, action) {
+        if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex) || fromIndex === toIndex
+                || fromIndex < 0 || toIndex < 0 || fromIndex >= state.blocks.length || toIndex >= state.blocks.length) {
             return;
         }
 
@@ -512,6 +530,8 @@ define([], function() {
         state.blocks.splice(toIndex, 0, block);
         saveState();
         render();
+        focusBlock(toIndex, action);
+        root.querySelector('[data-region="status"]').textContent = getString('moved').replace('{$a}', toIndex + 1);
     };
 
     var renderList = function(list) {
@@ -530,6 +550,10 @@ define([], function() {
             item.className = 'local-mailwhistle-builder-block';
             item.draggable = true;
             item.dataset.index = index;
+            item.tabIndex = -1;
+            item.setAttribute('role', 'group');
+            item.setAttribute('aria-label', getString('blockposition').replace('{$a}', index + 1)
+                + ': ' + getString('add' + block.type));
 
             item.addEventListener('dragstart', function() {
                 draggedIndex = index;
@@ -549,19 +573,35 @@ define([], function() {
 
             var header = document.createElement('div');
             header.className = 'local-mailwhistle-builder-block-header';
+            header.classList.add('flex-wrap');
 
             var drag = document.createElement('span');
             drag.className = 'local-mailwhistle-builder-drag';
-            drag.textContent = getString('drag') + ': ' + block.type;
+            drag.textContent = getString('add' + block.type);
+            drag.title = getString('drag');
             header.appendChild(drag);
 
+            var actions = document.createElement('div');
+            actions.className = 'd-flex flex-wrap';
+            [['moveup', -1], ['movedown', 1]].forEach(function(direction) {
+                var button = createButton(getString(direction[0]));
+                button.dataset.action = direction[0];
+                var destination = index + direction[1];
+                button.setAttribute('aria-disabled', destination < 0 || destination >= state.blocks.length ? 'true' : 'false');
+                button.addEventListener('click', function() {
+                    moveBlock(index, destination, direction[0]);
+                });
+                actions.appendChild(button);
+            });
             var remove = createButton(getString('remove'), 'btn btn-link btn-sm text-danger');
             remove.addEventListener('click', function() {
                 state.blocks.splice(index, 1);
                 saveState();
                 render();
+                focusBlock(Math.min(index, state.blocks.length - 1));
             });
-            header.appendChild(remove);
+            actions.appendChild(remove);
+            header.appendChild(actions);
             item.appendChild(header);
 
             var body = document.createElement('div');
@@ -737,6 +777,39 @@ define([], function() {
         state.blocks.push(clone(defaults[type]));
         saveState();
         render();
+        focusBlock(state.blocks.length - 1);
+    };
+
+    var hasHtmlContent = function() {
+        var textarea = document.getElementById('id_bodyhtml_editor');
+        var value = textarea ? textarea.value : '';
+        var tiny = window.tinyMCE || window.tinymce;
+        var editor = tiny && textarea ? tiny.get(textarea.id) : null;
+        var editable = document.querySelector('#fitem_id_bodyhtml_editor [contenteditable="true"]');
+        if (editor) {
+            value = editor.getContent();
+        } else if (editable) {
+            value = editable.innerHTML;
+        }
+        var content = new DOMParser().parseFromString(value, 'text/html').body;
+        return content.textContent.replace(/\u00a0/g, ' ').trim() !== ''
+            || !!content.querySelector('img, iframe, video, audio, object, embed, hr, table, a');
+    };
+
+    var changeMode = function() {
+        if (modeSelect.value === currentMode) {
+            return;
+        }
+        if (savedMode || (currentMode === 'builder' && state.blocks.length)
+                || (currentMode === 'html' && hasHtmlContent())) {
+            modeSelect.value = currentMode;
+            modeMessage.textContent = getString(savedMode ? 'modelocked' : 'modeunsaved');
+            modeMessage.hidden = false;
+            return;
+        }
+        currentMode = modeSelect.value;
+        modeMessage.hidden = true;
+        toggleMode();
     };
 
     var toggleMode = function() {
@@ -818,6 +891,12 @@ define([], function() {
 
         root.appendChild(header);
 
+        var status = document.createElement('p');
+        status.dataset.region = 'status';
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        root.appendChild(status);
+
         var body = document.createElement('div');
         body.className = 'local-mailwhistle-builder-body';
 
@@ -867,19 +946,26 @@ define([], function() {
         strings = config.strings || {};
         resourceFiles = Array.isArray(config.resources) ? config.resources : [];
         resourcesUrl = config.resourcesurl || '';
+        savedMode = config.savedmode || '';
 
         if (!root || !hiddenInput || !modeSelect) {
             return;
         }
 
         initialized = true;
+        currentMode = modeSelect.value;
+        modeMessage = document.createElement('div');
+        modeMessage.className = 'alert alert-info mt-2';
+        modeMessage.setAttribute('role', 'alert');
+        modeMessage.hidden = true;
+        modeSelect.insertAdjacentElement('afterend', modeMessage);
         state = normaliseState(hiddenInput.value || config.builderjson);
         saveState();
         buildUi();
         render();
         toggleMode();
 
-        modeSelect.addEventListener('change', toggleMode);
+        modeSelect.addEventListener('change', changeMode);
         var form = root.closest('form');
         if (form) {
             form.addEventListener('submit', saveState);

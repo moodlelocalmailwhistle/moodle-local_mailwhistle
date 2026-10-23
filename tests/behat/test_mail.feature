@@ -5,7 +5,8 @@ Feature: Send a test copy of a draft campaign
   I need to send a test copy to myself from the review step
 
   Background:
-    Given the following "local_mailwhistle > tags" exist:
+    Given campaign email delivery is enabled
+    And the following "local_mailwhistle > tags" exist:
       | name       |
       | Newsletter |
     And the following "local_mailwhistle > campaigns" exist:
@@ -17,4 +18,4 @@ Feature: Send a test copy of a draft campaign
   Scenario: Review step can send a test email to the current user
     When I visit the review step for campaign "Autumn news"
     And I press "Send test email to me"
-    Then I should see "A test email has been sent"
+    Then I should see "The email transport accepted a test email"

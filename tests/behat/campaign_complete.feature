@@ -11,6 +11,9 @@ Feature: Mark a draft campaign as complete
     And the following "local_mailwhistle > tags" exist:
       | name      |
       | Newsletter |
+    And the following "local_mailwhistle > tag assignments" exist:
+      | tag        | user     |
+      | Newsletter | manager1 |
     And I log in as "admin"
 
   Scenario: A complete draft campaign can be marked complete from the review step
@@ -29,4 +32,6 @@ Feature: Mark a draft campaign as complete
       | Empty one  |         |          | draft  |
     When I visit the review step for campaign "Empty one"
     Then I should not see "Mark campaign complete"
-    And I should see "Add a name, subject, body and at least one audience tag"
+    And I should see "Enter an email subject in Content."
+    And I should see "Add text or an image to the email body in Content."
+    And I should see "Choose audience groups containing at least one eligible person."

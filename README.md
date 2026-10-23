@@ -24,7 +24,7 @@ Moodle already has messaging, but it is built for notifications, not campaigns. 
 - building HTML newsletters (visual builder or raw HTML)
 - targeting people with reusable audience tags
 - sending a test copy to yourself before the real send
-- delivering in batches through Moodle messaging (so it respects each user's mail settings)
+- delivering in batches through Moodle's email processor while respecting campaign notification settings
 - recording opens and clicks without requiring a Moodle session in the inbox
 - seeing who a campaign (and which template) was sent to, with open and click counts
 
@@ -46,6 +46,8 @@ Open it at **Site administration → Mail Whistle**, or `/local/mailwhistle/inde
 
 Drafts and previously sent newsletters live on one tab. Create a campaign, walk through **Details → Content → Audience → Review**, send a test copy, mark it ready, then **Send now**. Delivery runs as an ad-hoc task so large audiences can be batched.
 
+Review shows the number of eligible recipients and explains missing content or unavailable attachments. A ready campaign can be returned to draft until sending starts. Sending and completed campaigns cannot be edited.
+
 ![Campaigns tab with draft campaigns and previously sent newsletters](docs/screenshots/01-campaigns.png)
 
 A sent campaign keeps its audience, recipient count, sender, time, and a preview of the HTML that went out.
@@ -63,6 +65,8 @@ The campaign is sent to everyone tagged with **any** of the selected tags.
 ### Templates
 
 Reusable layouts for the content step. HTML mode for a pasted body, or **Builder mode** for drag-and-drop blocks (header, logo, text, button, image, highlight, two columns, social links, divider, footer). Image and logo blocks pick a file uploaded on the Resources tab. Templates can be previewed, archived, restored, exported as JSON, and deleted when unused.
+
+Choose an editor before adding content. Saved templates keep that editor mode. **Save as HTML copy** converts the current Builder blocks into a separate editable HTML template and preserves the original. Blocks also have keyboard-accessible move controls.
 
 ![Email templates overview with card previews](docs/screenshots/04-templates.png)
 
@@ -83,16 +87,20 @@ Load a template into a campaign from the content step. Personalisation variables
 
 ### Sending and tracking
 
-- Outgoing mail goes through Moodle's `message_send` campaign provider (email by default).
+- Outgoing mail uses Moodle's email processor. Campaign provider defaults, administrator locks, user preferences, account status and recorded opt-outs are checked before each email. Other notification channels do not determine whether an email succeeded.
+- The sender display name is configurable; Moodle controls the From address. **Reply-to email address** sets the destination for replies.
 - Campaigns can attach files uploaded on the Resources tab (one file as-is, several as `attachments.zip`).
+- Missing files or disabled attachments block sending instead of silently dropping the attachment.
 - The subject of a test copy is prefixed with `[Test]`.
 - Live sends rewrite `http(s)` links through `click.php` and append a 1×1 open pixel (`pixel.php`). Tokens are HMAC-signed; click tokens are bound to the target URL (no open redirect).
 - Opens are stored once per recipient; clicks once per distinct link.
-- Batch size is configurable (**Site administration → Mail Whistle → Settings**, default 50). A scheduled task resumes stalled sends.
+- Batch size is configurable (**Site administration → Mail Whistle → Settings**, default 50). A scheduled task resumes pending work after a stalled send. Interrupted or unconfirmed transport attempts are marked **Uncertain** and are not automatically sent again.
 
 ### Reports
 
 The Reports tab lists sent and in-progress campaigns with audience tags, the template that was loaded (when one was used), recipient count, unique opens, and unique clicks. Open a campaign to see the snapshotted roster: name, email, send status, whether that person opened or clicked, and any send error. Opens are stored once per recipient; clicks once per person (unique clickers). Campaigns sent before this version have no stored template id.
+
+**Sent** means the email transport accepted the message, rather than confirmation that it reached an inbox. **Skipped** means account or notification settings prevented sending; **Uncertain** means acceptance could not be confirmed. Campaigns finish as Sent, Completed with issues, or Failed according to their recipient outcomes. **Retry failed recipients** retries only known failures; it leaves sent, skipped and uncertain recipients untouched.
 
 A sent-campaign preview on the Campaigns tab links through to the same report.
 
@@ -102,6 +110,8 @@ Upload images (JPEG, PNG, GIF, WebP) on the Resources tab, then choose them from
 
 PDFs and other documents uploaded there can be attached on the campaign content step. They are sent as email attachments, not as public URLs. Non-image files still require a Moodle login if opened from the site.
 
+Resources show which saved campaigns or templates use them. Referenced files cannot be deleted or replaced, including images used by sent campaigns. Upload a new filename for a replacement and update the draft or template that needs it.
+
 ## Install
 
 1. Copy this folder to `local/mailwhistle` in your Moodle tree (`public/local/mailwhistle` on Moodle 5.1+ with a `/public` docroot).
@@ -109,6 +119,8 @@ PDFs and other documents uploaded there can be attached on the campaign content 
 3. Purge caches.
 
 The plugin adds a **Mail Whistle** category under site administration, with Campaigns and Settings.
+
+When upgrading from a version before 1.5.0, finish any ongoing campaign sends and stop old cron workers before replacing the code. The upgrade marks historical failed deliveries, and any remaining recipients of an unfinished send, as Uncertain because the old sender could not establish whether email had already been accepted. It preserves the original error details and prevents those recipients from being sent again by recovery or retry. Draft and ready campaigns are unchanged.
 
 ## Capabilities
 

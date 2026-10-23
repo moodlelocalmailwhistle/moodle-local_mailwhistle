@@ -5,7 +5,8 @@ Feature: Send a ready campaign
   I need to queue a ready campaign and have it delivered to tagged users
 
   Background:
-    Given the following "users" exist:
+    Given campaign email delivery is enabled
+    And the following "users" exist:
       | username | firstname | lastname | email             |
       | alice    | Alice     | Student  | alice@example.com |
     And the following "local_mailwhistle > tags" exist:

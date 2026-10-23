@@ -32,6 +32,19 @@ use local_mailwhistle\manager\tag_manager;
  */
 final class send_manager_test extends \advanced_testcase {
     /**
+     * Configure the actual email processor while preventing external transport.
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        $this->preventResetByRollback();
+        global $DB, $CFG;
+        $CFG->noemailever = false;
+        $DB->set_field('message_processors', 'enabled', 1, ['name' => 'email']);
+        $this->redirectEmails();
+    }
+
+    /**
      * Build a complete, ready campaign with one tagged recipient.
      *
      * @return array{0:int,1:\stdClass} [campaignid, recipient user]
@@ -46,7 +59,7 @@ final class send_manager_test extends \advanced_testcase {
             'bodytext' => 'Body text',
             'sendername' => 'Sender Name',
             'senderemail' => 'sender@example.com',
-            'status' => campaign_manager::STATUS_READY,
+            'status' => campaign_manager::STATUS_DRAFT,
             'createdby' => (int) $USER->id,
             'timecreated' => $now,
             'timemodified' => $now,
@@ -55,6 +68,7 @@ final class send_manager_test extends \advanced_testcase {
         audience_manager::set_campaign_tags($campaignid, [$tag]);
         $user = $this->getDataGenerator()->create_user(['email' => 'rcpt@example.com']);
         tag_manager::assign_tag($tag, $user->id);
+        campaign_manager::mark_complete($campaignid);
         recipient_manager::snapshot_recipients($campaignid);
         return [$campaignid, $user];
     }
@@ -67,7 +81,7 @@ final class send_manager_test extends \advanced_testcase {
         global $DB;
 
         $this->preventResetByRollback();
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
         [$campaignid, $user] = $this->make_ready_campaign_with_recipient();
 
         campaign_manager::begin_sending($campaignid);
@@ -109,7 +123,7 @@ final class send_manager_test extends \advanced_testcase {
         send_manager::process_campaign($campaignid, 50);
 
         $this->preventResetByRollback();
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
         send_manager::process_campaign($campaignid, 50);
         $messages = $sink->get_messages();
         $sink->close();
@@ -153,7 +167,7 @@ final class send_manager_test extends \advanced_testcase {
         campaign_manager::begin_sending($campaignid);
 
         $this->preventResetByRollback();
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
         send_manager::process_campaign($campaignid, 2); // Batch of 2.
         $sink->close();
 
@@ -192,7 +206,7 @@ final class send_manager_test extends \advanced_testcase {
         ]);
 
         $this->preventResetByRollback();
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
         $sent = send_manager::send_test($campaignid, $reviewer);
         $messages = $sink->get_messages();
         $sink->close();
@@ -201,12 +215,12 @@ final class send_manager_test extends \advanced_testcase {
         $this->assertCount(1, $messages);
         $this->assertStringContainsString('[Test]', $messages[0]->subject);
         $this->assertStringContainsString('Hi Alice', $messages[0]->subject);
-        $this->assertStringContainsString('Hello Alice', $messages[0]->fullmessagehtml);
-        $this->assertStringContainsString('https://example.com/campus', $messages[0]->fullmessagehtml);
+        $this->assertStringContainsString('Hello Alice', quoted_printable_decode($messages[0]->body));
+        $this->assertStringContainsString('https://example.com/campus', quoted_printable_decode($messages[0]->body));
         $this->assertStringNotContainsString('{{firstname}}', $messages[0]->subject);
-        $this->assertStringNotContainsString('{{firstname}}', $messages[0]->fullmessagehtml);
-        $this->assertStringNotContainsString('pixel.php', $messages[0]->fullmessagehtml);
-        $this->assertStringNotContainsString('click.php', $messages[0]->fullmessagehtml);
+        $this->assertStringNotContainsString('{{firstname}}', quoted_printable_decode($messages[0]->body));
+        $this->assertStringNotContainsString('pixel.php', quoted_printable_decode($messages[0]->body));
+        $this->assertStringNotContainsString('click.php', quoted_printable_decode($messages[0]->body));
         $this->assertFalse($DB->record_exists('local_mailwhistle_recipients', ['campaignid' => $campaignid]));
         $this->assertFalse($DB->record_exists('local_mailwhistle_tracking', ['campaignid' => $campaignid]));
     }
@@ -246,10 +260,12 @@ final class send_manager_test extends \advanced_testcase {
 
         [$campaignid] = $this->make_ready_campaign_with_recipient();
         $this->create_resource('handbook.pdf', file_get_contents(__DIR__ . '/fixtures/handbook.pdf'));
+        campaign_manager::return_to_draft($campaignid);
         campaign_manager::update_fields($campaignid, [
             'attachmentsjson' => campaign_manager::encode_attachments(['handbook.pdf']),
         ]);
 
+        campaign_manager::mark_complete($campaignid);
         $sink = $this->redirectEmails();
         campaign_manager::begin_sending($campaignid);
         send_manager::process_campaign($campaignid, 50);
@@ -275,10 +291,12 @@ final class send_manager_test extends \advanced_testcase {
         [$campaignid] = $this->make_ready_campaign_with_recipient();
         $this->create_resource('handbook.pdf', file_get_contents(__DIR__ . '/fixtures/handbook.pdf'));
         $this->create_resource('notes.txt', 'Notes');
+        campaign_manager::return_to_draft($campaignid);
         campaign_manager::update_fields($campaignid, [
             'attachmentsjson' => campaign_manager::encode_attachments(['handbook.pdf', 'notes.txt']),
         ]);
 
+        campaign_manager::mark_complete($campaignid);
         $sink = $this->redirectEmails();
         campaign_manager::begin_sending($campaignid);
         send_manager::process_campaign($campaignid, 50);
