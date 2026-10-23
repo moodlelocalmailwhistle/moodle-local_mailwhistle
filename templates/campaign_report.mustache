@@ -17,24 +17,41 @@
 {{!
     @template local_mailwhistle/campaign_report
 
-    Campaign report: stats cards and recipient roster.
+    Campaign report: email preview, stats cards and recipient roster.
 
     Context variables required for this template:
     * listurl - Back-to-list URL.
     * notfound - True when the campaign is missing or not reportable.
-    * subject - format_string() subject.
+    * campaignname - Formatted campaign name.
+    * statushtml - Rendered status badge.
     * stats - Array of {label, value, detail}.
     * metarows - Array of {label, value} where value is already escaped/HTML.
     * table - Rendered recipient table HTML.
+    * previewunavailable - True when a requested recipient cannot be previewed.
+    * emailpreview - Subject, recipientlabel, hasrecipient, previewhtml, hasbody,
+      bodytext, hasplaintext, attachments and hasattachments for the saved campaign.
 
     Example context (json):
     {
         "listurl": "/local/mailwhistle/index.php?tab=reports",
         "notfound": false,
-        "subject": "News",
+        "campaignname": "Spring newsletter",
+        "statushtml": "<span>Sent</span>",
         "stats": [{"label": "Recipients", "value": "12", "detail": ""}],
         "metarows": [{"label": "Audience", "value": "Staff"}],
-        "table": "<table></table>"
+        "table": "<table></table>",
+        "previewunavailable": false,
+        "emailpreview": {
+            "subject": "Spring news",
+            "recipientlabel": "Alice Rowe <alice@example.com>",
+            "hasrecipient": true,
+            "previewhtml": "<!doctype html><html><body><p>Hello Alice</p></body></html>",
+            "hasbody": true,
+            "bodytext": "Hello Alice",
+            "hasplaintext": true,
+            "attachments": [{"filename": "handbook.pdf"}],
+            "hasattachments": true
+        }
     }
 }}
 <div class="local-mailwhistle-campaign-report">
@@ -45,7 +62,10 @@
         <div class="alert alert-warning">{{#str}}mailnotfound, local_mailwhistle{{/str}}</div>
     {{/notfound}}
     {{^notfound}}
-        <h3>{{{subject}}}</h3>
+        <div class="local-mailwhistle-report-heading">
+            <h2 class="h3 mb-0">{{{campaignname}}}</h2>
+            <div>{{{statushtml}}}</div>
+        </div>
         <div class="local-mailwhistle-report-stats">
             {{#stats}}
                 <div class="local-mailwhistle-report-stat card">
@@ -59,17 +79,79 @@
                 </div>
             {{/stats}}
         </div>
-        <table class="table generaltable w-auto local-mailwhistle-mailmeta mb-3">
-            <tbody>
-                {{#metarows}}
-                    <tr>
-                        <td>{{label}}</td>
-                        <td>{{{value}}}</td>
-                    </tr>
-                {{/metarows}}
-            </tbody>
-        </table>
-        <h4>{{#str}}report_recipients, local_mailwhistle{{/str}}</h4>
-        {{{table}}}
+        <div class="local-mailwhistle-report-layout mb-4">
+            <section class="card local-mailwhistle-report-message" id="local-mailwhistle-report-email"
+                     aria-labelledby="local-mailwhistle-report-email-heading">
+                <div class="card-header">
+                    <h3 class="h5 mb-0" id="local-mailwhistle-report-email-heading">
+                        {{#str}}report_emailpreview, local_mailwhistle{{/str}}
+                    </h3>
+                </div>
+                {{#previewunavailable}}
+                    <div class="card-body">
+                        <p class="mb-0">{{#str}}report_previewunavailable, local_mailwhistle{{/str}}</p>
+                    </div>
+                {{/previewunavailable}}
+                {{#emailpreview}}
+                    <div class="card-body local-mailwhistle-report-envelope">
+                        <div class="text-muted mb-1">{{#str}}subject, local_mailwhistle{{/str}}</div>
+                        <h4 class="h5 mb-2">{{subject}}</h4>
+                        {{#hasrecipient}}
+                            <p class="mb-0"><strong>{{#str}}report_previewrecipient, local_mailwhistle{{/str}}:</strong>
+                                {{recipientlabel}}</p>
+                        {{/hasrecipient}}
+                        {{^hasrecipient}}
+                            <p class="mb-0">{{#str}}report_previewgeneric, local_mailwhistle{{/str}}</p>
+                        {{/hasrecipient}}
+                    </div>
+                    {{#hasbody}}
+                        <iframe id="local-mailwhistle-report-email-frame" class="local-mailwhistle-report-email-frame"
+                                sandbox="" referrerpolicy="no-referrer"
+                                title="{{#str}}report_emailpreview, local_mailwhistle{{/str}}" srcdoc="{{previewhtml}}"></iframe>
+                    {{/hasbody}}
+                    {{^hasbody}}
+                        <p class="p-3 mb-0">{{#str}}report_previewempty, local_mailwhistle{{/str}}</p>
+                    {{/hasbody}}
+                    <div class="card-body">
+                        {{#hasattachments}}
+                            <div class="mb-3">
+                                <h4 class="h6">{{#str}}report_attachments, local_mailwhistle{{/str}}</h4>
+                                <ul class="local-mailwhistle-report-attachments list-unstyled mb-0">
+                                    {{#attachments}}<li class="border rounded px-2 py-1">{{filename}}</li>{{/attachments}}
+                                </ul>
+                            </div>
+                        {{/hasattachments}}
+                        {{#hasplaintext}}
+                            <details class="local-mailwhistle-report-plaintext mb-3">
+                                <summary>{{#str}}report_plaintext, local_mailwhistle{{/str}}</summary>
+                                <pre class="mt-2 mb-0">{{bodytext}}</pre>
+                            </details>
+                        {{/hasplaintext}}
+                        <p class="small text-muted mb-0">{{#str}}report_previewhint, local_mailwhistle{{/str}}</p>
+                    </div>
+                {{/emailpreview}}
+            </section>
+            <aside class="card align-self-start" aria-labelledby="local-mailwhistle-report-details-heading">
+                <div class="card-body">
+                    <h3 class="h5 mb-3" id="local-mailwhistle-report-details-heading">
+                        {{#str}}report_details, local_mailwhistle{{/str}}
+                    </h3>
+                    <dl class="local-mailwhistle-report-meta mb-0">
+                        {{#metarows}}
+                            <div>
+                                <dt>{{label}}</dt>
+                                <dd>{{{value}}}</dd>
+                            </div>
+                        {{/metarows}}
+                    </dl>
+                </div>
+            </aside>
+        </div>
+        <section aria-labelledby="local-mailwhistle-report-recipients-heading">
+            <h3 class="h4" id="local-mailwhistle-report-recipients-heading">
+                {{#str}}report_recipients, local_mailwhistle{{/str}}
+            </h3>
+            <div class="table-responsive">{{{table}}}</div>
+        </section>
     {{/notfound}}
 </div>

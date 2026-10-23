@@ -133,9 +133,14 @@ class helper {
      * @param string $name The internal campaign name.
      * @param int|null $userid The creating user (uses current user if null).
      * @return int The new campaign id.
+     * @throws \invalid_parameter_exception When the campaign name is blank.
      */
     public static function create_campaign(string $name, ?int $userid = null): int {
         global $DB, $USER;
+
+        if (trim($name) === '') {
+            throw new \invalid_parameter_exception('Campaign name must not be empty.');
+        }
 
         if ($userid === null) {
             $userid = $USER->id;

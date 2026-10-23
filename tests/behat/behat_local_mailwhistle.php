@@ -102,6 +102,49 @@ class behat_local_mailwhistle extends behat_base {
     }
 
     /**
+     * Assert which template was applied when a campaign was saved.
+     *
+     * @Then /^campaign "(?P<campaign_string>(?:[^"]|\\")*)" should use template "(?P<template_string>(?:[^"]|\\")*)"$/
+     * @param string $campaign The campaign name.
+     * @param string $template The applied template name, or empty for no template.
+     * @return void
+     */
+    public function campaign_should_use_template(string $campaign, string $template): void {
+        global $DB;
+        $expected = $template === '' ? 0 : (int) $DB->get_field(
+            'local_mailwhistle_templates',
+            'id',
+            ['name' => $template],
+            MUST_EXIST
+        );
+        $actual = (int) $DB->get_field('local_mailwhistle_campaigns', 'templateid', ['name' => $campaign], MUST_EXIST);
+        if ($actual !== $expected) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                "Campaign '$campaign' uses template id $actual, expected $expected",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert the number of stored campaigns, including unnamed drafts.
+     *
+     * @Then /^there should be (?P<count>\d+) Mail Whistle campaigns$/
+     * @param int $count Expected number of campaigns.
+     * @return void
+     */
+    public function there_should_be_mail_whistle_campaigns(int $count): void {
+        global $DB;
+        $actual = $DB->count_records('local_mailwhistle_campaigns');
+        if ($actual !== $count) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                "Found $actual Mail Whistle campaigns, expected $count",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
      * Open a Mail Whistle admin tab.
      *
      * @When /^I am on the Mail Whistle "(?P<tab_string>(?:[^"]|\\")*)" tab$/

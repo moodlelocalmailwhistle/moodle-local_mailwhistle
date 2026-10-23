@@ -19,6 +19,10 @@ namespace local_mailwhistle\output;
 use core\output\renderable;
 use core\output\renderer_base;
 use core\output\templatable;
+use local_mailwhistle\builder\preview;
+use local_mailwhistle\manager\campaign_manager;
+use local_mailwhistle\manager\placeholder_manager;
+use local_mailwhistle\manager\recipient_manager;
 use local_mailwhistle\manager\report_manager;
 use local_mailwhistle\reportbuilder\local\helper\campaign as campaignhelper;
 use local_mailwhistle\table\recipient_table;
@@ -34,13 +38,18 @@ class campaign_report implements renderable, templatable {
     /** @var int Campaign id. */
     private int $id;
 
+    /** @var int Explicit recipient snapshot to preview, or zero for the first sent recipient. */
+    private int $recipientid;
+
     /**
      * Create a campaign report.
      *
      * @param int $id Campaign id.
+     * @param int $recipientid Optional sent recipient snapshot id.
      */
-    public function __construct(int $id) {
+    public function __construct(int $id, int $recipientid = 0) {
         $this->id = $id;
+        $this->recipientid = $recipientid;
     }
 
     /**
@@ -65,7 +74,7 @@ class campaign_report implements renderable, templatable {
 
         $systemcontext = \context_system::instance();
         $stats = report_manager::get_campaign_stats($this->id);
-        $sentat = (int) $campaign->timesent > 0 ? (int) $campaign->timesent : (int) $campaign->timemodified;
+        $sentat = (int) $campaign->timesent;
         $templateid = (int) ($campaign->templateid ?? 0);
         $templatelabel = campaignhelper::templatename($templateid, $campaign);
         $templateurl = '';
@@ -76,12 +85,15 @@ class campaign_report implements renderable, templatable {
             ]))->out(false);
         }
 
+        $recipient = $this->get_preview_recipient();
+        $previewunavailable = $this->recipientid !== 0 && !$recipient;
+        $tableparams = ['tab' => 'reports', 'campaignid' => $this->id];
+        if ($recipient && $this->recipientid !== 0) {
+            $tableparams['recipientid'] = (int) $recipient->id;
+        }
         $table = new recipient_table(
             'local-mailwhistle-recipients-' . $this->id,
-            new \moodle_url('/local/mailwhistle/index.php', [
-                'tab' => 'reports',
-                'campaignid' => $this->id,
-            ]),
+            new \moodle_url('/local/mailwhistle/index.php', $tableparams),
             $this->id
         );
         $table->build_sql();
@@ -93,7 +105,9 @@ class campaign_report implements renderable, templatable {
             [
                 'label' => get_string('stat_recipients', 'local_mailwhistle'),
                 'value' => number_format($stats->recipients),
-                'detail' => '',
+                'detail' => $stats->pending > 0
+                    ? get_string('stat_pendingcount', 'local_mailwhistle', $stats->pending)
+                    : '',
             ],
             [
                 'label' => get_string('stat_sent', 'local_mailwhistle'),
@@ -114,10 +128,16 @@ class campaign_report implements renderable, templatable {
             ],
         ];
 
-        return [
+        $campaignname = trim((string) $campaign->name);
+        $statushtml = $output->render(new status_badge($campaign->status));
+        $data = [
             'listurl' => $listurl->out(false),
             'notfound' => false,
             'subject' => format_string($campaign->subject, true, ['context' => $systemcontext]),
+            'campaignname' => format_string($campaignname !== '' ? $campaignname
+                : get_string('untitledcampaign', 'local_mailwhistle'), true, ['context' => $systemcontext]),
+            'statushtml' => $statushtml,
+            'previewunavailable' => $previewunavailable,
             'stats' => $statcards,
             'metarows' => [
                 [
@@ -131,19 +151,138 @@ class campaign_report implements renderable, templatable {
                         : $templatelabel,
                 ],
                 [
-                    'label' => get_string('col_sentby', 'local_mailwhistle'),
+                    'label' => get_string('sendername', 'local_mailwhistle'),
                     'value' => format_string($campaign->sendername, true, ['context' => $systemcontext]),
                 ],
                 [
                     'label' => get_string('col_sentat', 'local_mailwhistle'),
-                    'value' => userdate($sentat),
+                    'value' => $sentat > 0 ? userdate($sentat) : '',
                 ],
                 [
                     'label' => get_string('col_status', 'local_mailwhistle'),
-                    'value' => $output->render(new status_badge($campaign->status)),
+                    'value' => $statushtml,
                 ],
             ],
             'table' => $tablehtml,
         ];
+        if (!$previewunavailable) {
+            $data['emailpreview'] = $this->export_email_preview($campaign, $recipient ?: null);
+        }
+        return $data;
+    }
+
+    /**
+     * Select only a sent snapshot belonging to this campaign.
+     *
+     * @return \stdClass|false Recipient snapshot, or false when none matches.
+     */
+    private function get_preview_recipient(): \stdClass|false {
+        global $DB;
+
+        $conditions = ['campaignid' => $this->id, 'status' => recipient_manager::STATUS_SENT];
+        if ($this->recipientid !== 0) {
+            $conditions['id'] = $this->recipientid;
+            return $DB->get_record('local_mailwhistle_recipients', $conditions);
+        }
+        $recipients = $DB->get_records('local_mailwhistle_recipients', $conditions, 'id ASC', '*', 0, 1);
+        return reset($recipients);
+    }
+
+    /**
+     * Reconstruct the saved content without sending or generating engagement events.
+     *
+     * @param \stdClass $campaign Saved campaign content.
+     * @param \stdClass|null $recipient Sent recipient snapshot, when available.
+     * @return array Preview data for the isolated email frame or plain-text fallback.
+     */
+    private function export_email_preview(\stdClass $campaign, ?\stdClass $recipient): array {
+        $subject = (string) $campaign->subject;
+        $html = (string) $campaign->bodyhtml;
+        $text = (string) $campaign->bodytext;
+        $recipientlabel = '';
+        if ($recipient) {
+            $subject = placeholder_manager::apply($subject, $recipient, false);
+            $html = placeholder_manager::apply($html, $recipient, true);
+            $text = placeholder_manager::apply($text, $recipient, false);
+            $name = trim($recipient->firstname . ' ' . $recipient->lastname);
+            $recipientlabel = trim($name . ' <' . $recipient->email . '>');
+        }
+
+        $body = self::prepare_preview_body(preview::prepare_html($html));
+        if ($body === '' && trim($text) !== '') {
+            $body = \html_writer::tag('pre', s($text), ['style' => 'white-space:pre-wrap;font:inherit;']);
+        }
+        $policy = "default-src 'none'; img-src http: https: data:; style-src 'unsafe-inline'; " .
+            "base-uri 'none'; form-action 'none'";
+        $document = '<!doctype html><html><head><meta charset="utf-8">' .
+            \html_writer::empty_tag('meta', ['http-equiv' => 'Content-Security-Policy', 'content' => $policy]) .
+            '<style>body{margin:0;padding:16px;font-family:Arial,sans-serif;}' .
+            'img{max-width:100%;height:auto;}table{max-width:100%;}</style>' .
+            '</head><body>' . $body . '</body></html>';
+        $attachments = array_map(
+            static fn($filename) => ['filename' => $filename],
+            campaign_manager::decode_attachments($campaign->attachmentsjson ?? '')
+        );
+
+        return [
+            'subject' => html_entity_decode(strip_tags(format_string($subject)), ENT_QUOTES, 'UTF-8'),
+            'recipientlabel' => $recipientlabel,
+            'hasrecipient' => $recipient !== null,
+            'previewhtml' => $document,
+            'hasbody' => $body !== '',
+            'bodytext' => $text,
+            'hasplaintext' => trim($text) !== '',
+            'attachments' => $attachments,
+            'hasattachments' => !empty($attachments),
+        ];
+    }
+
+    /**
+     * Remove links and copied tracking images so previewing cannot record engagement.
+     *
+     * @param string $html Sanitized email body.
+     * @return string Non-navigable email body.
+     */
+    private static function prepare_preview_body(string $html): string {
+        if ($html === '') {
+            return '';
+        }
+
+        $previous = libxml_use_internal_errors(true);
+        $dom = new \DOMDocument();
+        $loaded = $dom->loadHTML(
+            '<?xml encoding="UTF-8"><html><body>' . $html . '</body></html>',
+            LIBXML_NOWARNING | LIBXML_NOERROR
+        );
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        if (!$loaded) {
+            return '';
+        }
+        $xpath = new \DOMXPath($dom);
+        foreach ($xpath->query('//*[@href]') as $node) {
+            $node->removeAttribute('href');
+        }
+        // Saved campaign content normally has no tracking. A pasted previous
+        // email may already contain pixel URLs, including CSS or srcset values.
+        $trackingpattern = '~(?:^|[/,\s("\'=])(?:pixel|click)\.php(?:[/?#]|$)~i';
+        foreach ($xpath->query('//*') as $node) {
+            foreach (iterator_to_array($node->attributes) as $attribute) {
+                if (preg_match($trackingpattern, rawurldecode($attribute->value))) {
+                    $node->removeAttributeNode($attribute);
+                }
+            }
+        }
+        foreach ($xpath->query('//style') as $node) {
+            if (preg_match($trackingpattern, rawurldecode($node->textContent))) {
+                $node->parentNode->removeChild($node);
+            }
+        }
+        $body = $dom->getElementsByTagName('body')->item(0);
+        $result = '';
+        foreach ($body->childNodes as $child) {
+            $result .= $dom->saveHTML($child);
+        }
+        return trim($result);
     }
 }

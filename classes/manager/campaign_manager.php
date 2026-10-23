@@ -164,9 +164,14 @@ class campaign_manager {
      * @param int $campaignid The campaign to update.
      * @param array $fields Field => value map.
      * @return void
+     * @throws \invalid_parameter_exception When a supplied campaign name is blank.
      */
     public static function update_fields(int $campaignid, array $fields): void {
         global $DB;
+
+        if (array_key_exists('name', $fields) && trim((string) $fields['name']) === '') {
+            throw new \invalid_parameter_exception('Campaign name must not be empty.');
+        }
 
         $record = (object) ['id' => $campaignid];
         foreach (self::EDITABLE_FIELDS as $field) {

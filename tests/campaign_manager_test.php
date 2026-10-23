@@ -95,6 +95,60 @@ final class campaign_manager_test extends \advanced_testcase {
     }
 
     /**
+     * An invalid rename must not partially save the other supplied fields.
+     */
+    public function test_update_fields_rejects_blank_names_without_writes(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $id = $this->create_campaign();
+        $before = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id], '*', MUST_EXIST);
+
+        foreach (['', '   ', "\t\r\n", null] as $name) {
+            $writes = $DB->perf_get_writes();
+            try {
+                campaign_manager::update_fields($id, ['name' => $name, 'subject' => 'Changed subject']);
+                $this->fail('A blank campaign name must be rejected.');
+            } catch (\invalid_parameter_exception $exception) {
+                $this->assertSame('Campaign name must not be empty.', $exception->debuginfo);
+            }
+
+            $this->assertSame($writes, $DB->perf_get_writes());
+            $after = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id], '*', MUST_EXIST);
+            $this->assertEquals($before, $after);
+        }
+    }
+
+    /**
+     * Valid names are retained, including the nonempty name "0".
+     */
+    public function test_update_fields_preserves_valid_names(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $id = $this->create_campaign();
+
+        foreach (['0', ' Padded name '] as $name) {
+            campaign_manager::update_fields($id, ['name' => $name]);
+            $this->assertSame($name, $DB->get_field('local_mailwhistle_campaigns', 'name', ['id' => $id]));
+        }
+    }
+
+    /**
+     * Updates without a name can still edit legacy campaigns with blank names.
+     */
+    public function test_update_fields_without_name_updates_legacy_campaign(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $id = $this->create_campaign();
+        $DB->set_field('local_mailwhistle_campaigns', 'name', '', ['id' => $id]);
+
+        campaign_manager::update_fields($id, ['subject' => 'Updated subject']);
+
+        $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id], '*', MUST_EXIST);
+        $this->assertSame('', $campaign->name);
+        $this->assertSame('Updated subject', $campaign->subject);
+    }
+
+    /**
      * Attachment filenames are stored as JSON and ignore unsafe names.
      */
     public function test_encode_decode_attachments(): void {

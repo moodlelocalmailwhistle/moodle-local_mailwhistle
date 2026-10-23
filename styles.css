@@ -235,6 +235,42 @@
     margin-bottom: 1rem;
 }
 
+/* Campaign template chooser uses native Moodle form controls and spacing. */
+.local-mailwhistle-campaign-template-picker {
+    max-width: 40rem;
+}
+
+.local-mailwhistle-picker-preview:not([hidden]) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+}
+
+.local-mailwhistle-picker-thumbnail {
+    flex: 0 0 10rem;
+    width: 10rem;
+    height: 7rem;
+    overflow: hidden;
+    background: #fff;
+    pointer-events: none;
+}
+
+.local-mailwhistle-picker-thumbnail iframe {
+    display: block;
+    width: 40rem;
+    height: 28rem;
+    border: 0;
+    transform: scale(0.25);
+    transform-origin: top left;
+}
+
+.local-mailwhistle-picker-description {
+    flex: 1 1 12rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .local-mailwhistle-template-background[type="color"] {
     width: 4.5rem;
     min-height: 2.25rem;
@@ -703,6 +739,151 @@
 /**
  * Campaign report stats cards.
  */
+.local-mailwhistle-reports-help summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.local-mailwhistle-reports-help dd {
+    margin-bottom: 0.875rem;
+}
+
+.local-mailwhistle-reports table th,
+.local-mailwhistle-reports table td {
+    padding: 1rem 0.75rem;
+    vertical-align: top;
+}
+
+.local-mailwhistle-reports table th {
+    background: var(--mail-whistle-bg-light);
+}
+
+.local-mailwhistle-reports .local-mailwhistle-report-col-campaign {
+    min-width: 13rem;
+    width: 36%;
+    overflow-wrap: anywhere;
+}
+
+.local-mailwhistle-report-name {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.local-mailwhistle-report-subject {
+    display: block;
+    color: #495057;
+    font-size: 0.875rem;
+}
+
+.local-mailwhistle-reports .local-mailwhistle-report-col-date {
+    min-width: 7.5rem;
+}
+
+.local-mailwhistle-reports .local-mailwhistle-report-col-delivery {
+    min-width: 7rem;
+}
+
+.local-mailwhistle-reports .local-mailwhistle-report-col-engagement {
+    min-width: 6rem;
+}
+
+.local-mailwhistle-report-count {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.local-mailwhistle-report-metric-note {
+    display: block;
+    margin-top: 0.25rem;
+    color: #495057;
+    font-size: 0.875rem;
+}
+
+.local-mailwhistle-report-failed {
+    color: #a51d2d;
+    font-weight: 600;
+}
+
+.local-mailwhistle-report-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.local-mailwhistle-report-heading h2 {
+    overflow-wrap: anywhere;
+}
+
+.local-mailwhistle-report-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+}
+
+.local-mailwhistle-report-layout > * {
+    min-width: 0;
+}
+
+.local-mailwhistle-report-message {
+    scroll-margin-top: 5rem;
+}
+
+.local-mailwhistle-report-envelope {
+    border-bottom: 1px solid var(--mail-whistle-border-color);
+    overflow-wrap: anywhere;
+}
+
+.local-mailwhistle-report-email-frame {
+    display: block;
+    width: 100%;
+    height: 26rem;
+    border: 0;
+    border-bottom: 1px solid var(--mail-whistle-border-color);
+    background: #fff;
+}
+
+.local-mailwhistle-report-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 1rem;
+    overflow-wrap: anywhere;
+}
+
+.local-mailwhistle-report-meta dt {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.local-mailwhistle-report-meta dd {
+    margin-bottom: 0;
+}
+
+.local-mailwhistle-report-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    overflow-wrap: anywhere;
+}
+
+.local-mailwhistle-report-plaintext summary {
+    cursor: pointer;
+}
+
+.local-mailwhistle-report-plaintext pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: inherit;
+}
+
+@media (min-width: 1200px) {
+    .local-mailwhistle-report-layout {
+        grid-template-columns: minmax(0, 1fr) 17rem;
+    }
+}
+
 .local-mailwhistle-report-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
@@ -738,4 +919,32 @@
     max-height: 6rem;
     height: auto;
     border: 1px solid var(--mail-whistle-border-color);
+}
+
+.local-mailwhistle-selection-count {
+    font-weight: 700;
+}
+
+.local-mailwhistle-tag-modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+}
+
+.local-mailwhistle-tag-fields {
+    max-width: 32rem;
+}
+
+.local-mailwhistle-tag-fields select {
+    width: 100%;
+}
+
+@media (max-width: 576px) {
+    .local-mailwhistle-tag-modes {
+        flex-direction: column;
+    }
+
+    .local-mailwhistle-tag-apply {
+        width: 100%;
+    }
 }

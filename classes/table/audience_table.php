@@ -74,7 +74,13 @@ class audience_table extends \table_sql {
         if ($canmanage) {
             $this->define_columns(['select', 'fullname', 'email', 'tags']);
             $this->define_headers([
-                '', // Checkbox column — no sortable header text needed.
+                \html_writer::empty_tag('input', [
+                    'type' => 'checkbox',
+                    'data-action' => 'select-all',
+                    'aria-label' => get_string('audience_selectall', 'local_mailwhistle'),
+                    'title' => get_string('audience_selectall', 'local_mailwhistle'),
+                    'hidden' => true,
+                ]),
                 get_string('col_user', 'local_mailwhistle'),
                 get_string('col_email', 'local_mailwhistle'),
                 get_string('col_tags', 'local_mailwhistle'),
@@ -251,7 +257,12 @@ class audience_table extends \table_sql {
      * @return string HTML checkbox input.
      */
     public function col_select(\stdClass $row): string {
-        return \html_writer::empty_tag('input', ['type' => 'checkbox', 'name' => 'userids[]', 'value' => (int) $row->id]);
+        return \html_writer::empty_tag('input', [
+            'type' => 'checkbox',
+            'name' => 'userids[]',
+            'value' => (int) $row->id,
+            'aria-label' => get_string('audience_selectperson', 'local_mailwhistle', fullname($row)),
+        ]);
     }
 
     /**
@@ -301,12 +312,13 @@ class audience_table extends \table_sql {
             $label = format_string($chip->name);
 
             if ($this->canmanage) {
-                $removeurl = new \moodle_url('/local/mailwhistle/index.php', [
+                $removeurl = new \moodle_url($this->baseurl, [
                     'tab'     => 'audience',
                     'action'  => 'removetag',
                     'tagid'   => $chip->id,
                     'userid'  => (int) $row->id,
                     'sesskey' => sesskey(),
+                    'filtertagid' => $this->filters['tagid'] ?? 0,
                 ]);
 
                 $removelink = \html_writer::link(
@@ -314,9 +326,9 @@ class audience_table extends \table_sql {
                     $OUTPUT->pix_icon('t/delete', get_string('remove_tag', 'local_mailwhistle')),
                     ['class' => 'mw-tag-remove']
                 );
-                $parts[] = \html_writer::span($label . ' ' . $removelink, 'badge bg-secondary mw-tag-chip');
+                $parts[] = \html_writer::span($label . ' ' . $removelink, 'badge bg-light text-dark border mw-tag-chip');
             } else {
-                $parts[] = \html_writer::span($label, 'badge bg-secondary mw-tag-chip');
+                $parts[] = \html_writer::span($label, 'badge bg-light text-dark border mw-tag-chip');
             }
         }
 

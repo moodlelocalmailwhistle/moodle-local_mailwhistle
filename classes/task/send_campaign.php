@@ -62,10 +62,11 @@ class send_campaign extends \core\task\adhoc_task {
         $pending = send_manager::process_campaign($campaignid, $batchsize);
 
         if ($pending > 0) {
-            // More recipients remain: queue another run.
+            // The current task remains queued until execute() returns, so an
+            // existence check would mistake this running task for its successor.
             $next = new self();
             $next->set_custom_data(['campaignid' => $campaignid]);
-            \core\task\manager::queue_adhoc_task($next, true);
+            \core\task\manager::queue_adhoc_task($next);
         }
     }
 }

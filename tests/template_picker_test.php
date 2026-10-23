@@ -28,16 +28,104 @@ use local_mailwhistle\output\template_picker;
  */
 final class template_picker_test extends \advanced_testcase {
     /**
-     * format_string() names must not be escaped a second time in Mustache.
+     * Configure a page renderer and start with no seeded templates.
      */
-    public function test_render_does_not_double_escape_names(): void {
+    protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
         $this->setAdminUser();
 
-        global $PAGE;
+        global $DB, $PAGE;
+        $DB->delete_records('local_mailwhistle_templates');
         $PAGE->set_url(new \moodle_url('/local/mailwhistle/campaign_edit.php'));
         $PAGE->set_context(\context_system::instance());
+    }
 
+    /**
+     * An empty or entirely archived library does not render a picker.
+     */
+    public function test_no_active_templates_renders_nothing(): void {
+        global $PAGE;
+        $renderer = $PAGE->get_renderer('local_mailwhistle');
+
+        $picker = new template_picker(1);
+        $this->assertSame(['hastemplates' => false], $picker->export_for_template($renderer));
+        $this->assertSame('', trim($renderer->render($picker)));
+
+        $generator = self::getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $generator->create_template(['name' => 'Archived only', 'archived' => 1]);
+        $this->assertSame(['hastemplates' => false], $picker->export_for_template($renderer));
+        $this->assertSame('', trim($renderer->render($picker)));
+    }
+
+    /**
+     * Archived templates cannot be selected or exposed in the preview payload.
+     */
+    public function test_export_excludes_archived_templates(): void {
+        global $PAGE;
+        $generator = self::getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $active = $generator->create_template(['name' => 'Active layout']);
+        $generator->create_template(['name' => 'Archived layout', 'archived' => 1]);
+
+        $picker = new template_picker(1, (int) $active->id);
+        $data = $picker->export_for_template($PAGE->get_renderer('local_mailwhistle'));
+
+        $this->assertTrue($data['hastemplates']);
+        $this->assertCount(1, $data['options']);
+        $this->assertSame((int) $active->id, $data['options'][0]['id']);
+        $this->assertSame('Active layout', $data['options'][0]['name']);
+        $this->assertTrue($data['options'][0]['selected']);
+    }
+
+    /**
+     * Previews are sanitised and isolated, while raw editor HTML remains inert data.
+     */
+    public function test_preview_is_sanitised_and_sandboxed(): void {
+        global $PAGE;
+        $body = '<p onclick="alert(1)">Hello &amp; welcome</p><script>alert(2)</script>' .
+            '<img src="missing.png" onerror="alert(3)"><a href="javascript:alert(4)">Link</a>' .
+            '"><img id="escaped-payload" src="missing.png" onerror="alert(5)">';
+        $generator = self::getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $generator->create_template([
+            'name' => 'Preview layout',
+            'bodyhtml' => $body,
+            'background' => '#eeeeee',
+        ]);
+        $renderer = $PAGE->get_renderer('local_mailwhistle');
+        $picker = new template_picker(1);
+        $data = $picker->export_for_template($renderer);
+        $preview = $data['options'][0]['preview'];
+
+        $this->assertSame($body, $data['options'][0]['body']);
+        $this->assertStringContainsString('Hello &amp; welcome', $preview);
+        $this->assertStringContainsString('background:#eeeeee', $preview);
+        $this->assertStringNotContainsString('<script', $preview);
+        $this->assertStringNotContainsString('onclick=', $preview);
+        $this->assertStringNotContainsString('onerror=', $preview);
+        $this->assertStringNotContainsString('javascript:', $preview);
+
+        $dom = new \DOMDocument();
+        $dom->loadHTML($renderer->render($picker), LIBXML_NOERROR | LIBXML_NOWARNING);
+        $xpath = new \DOMXPath($dom);
+        $frames = $xpath->query('//iframe[@data-region="preview-frame"]');
+        $this->assertSame(1, $frames->length);
+        $frame = $frames->item(0);
+        $this->assertTrue($frame->hasAttribute('sandbox'));
+        $this->assertSame('', $frame->getAttribute('sandbox'));
+        $this->assertFalse($frame->hasAttribute('srcdoc'));
+        $this->assertSame(0, $xpath->query('//script | //img | //*[@onclick or @onerror]')->length);
+
+        $payloads = $xpath->query('//*[@data-template-id]');
+        $this->assertSame(1, $payloads->length);
+        $this->assertSame($body, $payloads->item(0)->getAttribute('data-body'));
+        $this->assertSame($preview, $payloads->item(0)->getAttribute('data-preview'));
+    }
+
+    /**
+     * format_string() names must not be escaped a second time in Mustache.
+     */
+    public function test_render_does_not_double_escape_names(): void {
+        global $PAGE;
         $generator = self::getDataGenerator()->get_plugin_generator('local_mailwhistle');
         $generator->create_template(['name' => 'News & Views']);
 

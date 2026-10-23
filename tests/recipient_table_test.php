@@ -83,4 +83,37 @@ final class recipient_table_test extends \advanced_testcase {
         $this->assertArrayNotHasKey((int) $neither->id, $map['opened']);
         $this->assertArrayNotHasKey((int) $neither->id, $map['clicked']);
     }
+
+    /**
+     * Preview actions identify sent snapshots and never offer unsent recipients.
+     */
+    public function test_email_preview_links_are_scoped_and_sent_only(): void {
+        $this->resetAfterTest();
+        $table = new recipient_table('mw-preview-links', new \moodle_url('/local/mailwhistle/index.php'), 42);
+        $row = (object) [
+            'id' => 123,
+            'firstname' => 'Ada & friends',
+            'lastname' => 'Lovelace',
+            'email' => 'ada@example.com',
+            'status' => 'sent',
+        ];
+
+        $dom = new \DOMDocument();
+        $dom->loadHTML($table->col_emailpreview($row), LIBXML_NOERROR | LIBXML_NOWARNING);
+        $link = $dom->getElementsByTagName('a')->item(0);
+        $this->assertNotNull($link);
+        $url = parse_url($link->getAttribute('href'));
+        parse_str($url['query'], $params);
+        $this->assertSame(['tab' => 'reports', 'campaignid' => '42', 'recipientid' => '123'], $params);
+        $this->assertSame('local-mailwhistle-report-email', $url['fragment']);
+        $this->assertSame(get_string(
+            'report_viewemailfor',
+            'local_mailwhistle',
+            'Ada & friends Lovelace <ada@example.com>'
+        ), $link->getAttribute('aria-label'));
+        foreach (['pending', 'failed'] as $status) {
+            $row->status = $status;
+            $this->assertSame('', $table->col_emailpreview($row));
+        }
+    }
 }

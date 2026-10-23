@@ -59,6 +59,7 @@ class campaign_audience_form extends \moodleform {
             ]
         );
         $mform->setType('tagids', PARAM_INT);
+        $mform->addHelpButton('tagids', 'audiencetags_label', 'local_mailwhistle');
         $mform->addElement(
             'static',
             'manageaudiencetags',

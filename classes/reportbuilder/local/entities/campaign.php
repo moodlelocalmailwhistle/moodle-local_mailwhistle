@@ -187,6 +187,81 @@ class campaign extends base {
             ->add_field("$campaignsalias.id")
             ->add_callback([campaignhelper::class, 'reportnamelink']);
 
+        // Report-only columns keep the Campaigns tab's existing presentation unchanged.
+        $columns[] = (new column(
+            'reportsummary',
+            new lang_string('reports_column_campaign', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_field("$campaignsalias.name")
+            ->add_field("$campaignsalias.subject")
+            ->add_field("$campaignsalias.id")
+            ->set_is_sortable(true, ['name', 'id'])
+            ->add_attributes(['class' => 'local-mailwhistle-report-col-campaign'])
+            ->add_callback([campaignhelper::class, 'reportsummary']);
+
+        $columns[] = (new column(
+            'reportsentat',
+            new lang_string('report:sentat', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_field("$campaignsalias.timesent")
+            ->add_field("$campaignsalias.id")
+            ->set_type(column::TYPE_INTEGER)
+            ->set_is_sortable(true, ['timesent', 'id'])
+            ->add_attributes(['class' => 'local-mailwhistle-report-col-date'])
+            ->add_callback([campaignhelper::class, 'reportsentat']);
+
+        $sentcount = "(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
+                       WHERE campaignid = {$campaignsalias}.id AND status = 'sent')";
+        $columns[] = (new column(
+            'reportdelivery',
+            new lang_string('reports_column_delivery', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_INTEGER)
+            ->add_field($sentcount, 'sentcount')
+            ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
+                          WHERE campaignid = {$campaignsalias}.id)", 'totalcount')
+            ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
+                          WHERE campaignid = {$campaignsalias}.id AND status = 'failed')", 'failedcount')
+            ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
+                          WHERE campaignid = {$campaignsalias}.id AND status = 'pending')", 'pendingcount')
+            ->set_is_sortable(true, ['sentcount'])
+            ->add_attributes(['class' => 'local-mailwhistle-report-col-delivery'])
+            ->add_callback([campaignhelper::class, 'reportdelivery']);
+
+        $columns[] = (new column(
+            'reportopens',
+            new lang_string('report:opens', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_INTEGER)
+            ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_tracking}
+                          WHERE campaignid = {$campaignsalias}.id AND eventtype = '{$open}')", 'opencount')
+            ->add_field($sentcount, 'sentcount')
+            ->set_is_sortable(true, ['opencount'])
+            ->add_attributes(['class' => 'local-mailwhistle-report-col-engagement'])
+            ->add_callback([campaignhelper::class, 'reportopens']);
+
+        $columns[] = (new column(
+            'reportclicks',
+            new lang_string('report:clicks', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_INTEGER)
+            ->add_field("(SELECT COUNT(DISTINCT recipientid) FROM {local_mailwhistle_tracking}
+                          WHERE campaignid = {$campaignsalias}.id AND eventtype = '{$click}')", 'clickcount')
+            ->add_field($sentcount, 'sentcount')
+            ->set_is_sortable(true, ['clickcount'])
+            ->add_attributes(['class' => 'local-mailwhistle-report-col-engagement'])
+            ->add_callback([campaignhelper::class, 'reportclicks']);
+
         // Sent by.
         $columns[] = (new column(
             'sentby',

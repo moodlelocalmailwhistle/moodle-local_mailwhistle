@@ -80,6 +80,7 @@ class audience_filter_form extends \moodleform {
         );
         $mform->setType('suspended', PARAM_ALPHA);
         $mform->setDefault('suspended', 'any');
+        $mform->setAdvanced('suspended', ($this->_customdata['suspended'] ?? 'any') === 'any');
 
         // Auth plugin filter.
         $authoptions = ['any' => get_string('filter_any', 'local_mailwhistle')];
@@ -96,12 +97,22 @@ class audience_filter_form extends \moodleform {
         );
         $mform->setType('auth', PARAM_PLUGIN);
         $mform->setDefault('auth', 'any');
+        $mform->setAdvanced('auth', ($this->_customdata['auth'] ?? 'any') === 'any');
 
         // Rows per page.
         $mform->addElement('hidden', 'tab', 'audience');
         $mform->setType('tab', PARAM_ALPHA);
+        $mform->addElement('hidden', 'perpage', $this->_customdata['perpage'] ?? 25);
+        $mform->setType('perpage', PARAM_INT);
 
-        // Submit button.
-        $mform->addElement('submit', 'submitbutton', get_string('applybtn', 'local_mailwhistle'), ['class' => 'ms-0']);
+        $buttons = [
+            $mform->createElement('submit', 'submitbutton', get_string('audience_filterusers', 'local_mailwhistle')),
+            $mform->createElement('static', 'clearfilters', '', \html_writer::link(
+                new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'audience', 'tifirst' => '', 'tilast' => '']),
+                get_string('audience_clearfilters', 'local_mailwhistle'),
+                ['class' => 'btn btn-link']
+            )),
+        ];
+        $mform->addGroup($buttons, 'filterbuttons', '', [' '], false);
     }
 }

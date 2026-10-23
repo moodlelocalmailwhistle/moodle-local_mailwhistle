@@ -26,7 +26,7 @@ Feature: Create a campaign through the edit wizard
     And I set the field "Email body" to "<p>Hello everyone</p>"
     And I press "Save and continue"
     Then I should see "3. Audience"
-    And I should see "The campaign will be sent to everyone tagged with any of the selected tags."
+    And I should see "Choose the groups of people for this campaign."
 
   @javascript @_file_upload
   Scenario: Attach a PDF from Resources on the content step

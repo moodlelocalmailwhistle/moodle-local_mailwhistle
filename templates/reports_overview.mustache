@@ -32,11 +32,27 @@
     }
 }}
 <div class="local-mailwhistle-reports">
-    <h3>{{heading}}</h3>
+    <h2 class="h3">{{heading}}</h2>
+    <p class="text-muted">{{#str}}reports_intro, local_mailwhistle{{/str}}</p>
+    <details class="card local-mailwhistle-reports-help mb-3">
+        <summary class="p-3">{{#str}}reports_help_heading, local_mailwhistle{{/str}}</summary>
+        <div class="px-3 pb-3">
+            <dl class="mb-3">
+                <dt>{{#str}}reports_help_delivery, local_mailwhistle{{/str}}</dt>
+                <dd>{{#str}}reports_help_delivery_desc, local_mailwhistle{{/str}}</dd>
+                <dt>{{#str}}reports_help_engagement, local_mailwhistle{{/str}}</dt>
+                <dd>{{#str}}reports_help_engagement_desc, local_mailwhistle{{/str}}</dd>
+                <dt>{{#str}}reports_help_status, local_mailwhistle{{/str}}</dt>
+                <dd>{{#str}}reports_help_status_desc, local_mailwhistle{{/str}}</dd>
+            </dl>
+            <p class="small mb-0">{{#str}}reports_help_tracking, local_mailwhistle{{/str}}</p>
+        </div>
+    </details>
     {{#showallurl}}
         <p class="mb-3">
-            <a href="{{showallurl}}" class="btn btn-secondary>{{#str}}report_back, local_mailwhistle{{/str}}</a>
+            <a href="{{showallurl}}" class="btn btn-secondary">{{#str}}report_back, local_mailwhistle{{/str}}</a>
         </p>
     {{/showallurl}}
+    <p class="small text-muted mb-2">{{#str}}reports_sort_hint, local_mailwhistle{{/str}}</p>
     {{{table}}}
 </div>
