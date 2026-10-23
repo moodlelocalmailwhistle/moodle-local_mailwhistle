@@ -18,6 +18,7 @@ namespace local_mailwhistle\page;
 
 use local_mailwhistle\builder\schema;
 use local_mailwhistle\form\template_form;
+use local_mailwhistle\form\template_import_form;
 use local_mailwhistle\manager\template_manager;
 use local_mailwhistle\output\template_form_page;
 use local_mailwhistle\output\template_preview;
@@ -42,7 +43,7 @@ class templates {
      * @return string Rendered HTML.
      */
     public static function execute(string $action, int $id = 0): string {
-        $validactions = ['list', 'create', 'edit', 'preview', 'export', 'archive', 'restore', 'delete'];
+        $validactions = ['list', 'create', 'edit', 'preview', 'export', 'import', 'duplicate', 'archive', 'restore', 'delete'];
         if (!in_array($action, $validactions, true)) {
             $action = 'list';
         }
@@ -52,6 +53,8 @@ class templates {
             'edit' => self::form($id),
             'preview' => self::preview($id),
             'export' => self::export($id),
+            'import' => self::import(),
+            'duplicate' => self::duplicate($id),
             'archive' => self::archive($id),
             'restore' => self::restore($id),
             'delete' => self::delete($id),
@@ -236,6 +239,57 @@ class templates {
         @header('Cache-Control: private, max-age=0, must-revalidate');
         echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         exit;
+    }
+
+    /**
+     * Upload and validate a template export before creating a new editable copy.
+     *
+     * @return string Rendered upload form, or redirect after success/cancel.
+     */
+    private static function import(): string {
+        global $CFG, $PAGE;
+
+        require_capability('local/mailwhistle:manage', \context_system::instance());
+        require_once($CFG->libdir . '/formslib.php');
+        $url = new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'templates', 'action' => 'import']);
+        $mform = new template_import_form($url);
+        if ($mform->is_cancelled()) {
+            redirect(new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'templates']));
+        }
+        if ($mform->get_data()) {
+            \local_mailwhistle\helper::require_post();
+            require_sesskey();
+            $id = template_manager::import_uploaded_json($mform->get_file_content('templatefile'));
+            redirect(
+                new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'templates', 'action' => 'edit', 'id' => $id]),
+                get_string('template_imported', 'local_mailwhistle'),
+                null,
+                \core\output\notification::NOTIFY_SUCCESS
+            );
+        }
+        return $PAGE->get_renderer('local_mailwhistle')->render(new template_form_page(
+            get_string('template_import', 'local_mailwhistle'),
+            $mform->render()
+        ));
+    }
+
+    /**
+     * Duplicate a saved template after an authorised POST and open its editor.
+     *
+     * @param int $id Original template id.
+     * @return string Never returns; redirects.
+     */
+    private static function duplicate(int $id): string {
+        \local_mailwhistle\helper::require_post();
+        require_capability('local/mailwhistle:manage', \context_system::instance());
+        require_sesskey();
+        $copyid = template_manager::duplicate($id);
+        redirect(
+            new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'templates', 'action' => 'edit', 'id' => $copyid]),
+            get_string('template_duplicated', 'local_mailwhistle'),
+            null,
+            \core\output\notification::NOTIFY_SUCCESS
+        );
     }
 
     /**

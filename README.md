@@ -51,6 +51,8 @@ Drafts, scheduled campaigns and previously sent newsletters live on one tab. Cre
 
 Review shows the number of eligible recipients and explains missing content or unavailable attachments. A ready campaign can be returned to draft until sending starts. Sending and completed campaigns cannot be edited.
 
+Use **Duplicate** in a campaign or report table to start a follow-up as a new draft. The copy keeps the subject, message, sender, attachment selections, template reference and audience rules, and opens for editing. It has no delivery history or scheduled send time. The original campaign stays unchanged. Recipients are selected again when the follow-up is sent, so current tag membership, opt-outs and notification preferences apply.
+
 Scheduling uses your Moodle timezone. The **Scheduled for** column shows the planned time; **View schedule** lets you cancel before sending starts. Cancellation returns the campaign to Ready so it can be edited or rescheduled. Moodle cron checks due campaigns every minute; busy or stopped cron can delay delivery, but cannot start it early. The audience is selected when the scheduled send starts, so later tag changes and opt-outs apply. If content, resources or audience are no longer valid, the campaign changes to **Schedule needs review** without sending and explains what needs attention.
 
 On Review, **Send test email** opens a Moodle dialog. Enter up to five addresses separated by commas, semicolons or newlines; the default is your current notification address. Each destination shows an accepted, failed-before-transport, or uncertain result. Copies use saved campaign content and your profile as sample personalisation, with no recipient snapshots, tracking or active unsubscribe links. Each manager can attempt up to 20 test addresses per rolling hour across campaigns and sessions. Site email diversion and your campaign notification eligibility still apply.
@@ -73,7 +75,9 @@ The **Campaign email preference** column and filter identify explicit opt-outs. 
 
 ### Templates
 
-Reusable layouts for the content step. HTML mode for a pasted body, or **Builder mode** for drag-and-drop blocks (header, logo, text, button, image, highlight, two columns, social links, divider, footer). Image and logo blocks pick a file uploaded on the Resources tab. Templates can be previewed, archived, restored, exported as JSON, and deleted when unused.
+Reusable layouts for the content step. HTML mode for a pasted body, or **Builder mode** for drag-and-drop blocks (header, logo, text, button, image, highlight, two columns, social links, divider, footer). Image and logo blocks pick a file uploaded on the Resources tab. Templates can be previewed, duplicated, archived, restored, exported as JSON, and deleted when unused.
+
+**Duplicate** on a template opens a separate active copy in the same editor mode. **Import template** accepts a JSON file created by **Export JSON**, validates it, and creates a new template for review without replacing an existing template. Exports include layout and content, not uploaded image or document files. When importing on another site, check resource links and upload or select replacement files where needed.
 
 Choose an editor before adding content. Saved templates keep that editor mode. **Save as HTML copy** converts the current Builder blocks into a separate editable HTML template and preserves the original. Blocks also have keyboard-accessible move controls.
 

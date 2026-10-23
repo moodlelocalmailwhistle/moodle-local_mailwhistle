@@ -53,6 +53,67 @@ class campaign_manager {
     public const STATUS_FAILED = 'failed';
 
     /**
+     * Copy saved authoring data and audience rules into a new draft for the current user.
+     *
+     * The source lock provides one consistent view while authoring or sending is
+     * in progress. Recipient snapshots, tracking, logs and tasks belong only to
+     * the original campaign; the copy resolves its audience when it is sent.
+     *
+     * @param int $campaignid Source campaign in any lifecycle state.
+     * @return int New draft campaign id.
+     */
+    public static function duplicate(int $campaignid): int {
+        global $DB, $USER;
+
+        $lock = \core\lock\lock_config::get_lock_factory('local_mailwhistle')->get_lock('campaign:' . $campaignid, 10);
+        if (!$lock) {
+            throw new \moodle_exception('campaignbusy', 'local_mailwhistle');
+        }
+        try {
+            $transaction = $DB->start_delegated_transaction();
+            $source = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
+            $name = trim($source->name) !== '' ? $source->name : get_string('untitledcampaign', 'local_mailwhistle');
+            $now = time();
+            $copy = (object) [
+                'name' => \core_text::substr(get_string('campaigncopyname', 'local_mailwhistle', $name), 0, 255),
+                'subject' => $source->subject,
+                'bodyhtml' => $source->bodyhtml,
+                'bodytext' => $source->bodytext,
+                'sendername' => $source->sendername,
+                'senderemail' => $source->senderemail,
+                'status' => self::STATUS_DRAFT,
+                'templateid' => $source->templateid,
+                'attachmentsjson' => $source->attachmentsjson,
+                'sendengine' => $source->sendengine,
+                'createdby' => $USER->id,
+                'timecreated' => $now,
+                'timemodified' => $now,
+                'timescheduled' => 0,
+                'timesent' => 0,
+            ];
+            $copyid = $DB->insert_record('local_mailwhistle_campaigns', $copy);
+            foreach ($DB->get_records('local_mailwhistle_audrules', ['campaignid' => $campaignid], 'id ASC') as $rule) {
+                $DB->insert_record('local_mailwhistle_audrules', (object) [
+                    'campaignid' => $copyid,
+                    'type' => $rule->type,
+                    'instanceid' => $rule->instanceid,
+                    'roleid' => $rule->roleid,
+                    'timecreated' => $now,
+                ]);
+            }
+            $transaction->allow_commit();
+            return (int) $copyid;
+        } catch (\Throwable $exception) {
+            if (isset($transaction) && !$transaction->is_disposed()) {
+                $transaction->rollback($exception);
+            }
+            throw $exception;
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
      * Atomically transition a campaign from ready to sending.
      *
      * The campaign lock serialises authoring, starting, retrying, and workers.

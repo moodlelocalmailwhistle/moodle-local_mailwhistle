@@ -22,6 +22,7 @@
     Context variables required for this template:
     * canmanage - Whether the user can create/edit templates.
     * createurl - URL of the create-template page.
+    * importurl - URL of the JSON import page.
     * filters - Filter buttons (url, label, active).
     * hascards - True when at least one card is present.
     * cards - Array of template_card contexts.
@@ -31,6 +32,7 @@
     {
         "canmanage": true,
         "createurl": "/local/mailwhistle/index.php?tab=templates&action=create",
+        "importurl": "/local/mailwhistle/index.php?tab=templates&action=import",
         "filters": [{"url": "#", "label": "Active", "active": true}],
         "hascards": false,
         "cards": [],
@@ -41,7 +43,10 @@
     <div class="local-mailwhistle-templates-header">
         <h3>{{#str}}templates_heading, local_mailwhistle{{/str}}</h3>
         {{#canmanage}}
-            <a href="{{createurl}}" class="btn btn-primary">{{#str}}template_create, local_mailwhistle{{/str}}</a>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{createurl}}" class="btn btn-primary">{{#str}}template_create, local_mailwhistle{{/str}}</a>
+                <a href="{{importurl}}" class="btn btn-secondary">{{#str}}template_import, local_mailwhistle{{/str}}</a>
+            </div>
         {{/canmanage}}
     </div>
     {{> local_mailwhistle/template_filters}}

@@ -64,6 +64,9 @@ class sent_campaigns extends system_report {
         $this->add_column_from_entity('campaign:sentby');
         $this->add_column_from_entity('campaign:sentat');
         $this->add_column_from_entity('campaign:status');
+        if (has_capability('local/mailwhistle:manage', \context_system::instance())) {
+            $this->add_column_from_entity('campaign:actions');
+        }
     }
 
     #[\Override]

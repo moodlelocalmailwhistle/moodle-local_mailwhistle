@@ -98,6 +98,11 @@ class campaign {
     public static function actions(?int $id, \stdClass $row): string {
         global $OUTPUT;
 
+        if (!has_capability('local/mailwhistle:manage', \context_system::instance())) {
+            return '';
+        }
+
+        $actions = '';
         $scheduleurl = new \moodle_url('/local/mailwhistle/campaign_schedule.php', ['campaignid' => $id]);
         if (
             in_array($row->status, [
@@ -105,28 +110,37 @@ class campaign {
             \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULE_FAILED,
             ], true)
         ) {
-            return \html_writer::link(
+            $actions .= \html_writer::link(
                 $scheduleurl,
                 get_string('viewschedule', 'local_mailwhistle'),
                 ['class' => 'btn btn-secondary']
             );
         }
-        if ($row->status !== \local_mailwhistle\manager\campaign_manager::STATUS_READY) {
-            return '';
+        if ($row->status === \local_mailwhistle\manager\campaign_manager::STATUS_READY) {
+            $sendurl = new \moodle_url('/local/mailwhistle/index.php', [
+                'tab' => 'send',
+                'action' => 'sendnow',
+                'campaignid' => $id,
+            ]);
+            $actions .= $OUTPUT->single_button($sendurl, get_string('sendnow', 'local_mailwhistle'), 'post') .
+                \html_writer::link(
+                    $scheduleurl,
+                    get_string('schedulecampaign', 'local_mailwhistle'),
+                    ['class' => 'btn btn-secondary']
+                );
         }
 
-        $sendurl = new \moodle_url('/local/mailwhistle/index.php', [
+        $copyurl = new \moodle_url('/local/mailwhistle/index.php', [
             'tab' => 'send',
-            'action' => 'sendnow',
+            'action' => 'duplicatecampaign',
             'campaignid' => $id,
         ]);
+        $name = trim((string) ($row->name ?? '')) !== '' ? $row->name : get_string('untitledcampaign', 'local_mailwhistle');
+        $actions .= $OUTPUT->single_button($copyurl, get_string('duplicatecampaign', 'local_mailwhistle'), 'post', [
+            'aria-label' => get_string('duplicatecampaignlabel', 'local_mailwhistle', clean_param($name, PARAM_TEXT)),
+        ]);
         return \html_writer::div(
-            $OUTPUT->single_button($sendurl, get_string('sendnow', 'local_mailwhistle'), 'post') .
-            \html_writer::link(
-                $scheduleurl,
-                get_string('schedulecampaign', 'local_mailwhistle'),
-                ['class' => 'btn btn-secondary']
-            ),
+            $actions,
             'd-flex flex-wrap align-items-center gap-2'
         );
     }

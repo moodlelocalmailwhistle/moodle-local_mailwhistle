@@ -69,6 +69,9 @@ class template_preview implements renderable, templatable {
         $previewtext = trim((string) $this->template->previewtext);
 
         return [
+            'id' => (int) $this->template->id,
+            'actionurl' => (new \moodle_url('/local/mailwhistle/index.php'))->out(false),
+            'sesskey' => sesskey(),
             'name' => format_string($this->template->name),
             'listurl' => $listurl->out(false),
             'canmanage' => $this->canmanage,

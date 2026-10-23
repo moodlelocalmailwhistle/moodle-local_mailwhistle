@@ -32,13 +32,13 @@ use local_mailwhistle\output\sent_campaigns;
  */
 class send {
     /**
-     * Queue a ready campaign. Must run before page output.
+     * Apply an authorised campaign action before page output.
      *
      * @param string $action Requested action.
      * @return void
      */
     public static function handle_write(string $action): void {
-        if (!in_array($action, ['sendnow', 'retryfailed'], true)) {
+        if (!in_array($action, ['sendnow', 'retryfailed', 'duplicatecampaign'], true)) {
             return;
         }
 
@@ -47,6 +47,15 @@ class send {
         require_capability('local/mailwhistle:manage', \context_system::instance());
 
         $campaignid = required_param('campaignid', PARAM_INT);
+        if ($action === 'duplicatecampaign') {
+            $copyid = campaign_manager::duplicate($campaignid);
+            redirect(
+                new \moodle_url('/local/mailwhistle/campaign_edit.php', ['campaignid' => $copyid]),
+                get_string('campaignduplicated', 'local_mailwhistle'),
+                null,
+                \core\output\notification::NOTIFY_SUCCESS
+            );
+        }
         $sendurl = new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'send']);
 
         if ($action === 'retryfailed') {

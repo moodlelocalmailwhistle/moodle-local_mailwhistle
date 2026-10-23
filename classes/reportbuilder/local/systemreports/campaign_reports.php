@@ -79,6 +79,9 @@ class campaign_reports extends system_report {
         $this->add_column_from_entity('campaign:reportclicks');
         $this->add_column_from_entity('campaign:status')
             ->add_attributes(['class' => 'local-mailwhistle-report-col-status']);
+        if (has_capability('local/mailwhistle:manage', \context_system::instance())) {
+            $this->add_column_from_entity('campaign:actions');
+        }
     }
 
     #[\Override]

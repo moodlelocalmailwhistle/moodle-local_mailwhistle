@@ -537,3 +537,20 @@ $string['testmail_requiresjavascript'] = 'Enable JavaScript to enter test email 
 $string['privacy:metadata:preference:testemail_attempts'] = 'Timestamps of recent test email attempts used to enforce the hourly sending limit. Destination addresses are not stored.';
 
 $string['campaignhassnapshot'] = 'This campaign already has a saved recipient snapshot. Its schedule cannot be changed and it cannot be reopened for editing.';
+
+// Template reuse and JSON uploads.
+$string['template_duplicate'] = 'Duplicate';
+$string['template_copy_name'] = 'Copy of {$a}';
+$string['template_duplicated'] = 'Template duplicated. You can edit this copy without changing the original.';
+$string['template_import'] = 'Import template';
+$string['template_import_file'] = 'Template JSON file';
+$string['template_import_help'] = 'Upload a JSON file created by Export JSON in Mail Whistle (up to 2 MB). A new template is created; existing templates are never overwritten. If the name is already used, the copy gets a new name. HTML or Builder mode is preserved. Images and other linked files are not included in the JSON: their existing links are kept. For a different site, upload the files there and update those links after importing.';
+$string['template_import_invalid'] = 'Choose a valid Mail Whistle template JSON export (up to 2 MB). The file must contain a template name, content and valid editor settings.';
+$string['template_import_version'] = 'This template export version is not supported. Import a version 1 Mail Whistle template export.';
+$string['template_imported'] = 'Template imported as a new copy. Review its content and file links before using it.';
+
+// Follow-up campaign drafts.
+$string['campaigncopyname'] = 'Copy of {$a}';
+$string['campaignduplicated'] = 'Campaign duplicated as a new draft. It uses the same audience selection. Current members and opt-outs are applied when sending starts; delivery history is not copied.';
+$string['duplicatecampaign'] = 'Duplicate';
+$string['duplicatecampaignlabel'] = 'Duplicate campaign: {$a}';

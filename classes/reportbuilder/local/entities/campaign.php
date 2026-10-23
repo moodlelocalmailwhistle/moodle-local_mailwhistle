@@ -329,6 +329,7 @@ class campaign extends base {
             ->set_type(column::TYPE_INTEGER)
             ->add_field("$campaignsalias.id")
             ->add_field("$campaignsalias.status")
+            ->add_field("$campaignsalias.name")
             ->add_callback([campaignhelper::class, 'actions']);
 
         return $columns;

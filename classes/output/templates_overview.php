@@ -76,10 +76,12 @@ class templates_overview implements renderable, templatable {
             'tab' => 'templates',
             'action' => 'create',
         ]);
+        $importurl = new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'templates', 'action' => 'import']);
 
         return [
             'canmanage' => $this->canmanage,
             'createurl' => $createurl->out(false),
+            'importurl' => $importurl->out(false),
             'filters' => $filters,
             'hascards' => !empty($cards),
             'cards' => $cards,

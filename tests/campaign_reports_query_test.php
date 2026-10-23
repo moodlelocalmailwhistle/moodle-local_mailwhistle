@@ -80,7 +80,7 @@ final class campaign_reports_query_test extends \advanced_testcase {
 
         $data = $this->export_report();
         $this->assertSame(1, $data->totalrowcount);
-        $this->assertCount(6, $data->headers);
+        $this->assertCount(7, $data->headers);
         [$summary, $date, $delivery, $opens, $clicks, $status] = $data->rows[0]['columns'];
         $this->assertStringContainsString('Mixed results', $summary);
         $this->assertStringContainsString('Saved subject', $summary);
