@@ -34,6 +34,12 @@ class campaign_manager {
     /** @var string Status of a campaign that has all required parts and is ready. */
     public const STATUS_READY = 'ready';
 
+    /** @var string A campaign waiting for its scheduled delivery time. */
+    public const STATUS_SCHEDULED = 'scheduled';
+
+    /** @var string A scheduled campaign that could not pass the readiness checks. */
+    public const STATUS_SCHEDULE_FAILED = 'schedulefailed';
+
     /** @var string Status of a campaign currently being delivered. */
     public const STATUS_SENDING = 'sending';
 
@@ -57,30 +63,88 @@ class campaign_manager {
      * @return bool True if this call transitioned ready -> sending.
      */
     public static function begin_sending(int $campaignid): bool {
+        return self::start_sending($campaignid, false);
+    }
+
+    /**
+     * Claim a due schedule and atomically snapshot and queue its recipients.
+     *
+     * @param int $campaignid Campaign to dispatch.
+     * @return bool Whether delivery was queued.
+     */
+    public static function begin_scheduled_sending(int $campaignid): bool {
+        return self::start_sending($campaignid, true);
+    }
+
+    /**
+     * Start immediate or scheduled delivery under the shared campaign lock.
+     *
+     * Readiness failures stop a schedule for explicit review. Infrastructure
+     * failures roll back the snapshot and leave the schedule available to cron.
+     *
+     * @param int $campaignid Campaign to start.
+     * @param bool $scheduled Whether to claim a due schedule instead of a ready campaign.
+     * @return bool Whether delivery was queued.
+     */
+    private static function start_sending(int $campaignid, bool $scheduled): bool {
         global $DB;
 
-        $lock = \core\lock\lock_config::get_lock_factory('local_mailwhistle')->get_lock('campaign:' . $campaignid, 10);
+        $lock = \core\lock\lock_config::get_lock_factory('local_mailwhistle')
+            ->get_lock('campaign:' . $campaignid, $scheduled ? 0 : 10);
         if (!$lock) {
+            if ($scheduled) {
+                return false;
+            }
             throw new \moodle_exception('campaignbusy', 'local_mailwhistle');
         }
         try {
             $transaction = $DB->start_delegated_transaction();
             $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
-            if ($campaign->status !== self::STATUS_READY) {
+            $requiredstatus = $scheduled ? self::STATUS_SCHEDULED : self::STATUS_READY;
+            if (
+                $campaign->status !== $requiredstatus ||
+                ($scheduled && ($campaign->timescheduled <= 0 || $campaign->timescheduled > time()))
+            ) {
                 $transaction->allow_commit();
                 return false;
             }
-            if (!self::is_complete($campaignid)) {
+            $readiness = self::get_readiness($campaignid);
+            if ($scheduled && $DB->record_exists('local_mailwhistle_recipients', ['campaignid' => $campaignid])) {
+                $readiness['errors'][] = get_string('campaignhassnapshot', 'local_mailwhistle');
+            }
+            if ($readiness['errors']) {
+                if ($scheduled) {
+                    self::fail_schedule($campaignid, $readiness['errors']);
+                    $transaction->allow_commit();
+                    return false;
+                }
                 throw new \moodle_exception('campaignincomplete', 'local_mailwhistle');
             }
             resource_manager::assert_attachments_available($campaign);
             recipient_manager::snapshot_recipients($campaignid);
             if (!recipient_manager::count_pending($campaignid)) {
+                if ($scheduled) {
+                    self::fail_schedule($campaignid, [get_string('sendnoeligible', 'local_mailwhistle')]);
+                    $transaction->allow_commit();
+                    return false;
+                }
                 throw new \moodle_exception('sendnoeligible', 'local_mailwhistle');
+            }
+            // Freeze the outgoing footer so future reports reflect this send without
+            // retroactively adding it to historical campaigns. Tokens remain inert in previews.
+            $html = $campaign->bodyhtml;
+            $text = $campaign->bodytext;
+            if (trim((string) $html) !== '') {
+                $html = subscription_manager::add_footer($html, '{{unsubscribe}}', true);
+            }
+            if (trim((string) $text) !== '') {
+                $text = subscription_manager::add_footer($text, '{{unsubscribe}}', false);
             }
             $DB->update_record('local_mailwhistle_campaigns', (object) [
                 'id' => $campaignid,
                 'status' => self::STATUS_SENDING,
+                'bodyhtml' => $html,
+                'bodytext' => $text,
                 'timemodified' => time(),
             ]);
             send_manager::queue_campaign($campaignid);
@@ -93,6 +157,109 @@ class campaign_manager {
             throw $e;
         } finally {
             $lock->release();
+        }
+    }
+
+    /**
+     * Record a blocked schedule while holding the campaign lock and transaction.
+     *
+     * @param int $campaignid Campaign whose readiness failed.
+     * @param string[] $errors Plain-text readiness errors.
+     * @return void
+     */
+    private static function fail_schedule(int $campaignid, array $errors): void {
+        global $DB;
+
+        $DB->update_record('local_mailwhistle_campaigns', (object) [
+            'id' => $campaignid,
+            'status' => self::STATUS_SCHEDULE_FAILED,
+            'timemodified' => time(),
+        ]);
+        \local_mailwhistle\helper::log_send($campaignid, 0, 'error', 'Scheduled campaign needs review', ['errors' => $errors]);
+    }
+
+    /**
+     * Schedule a ready campaign without freezing its future audience membership.
+     *
+     * @param int $campaignid Ready campaign.
+     * @param int $timescheduled Future Unix timestamp from the user's date selector.
+     * @return bool Whether this call scheduled the campaign.
+     */
+    public static function schedule(int $campaignid, int $timescheduled): bool {
+        global $DB;
+
+        $lock = \core\lock\lock_config::get_lock_factory('local_mailwhistle')->get_lock('campaign:' . $campaignid, 10);
+        if (!$lock) {
+            throw new \moodle_exception('campaignbusy', 'local_mailwhistle');
+        }
+        try {
+            if ($timescheduled <= time()) {
+                throw new \moodle_exception('schedulefuture', 'local_mailwhistle');
+            }
+            $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
+            if ($campaign->status !== self::STATUS_READY) {
+                return false;
+            }
+            self::require_no_snapshot($campaignid);
+            if (!self::is_complete($campaignid)) {
+                throw new \moodle_exception('campaignincomplete', 'local_mailwhistle');
+            }
+            $DB->update_record('local_mailwhistle_campaigns', (object) [
+                'id' => $campaignid,
+                'status' => self::STATUS_SCHEDULED,
+                'timescheduled' => $timescheduled,
+                'timemodified' => time(),
+            ]);
+            return true;
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * Cancel an unclaimed schedule, allowing the ready campaign to be reopened.
+     *
+     * @param int $campaignid Scheduled campaign.
+     * @return bool Whether the schedule was cancelled before delivery started.
+     */
+    public static function cancel_schedule(int $campaignid): bool {
+        global $DB;
+
+        $lock = \core\lock\lock_config::get_lock_factory('local_mailwhistle')->get_lock('campaign:' . $campaignid, 10);
+        if (!$lock) {
+            throw new \moodle_exception('campaignbusy', 'local_mailwhistle');
+        }
+        try {
+            $status = $DB->get_field('local_mailwhistle_campaigns', 'status', ['id' => $campaignid], MUST_EXIST);
+            if (!in_array($status, [self::STATUS_SCHEDULED, self::STATUS_SCHEDULE_FAILED], true)) {
+                return false;
+            }
+            self::require_no_snapshot($campaignid);
+            $DB->update_record('local_mailwhistle_campaigns', (object) [
+                'id' => $campaignid,
+                'status' => self::STATUS_READY,
+                'timescheduled' => 0,
+                'timemodified' => time(),
+            ]);
+            return true;
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * Prevent authoring or changing a schedule after recipients have been frozen.
+     *
+     * The caller must hold the campaign lock.
+     *
+     * @param int $campaignid Campaign being changed.
+     * @return void
+     */
+    private static function require_no_snapshot(int $campaignid): void {
+        global $DB;
+
+        if ($DB->record_exists('local_mailwhistle_recipients', ['campaignid' => $campaignid])) {
+            throw new \moodle_exception('campaignhassnapshot', 'local_mailwhistle');
         }
     }
 
@@ -372,6 +539,7 @@ class campaign_manager {
             if ($status !== self::STATUS_READY) {
                 throw new \moodle_exception('campaigncannotreopen', 'local_mailwhistle');
             }
+            self::require_no_snapshot($campaignid);
             $DB->update_record('local_mailwhistle_campaigns', (object) [
                 'id' => $campaignid,
                 'status' => self::STATUS_DRAFT,

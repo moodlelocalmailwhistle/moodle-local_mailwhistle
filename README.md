@@ -23,7 +23,8 @@ Moodle already has messaging, but it is built for notifications, not campaigns. 
 
 - building HTML newsletters (visual builder or raw HTML)
 - targeting people with reusable audience tags
-- sending a test copy to yourself before the real send
+- sending test copies to selected reviewers before the real send
+- scheduling campaigns for a future date and time
 - delivering in batches through Moodle's email processor while respecting campaign notification settings
 - recording opens and clicks without requiring a Moodle session in the inbox
 - seeing who a campaign (and which template) was sent to, with open and click counts
@@ -37,16 +38,22 @@ Open it at **Site administration → Mail Whistle**, or `/local/mailwhistle/inde
 | Campaigns (draft → ready → send) | Working |
 | Audience tags, filters, assign/remove | Working |
 | Email templates + visual builder | Working |
-| Test mail to the current user | Working |
+| Test mail to selected reviewers | Working |
+| Scheduled sending and cancellation | Working |
+| Recipient unsubscribe and personal preferences | Working |
 | Open / click tracking | Working |
 | Image resources for templates | Working |
 | Reports and analytics | Working |
 
 ### Campaigns
 
-Drafts and previously sent newsletters live on one tab. Create a campaign, walk through **Details → Content → Audience → Review**, send a test copy, mark it ready, then **Send now**. Delivery runs as an ad-hoc task so large audiences can be batched.
+Drafts, scheduled campaigns and previously sent newsletters live on one tab. Create a campaign, walk through **Details → Content → Audience → Review**, send test copies, mark it ready, then choose **Send now** or **Schedule campaign**. Delivery runs as an ad-hoc task so large audiences can be batched.
 
 Review shows the number of eligible recipients and explains missing content or unavailable attachments. A ready campaign can be returned to draft until sending starts. Sending and completed campaigns cannot be edited.
+
+Scheduling uses your Moodle timezone. The **Scheduled for** column shows the planned time; **View schedule** lets you cancel before sending starts. Cancellation returns the campaign to Ready so it can be edited or rescheduled. Moodle cron checks due campaigns every minute; busy or stopped cron can delay delivery, but cannot start it early. The audience is selected when the scheduled send starts, so later tag changes and opt-outs apply. If content, resources or audience are no longer valid, the campaign changes to **Schedule needs review** without sending and explains what needs attention.
+
+On Review, **Send test email** opens a Moodle dialog. Enter up to five addresses separated by commas, semicolons or newlines; the default is your current notification address. Each destination shows an accepted, failed-before-transport, or uncertain result. Copies use saved campaign content and your profile as sample personalisation, with no recipient snapshots, tracking or active unsubscribe links. Each manager can attempt up to 20 test addresses per rolling hour across campaigns and sessions. Site email diversion and your campaign notification eligibility still apply.
 
 ![Campaigns tab with draft campaigns and previously sent newsletters](docs/screenshots/01-campaigns.png)
 
@@ -61,6 +68,8 @@ Tag users (for example `Newsletter` or `VIP`), then target a campaign at those t
 ![Audience tab with search, tag filters, and apply-tag controls](docs/screenshots/03-audience.png)
 
 The campaign is sent to everyone tagged with **any** of the selected tags.
+
+The **Campaign email preference** column and filter identify explicit opt-outs. These people remain visible for audience management but are excluded from sends. Adding a tag cannot override a recipient's choice; other account and notification settings are checked separately.
 
 ### Templates
 
@@ -82,6 +91,7 @@ Load a template into a campaign from the content step. Personalisation variables
 | `{{email}}` | Recipient email |
 | `{{sitename}}` | This Moodle site's full name |
 | `{{siteurl}}` | This Moodle site's URL |
+| `{{unsubscribe}}` | Recipient-specific unsubscribe confirmation URL; inactive in previews and test copies |
 
 `{{university}}` is an older name for `{{sitename}}`. Unknown variables are removed so they never appear in the inbox. These are Mail Whistle variables, not Moodle text filters.
 
@@ -93,6 +103,7 @@ Load a template into a campaign from the content step. Personalisation variables
 - Missing files or disabled attachments block sending instead of silently dropping the attachment.
 - The subject of a test copy is prefixed with `[Test]`.
 - Live sends rewrite `http(s)` links through `click.php` and append a 1×1 open pixel (`pixel.php`). Tokens are HMAC-signed; click tokens are bound to the target URL (no open redirect).
+- Every campaign includes an unsubscribe link in HTML and plain text, even if the author omits `{{unsubscribe}}`. Unsubscribe links are never click-tracked. Opening one shows a confirmation; only confirming stops future Mail Whistle campaign emails for the original recipient, including when the message was forwarded. No Moodle login is needed to unsubscribe. Users can allow campaign emails again in **Preferences → Mail Whistle email preferences**; other Moodle notification settings still apply.
 - Opens are stored once per recipient; clicks once per distinct link.
 - Batch size is configurable (**Site administration → Mail Whistle → Settings**, default 50). A scheduled task resumes pending work after a stalled send. Interrupted or unconfirmed transport attempts are marked **Uncertain** and are not automatically sent again.
 
@@ -136,6 +147,8 @@ All capabilities are system-context. Default archetype: **manager**.
 ## Privacy
 
 Mail Whistle ships a GDPR privacy provider. It can export and delete campaign authorship, tag assignments, recipient snapshots, send logs, tracking events, and unsubscribes for a user. See `classes/privacy/provider.php`.
+
+The test-copy allowance stores only recent attempt timestamps in a user preference, with no destination addresses. The privacy provider exports this preference too. Deleting a recipient snapshot invalidates its unsubscribe link.
 
 ## Development
 

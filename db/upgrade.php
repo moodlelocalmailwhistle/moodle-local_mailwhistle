@@ -278,5 +278,11 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026102300, 'local', 'mailwhistle');
     }
 
+    if ($oldversion < 2026102301) {
+        // Register the scheduled campaign dispatcher and refresh plugin metadata.
+        // Scheduling and subscriptions use fields and tables already installed.
+        upgrade_plugin_savepoint(true, 2026102301, 'local', 'mailwhistle');
+    }
+
     return true;
 }

@@ -14,7 +14,7 @@ Feature: Campaign creation requires a valid name
     And "2. Content" "link" should not exist
     And there should be 0 Mail Whistle campaigns
     When I press "Cancel"
-    Then I should see "No draft campaigns yet."
+    Then I should see "No draft or scheduled campaigns yet."
     And there should be 0 Mail Whistle campaigns
 
   Scenario: Empty and whitespace-only names do not create a campaign

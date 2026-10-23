@@ -339,6 +339,9 @@ class send_manager {
      */
     private static function make_message(\stdClass $campaign, \stdClass $to, \stdClass $values, bool $test): \core\message\message {
         resource_manager::assert_attachments_available($campaign);
+        $values = clone $values;
+        $values->unsubscribeurl = ($test ? subscription_manager::preview_url()
+            : subscription_manager::unsubscribe_url($values))->out(false);
         $message = new \core\message\message();
         $message->component = 'local_mailwhistle';
         $message->name = 'campaign';
@@ -348,10 +351,19 @@ class send_manager {
         if ($test) {
             $message->subject = get_string('testmail_subjectprefix', 'local_mailwhistle') . ' ' . $message->subject;
         }
-        $message->fullmessage = placeholder_manager::apply((string) $campaign->bodytext, $values, false);
-        $message->fullmessageformat = FORMAT_HTML;
+        $text = placeholder_manager::apply((string) $campaign->bodytext, $values, false);
         $html = placeholder_manager::apply((string) $campaign->bodyhtml, $values, true);
-        $message->fullmessagehtml = $test ? $html : tracking_manager::prepare_body($html, (int) $campaign->id, (int) $values->id);
+        if ($text === '' && $html !== '') {
+            $text = html_to_text($html);
+        }
+        $message->fullmessage = subscription_manager::add_footer($text, $values->unsubscribeurl, false);
+        $message->fullmessageformat = FORMAT_HTML;
+        $message->fullmessagehtml = '';
+        if ($html !== '') {
+            $html = subscription_manager::add_footer($html, $values->unsubscribeurl, true);
+            $message->fullmessagehtml = $test ? $html
+                : tracking_manager::prepare_body($html, (int) $campaign->id, (int) $values->id);
+        }
         $message->smallmessage = '';
         $message->notification = 1;
         if (trim((string) $campaign->senderemail) !== '') {
@@ -397,6 +409,62 @@ class send_manager {
         } finally {
             $lock->release();
         }
+    }
+
+    /**
+     * Send one untracked copy to an explicitly entered address with reviewer sample data.
+     *
+     * The authorised caller holds the campaign lock and reserves rate-limit allowance.
+     * A synthetic destination avoids silently substituting a user's notification address.
+     * Site-wide email diversion still applies and is reported as the effective destination.
+     *
+     * @param \stdClass $campaign Locked saved campaign record.
+     * @param \stdClass $reviewer Current full reviewer record used for sample placeholders and email policy.
+     * @param string $address Explicit destination address.
+     * @return array Requested and effective address, outcome, and plain-text explanation.
+     */
+    public static function send_test_to_address(\stdClass $campaign, \stdClass $reviewer, string $address): array {
+        global $CFG;
+
+        $result = ['address' => $address, 'destination' => $address, 'diverted' => false, 'status' => 'failed'];
+        $reason = self::get_skip_reason($reviewer);
+        if ($reason !== '') {
+            return $result + ['message' => $reason];
+        }
+        if (!validate_email($address)) {
+            return $result + ['message' => get_string('testmail_invalidaddresses', 'local_mailwhistle')];
+        }
+        $destination = email_should_be_diverted($address) ? $CFG->divertallemailsto : $address;
+        $result['destination'] = $destination;
+        $result['diverted'] = $destination !== $address;
+        if (!validate_email($destination) || str_ends_with(strtolower($destination), '.invalid')) {
+            return $result + ['message' => get_string('delivery_invaliddomain', 'local_mailwhistle')];
+        }
+
+        try {
+            $to = clone $reviewer;
+            $to->id = \core_user::NOREPLY_USER;
+            $to->email = $address;
+            $to->emailstop = 0;
+            $to->mailformat = 1;
+            $to->auth = 'manual';
+            $to->mnethostid = $CFG->mnet_localhost_id;
+            unset($to->preference);
+            $values = clone $reviewer;
+            $values->email = self::get_destination($reviewer);
+            $message = self::make_message($campaign, $to, $values, true);
+        } catch (\Throwable $exception) {
+            return $result + ['message' => get_string('testmail_preparationfailed', 'local_mailwhistle')];
+        }
+
+        try {
+            $accepted = static::deliver_message($message);
+        } catch (\Throwable $exception) {
+            $accepted = false;
+        }
+        $result['status'] = $accepted ? 'accepted' : 'uncertain';
+        $result['message'] = get_string($accepted ? 'testmail_accepted' : 'testmail_uncertain', 'local_mailwhistle');
+        return $result;
     }
 
     /**

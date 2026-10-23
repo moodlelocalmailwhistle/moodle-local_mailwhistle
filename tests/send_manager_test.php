@@ -47,9 +47,10 @@ final class send_manager_test extends \advanced_testcase {
     /**
      * Build a complete, ready campaign with one tagged recipient.
      *
+     * @param bool $snapshot Whether to precreate the legacy recipient snapshot.
      * @return array{0:int,1:\stdClass} [campaignid, recipient user]
      */
-    private function make_ready_campaign_with_recipient(): array {
+    private function make_ready_campaign_with_recipient(bool $snapshot = true): array {
         global $DB, $USER;
         $now = time();
         $campaignid = (int) $DB->insert_record('local_mailwhistle_campaigns', (object) [
@@ -69,7 +70,9 @@ final class send_manager_test extends \advanced_testcase {
         $user = $this->getDataGenerator()->create_user(['email' => 'rcpt@example.com']);
         tag_manager::assign_tag($tag, $user->id);
         campaign_manager::mark_complete($campaignid);
-        recipient_manager::snapshot_recipients($campaignid);
+        if ($snapshot) {
+            recipient_manager::snapshot_recipients($campaignid);
+        }
         return [$campaignid, $user];
     }
 
@@ -258,7 +261,7 @@ final class send_manager_test extends \advanced_testcase {
         $CFG->allowattachments = true;
         unset_config('noemailever');
 
-        [$campaignid] = $this->make_ready_campaign_with_recipient();
+        [$campaignid] = $this->make_ready_campaign_with_recipient(false);
         $this->create_resource('handbook.pdf', file_get_contents(__DIR__ . '/fixtures/handbook.pdf'));
         campaign_manager::return_to_draft($campaignid);
         campaign_manager::update_fields($campaignid, [
@@ -288,7 +291,7 @@ final class send_manager_test extends \advanced_testcase {
         $CFG->allowattachments = true;
         unset_config('noemailever');
 
-        [$campaignid] = $this->make_ready_campaign_with_recipient();
+        [$campaignid] = $this->make_ready_campaign_with_recipient(false);
         $this->create_resource('handbook.pdf', file_get_contents(__DIR__ . '/fixtures/handbook.pdf'));
         $this->create_resource('notes.txt', 'Notes');
         campaign_manager::return_to_draft($campaignid);

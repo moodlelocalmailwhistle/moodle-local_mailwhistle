@@ -286,6 +286,18 @@ class campaign extends base {
             ->set_type(column::TYPE_INTEGER)
             ->add_callback([format::class, 'userdate']);
 
+        // Planned delivery time is distinct from campaign completion.
+        $columns[] = (new column(
+            'timescheduled',
+            new lang_string('scheduledfor', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_field("$campaignsalias.timescheduled")
+            ->set_type(column::TYPE_INTEGER)
+            ->set_is_sortable(true)
+            ->add_callback([campaignhelper::class, 'timescheduled']);
+
         // Time created.
         $columns[] = (new column(
             'timecreated',

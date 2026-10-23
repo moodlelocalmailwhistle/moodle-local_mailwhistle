@@ -61,6 +61,13 @@ class campaign {
             )
         ) {
             $url = new \moodle_url('/local/mailwhistle/campaign_edit.php', ['campaignid' => $row->id]);
+        } else if (
+            in_array($row->status, [
+            \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULED,
+            \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULE_FAILED,
+            ], true)
+        ) {
+            $url = new \moodle_url('/local/mailwhistle/campaign_schedule.php', ['campaignid' => $row->id]);
         } else if ($row->status === \local_mailwhistle\manager\campaign_manager::STATUS_SENT) {
             $url = new \moodle_url('/local/mailwhistle/index.php', ['view' => $row->id, 'tab' => 'send']);
         } else if (
@@ -91,6 +98,19 @@ class campaign {
     public static function actions(?int $id, \stdClass $row): string {
         global $OUTPUT;
 
+        $scheduleurl = new \moodle_url('/local/mailwhistle/campaign_schedule.php', ['campaignid' => $id]);
+        if (
+            in_array($row->status, [
+            \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULED,
+            \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULE_FAILED,
+            ], true)
+        ) {
+            return \html_writer::link(
+                $scheduleurl,
+                get_string('viewschedule', 'local_mailwhistle'),
+                ['class' => 'btn btn-secondary']
+            );
+        }
         if ($row->status !== \local_mailwhistle\manager\campaign_manager::STATUS_READY) {
             return '';
         }
@@ -100,7 +120,26 @@ class campaign {
             'action' => 'sendnow',
             'campaignid' => $id,
         ]);
-        return $OUTPUT->single_button($sendurl, get_string('sendnow', 'local_mailwhistle'), 'post');
+        return \html_writer::div(
+            $OUTPUT->single_button($sendurl, get_string('sendnow', 'local_mailwhistle'), 'post') .
+            \html_writer::link(
+                $scheduleurl,
+                get_string('schedulecampaign', 'local_mailwhistle'),
+                ['class' => 'btn btn-secondary']
+            ),
+            'd-flex flex-wrap align-items-center gap-2'
+        );
+    }
+
+    /**
+     * Display a planned time with its timezone, leaving unscheduled rows empty.
+     *
+     * @param int|string|null $timestamp Stored scheduled time.
+     * @param \stdClass $row Report row.
+     * @return string Escaped scheduled time.
+     */
+    public static function timescheduled($timestamp, \stdClass $row): string {
+        return (int) $timestamp > 0 ? s(\local_mailwhistle\page\campaign_schedule::format_time((int) $timestamp)) : '';
     }
 
     /**

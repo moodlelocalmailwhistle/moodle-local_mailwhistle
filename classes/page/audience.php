@@ -207,6 +207,7 @@ class audience {
             'tagid' => optional_param('filtertagid', 0, PARAM_INT),
             'suspended' => optional_param('suspended', 'any', PARAM_ALPHA),
             'auth' => optional_param('auth', 'any', PARAM_PLUGIN),
+            'subscription' => optional_param('subscription', 'any', PARAM_ALPHA),
             'perpage' => min(max(optional_param('perpage', 25, PARAM_INT), 1), 100),
         ]);
     }
@@ -226,6 +227,7 @@ class audience {
         $filtertagid = optional_param('tagid', 0, PARAM_INT);
         $suspended = optional_param('suspended', 'any', PARAM_ALPHA);
         $auth = optional_param('auth', 'any', PARAM_PLUGIN);
+        $subscription = optional_param('subscription', 'any', PARAM_ALPHA);
         $perpage = min(max(optional_param('perpage', 25, PARAM_INT), 1), 100);
         $canmanage = has_capability('local/mailwhistle:managetags', \context_system::instance());
         $tags = tag_manager::get_all_tags();
@@ -241,6 +243,7 @@ class audience {
             'tagid' => $filtertagid,
             'suspended' => $suspended,
             'auth' => $auth,
+            'subscription' => $subscription,
             'perpage' => $perpage,
         ]);
 
@@ -254,6 +257,7 @@ class audience {
             'tagid' => $filtertagid,
             'suspended' => $suspended,
             'auth' => $auth,
+            'subscription' => $subscription,
         ]);
 
         $table = new audience_table(
@@ -264,6 +268,7 @@ class audience {
                 'tagid' => $filtertagid,
                 'suspended' => $suspended,
                 'auth' => $auth,
+                'subscription' => $subscription,
             ],
             $canmanage
         );
@@ -272,6 +277,7 @@ class audience {
         ob_start();
         echo $OUTPUT->heading(get_string('audience_build', 'local_mailwhistle'), 3);
         echo \html_writer::tag('p', get_string('audience_intro', 'local_mailwhistle'));
+        echo \html_writer::tag('p', get_string('subscription_audiencehelp', 'local_mailwhistle'), ['class' => 'text-muted']);
         echo $OUTPUT->heading(get_string('audience_findpeople', 'local_mailwhistle'), 4);
         $filterform->display();
         if ($canmanage) {

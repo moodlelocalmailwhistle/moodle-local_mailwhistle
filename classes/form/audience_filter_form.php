@@ -65,6 +65,14 @@ class audience_filter_form extends \moodleform {
         $mform->setType('tagid', PARAM_INT);
         $mform->setDefault('tagid', 0);
 
+        $mform->addElement('select', 'subscription', get_string('subscription_filter', 'local_mailwhistle'), [
+            'any' => get_string('filter_any', 'local_mailwhistle'),
+            'unsubscribed' => get_string('subscription_optedout', 'local_mailwhistle'),
+            'allowed' => get_string('subscription_notoptedout', 'local_mailwhistle'),
+        ]);
+        $mform->setType('subscription', PARAM_ALPHA);
+        $mform->setDefault('subscription', 'any');
+
         // Suspended status filter.
         $suspendoptions = [
             'any'       => get_string('filter_any', 'local_mailwhistle'),

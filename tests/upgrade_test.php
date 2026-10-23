@@ -89,7 +89,7 @@ final class upgrade_test extends \advanced_testcase {
         $draft = $generator->create_campaign(['status' => 'draft']);
 
         $this->assertTrue(\xmldb_local_mailwhistle_upgrade(2026091101));
-        $this->assertSame(2026102300, (int) get_config('local_mailwhistle', 'version'));
+        $this->assertSame(2026102301, (int) get_config('local_mailwhistle', 'version'));
         $reason = get_string('delivery_legacyuncertain', 'local_mailwhistle');
         foreach ([$failed, $nullerror, $pending] as $original) {
             $updated = $DB->get_record('local_mailwhistle_recipients', ['id' => $original->id], '*', MUST_EXIST);

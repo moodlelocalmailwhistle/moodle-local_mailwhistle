@@ -26,6 +26,15 @@ defined('MOODLE_INTERNAL') || die();
 
 $tasks = [
     [
+        'classname' => 'local_mailwhistle\task\dispatch_scheduled_campaigns',
+        'blocking' => 0,
+        'minute' => '*',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
+    [
         'classname' => 'local_mailwhistle\task\requeue_stuck_sends',
         'blocking' => 0,
         'minute' => '*/10',

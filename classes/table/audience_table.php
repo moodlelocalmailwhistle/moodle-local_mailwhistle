@@ -54,6 +54,9 @@ class audience_table extends \table_sql {
      */
     public array $tagmap = [];
 
+    /** @var int[] User ids who explicitly opted out, restricted to the current page. */
+    protected array $unsubscribed = [];
+
     /**
      * Initialise the audience table.
      *
@@ -72,7 +75,7 @@ class audience_table extends \table_sql {
 
         // Only include the checkbox column when the viewer can actually manage tags.
         if ($canmanage) {
-            $this->define_columns(['select', 'fullname', 'email', 'tags']);
+            $this->define_columns(['select', 'fullname', 'email', 'subscription', 'tags']);
             $this->define_headers([
                 \html_writer::empty_tag('input', [
                     'type' => 'checkbox',
@@ -83,13 +86,15 @@ class audience_table extends \table_sql {
                 ]),
                 get_string('col_user', 'local_mailwhistle'),
                 get_string('col_email', 'local_mailwhistle'),
+                get_string('subscription_filter', 'local_mailwhistle'),
                 get_string('col_tags', 'local_mailwhistle'),
             ]);
         } else {
-            $this->define_columns(['fullname', 'email', 'tags']);
+            $this->define_columns(['fullname', 'email', 'subscription', 'tags']);
             $this->define_headers([
                 get_string('col_user', 'local_mailwhistle'),
                 get_string('col_email', 'local_mailwhistle'),
+                get_string('subscription_filter', 'local_mailwhistle'),
                 get_string('col_tags', 'local_mailwhistle'),
             ]);
         }
@@ -99,6 +104,7 @@ class audience_table extends \table_sql {
             $this->no_sorting('select');
         }
         $this->no_sorting('tags');
+        $this->no_sorting('subscription');
 
         // Default sort: lastname ASC, firstname ASC (deterministic).
         $this->sortable(true, 'lastname', SORT_ASC);
@@ -185,6 +191,14 @@ class audience_table extends \table_sql {
             $params['auth'] = $auth;
         }
 
+        $subscription = $this->filters['subscription'] ?? 'any';
+        if (in_array($subscription, ['unsubscribed', 'allowed'], true)) {
+            $exists = 'EXISTS (SELECT 1 FROM {local_mailwhistle_unsubscribes} un'
+                . ' WHERE un.userid = u.id AND un.scope = :subscriptionscope)';
+            $whereclauses[] = $subscription === 'unsubscribed' ? $exists : 'NOT ' . $exists;
+            $params['subscriptionscope'] = 'global';
+        }
+
         $this->set_sql($fields, $from, implode(' AND ', $whereclauses), $params);
     }
 
@@ -200,10 +214,23 @@ class audience_table extends \table_sql {
      * @return void
      */
     public function query_db($pagesize, $useinitialsbar = true): void {
+        global $DB;
+
         parent::query_db($pagesize, $useinitialsbar);
 
         $userids = array_keys($this->rawdata);
         $this->tagmap = self::fetch_tagmap($userids);
+        $this->unsubscribed = [];
+        if ($userids) {
+            [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+            $params['scope'] = 'global';
+            $this->unsubscribed = array_map('intval', $DB->get_fieldset_select(
+                'local_mailwhistle_unsubscribes',
+                'userid',
+                "userid $insql AND scope = :scope",
+                $params
+            ));
+        }
     }
 
     /**
@@ -286,6 +313,17 @@ class audience_table extends \table_sql {
      */
     public function col_email(\stdClass $row): string {
         return s($row->email);
+    }
+
+    /**
+     * Show opt-outs without implying that other delivery checks have passed.
+     *
+     * @param \stdClass $row Current user.
+     * @return string Preference label.
+     */
+    public function col_subscription(\stdClass $row): string {
+        $key = in_array((int) $row->id, $this->unsubscribed, true) ? 'subscription_optedout' : 'subscription_notoptedout';
+        return get_string($key, 'local_mailwhistle');
     }
 
     /**

@@ -79,3 +79,34 @@ function local_mailwhistle_pluginfile(
     send_stored_file($file, 0, 0, true, $options);
     return true;
 }
+
+/**
+ * Add the owner's campaign email preference to Moodle's user preferences.
+ *
+ * @param navigation_node $usersetting User settings navigation node.
+ * @param stdClass $user User whose settings are displayed.
+ * @param context_user $context User context.
+ * @param stdClass $course Current course.
+ * @param context $coursecontext Current course context.
+ * @return void
+ */
+function local_mailwhistle_extend_navigation_user_settings(
+    navigation_node $usersetting,
+    stdClass $user,
+    context_user $context,
+    stdClass $course,
+    context $coursecontext
+): void {
+    global $USER;
+
+    if ((int) $user->id !== (int) $USER->id || !isloggedin() || isguestuser()) {
+        return;
+    }
+    $usersetting->add(
+        get_string('subscription_title', 'local_mailwhistle'),
+        new moodle_url('/local/mailwhistle/preferences.php'),
+        navigation_node::TYPE_SETTING,
+        null,
+        'local_mailwhistle_subscription'
+    );
+}

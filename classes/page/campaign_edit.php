@@ -22,7 +22,6 @@ use local_mailwhistle\form\campaign_details_form;
 use local_mailwhistle\helper;
 use local_mailwhistle\manager\audience_manager;
 use local_mailwhistle\manager\campaign_manager;
-use local_mailwhistle\manager\send_manager;
 use local_mailwhistle\manager\tag_manager;
 use local_mailwhistle\manager\template_manager;
 use local_mailwhistle\output\resources;
@@ -44,7 +43,7 @@ class campaign_edit {
      * @return void
      */
     public static function execute(): void {
-        global $DB, $OUTPUT, $PAGE, $USER;
+        global $DB, $OUTPUT, $PAGE;
 
         require_login();
         $context = \context_system::instance();
@@ -114,7 +113,7 @@ class campaign_edit {
             'details' => self::details($campaign, $baseurl, $returnurl),
             'content' => self::content($campaign, $baseurl, $returnurl),
             'audience' => self::audience($campaignid, $baseurl, $returnurl),
-            default => self::review($campaign, $baseurl, $returnurl, $context, $USER),
+            default => self::review($campaign, $baseurl, $returnurl, $context),
         };
     }
 
@@ -339,15 +338,13 @@ class campaign_edit {
      * @param \moodle_url $baseurl Campaign base URL.
      * @param \moodle_url $returnurl Send-tab URL.
      * @param \context $context System context.
-     * @param \stdClass $user Current user.
      * @return void
      */
     private static function review(
         \stdClass $campaign,
         \moodle_url $baseurl,
         \moodle_url $returnurl,
-        \context $context,
-        \stdClass $user
+        \context $context
     ): void {
         global $OUTPUT;
 
@@ -370,20 +367,6 @@ class campaign_edit {
                 }
             }
         }
-        if ($action === 'sendtest') {
-            helper::require_post();
-            require_sesskey();
-            $sent = send_manager::send_test($campaignid, $user);
-            if ($sent) {
-                $testmsg = get_string('testmail_sent', 'local_mailwhistle', s(send_manager::get_destination($user)));
-                $testtype = \core\output\notification::NOTIFY_SUCCESS;
-            } else {
-                $testmsg = get_string('testmail_failed', 'local_mailwhistle');
-                $testtype = \core\output\notification::NOTIFY_ERROR;
-            }
-            redirect(self::step_url($baseurl, 'review'), $testmsg, null, $testtype);
-        }
-
         $readiness = campaign_manager::get_readiness($campaignid);
         $iscomplete = empty($readiness['errors']);
         $tagids = audience_manager::get_campaign_tagids($campaignid);
@@ -423,11 +406,7 @@ class campaign_edit {
         }
         echo \html_writer::start_tag('div', ['class' => 'd-flex flex-wrap gap-2']);
 
-        $testurl = new \moodle_url($baseurl, ['step' => 'review', 'action' => 'sendtest', 'sesskey' => sesskey()]);
-        echo \html_writer::div(
-            $OUTPUT->single_button($testurl, get_string('testmail_send', 'local_mailwhistle'), 'post'),
-            'local-mailwhistle-testmail mb-3'
-        );
+        echo $OUTPUT->render_from_template('local_mailwhistle/test_email', ['campaignid' => $campaignid]);
 
         if ($iscomplete) {
             $completeurl = new \moodle_url($baseurl, [

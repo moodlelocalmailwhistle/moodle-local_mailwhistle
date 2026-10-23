@@ -157,7 +157,6 @@ $string['editcampaign_markcomplete'] = 'Mark campaign complete';
 $string['editcampaign_incomplete'] = 'Add a name, subject, body and at least one audience tag before this campaign can be completed.';
 $string['testmail_send']           = 'Send test email to me';
 $string['testmail_subjectprefix']  = '[Test]';
-$string['testmail_sent']           = 'A test email has been sent to {$a}.';
 $string['testmail_failed']         = 'The test email could not be sent. Please try again.';
 $string['campaignincomplete']      = 'The campaign is not complete yet.';
 $string['status_ready']            = 'Ready';
@@ -175,9 +174,7 @@ Recipient: {{firstname}}, {{lastname}}, {{fullname}}, {{email}}.
 Site: {{sitename}}, {{siteurl}}.
 
 {{university}} is an older name for {{sitename}}. Unknown variables are removed so they never appear in the inbox. These are Mail Whistle variables, not Moodle text filters.';
-$string['placeholders_cheatsheet'] = 'Use {{firstname}}, {{lastname}}, {{fullname}}, {{email}}, {{sitename}}, {{siteurl}} — replaced when the campaign is sent.';
-$string['sendername']              = 'Sender name';
-$string['senderemail']             = 'Sender email';
+$string['placeholders_cheatsheet'] = 'Use {{firstname}}, {{lastname}}, {{fullname}}, {{email}}, {{sitename}}, {{siteurl}} and {{unsubscribe}}. Values are replaced when the campaign is sent. Unsubscribe links in previews and test copies are inactive.';
 
 // Sending.
 $string['col_actions']             = 'Actions';
@@ -189,8 +186,8 @@ $string['sendbatchsize_desc']      = 'How many recipients each send task run del
 $string['task_requeue_stuck_sends'] = 'Resume stalled campaign sends';
 
 // Draft campaigns section (Option D2).
-$string['draftcampaigns_heading']  = 'Draft campaigns';
-$string['nodraftcampaigns']        = 'No draft campaigns yet.';
+$string['draftcampaigns_heading'] = 'Draft and scheduled campaigns';
+$string['nodraftcampaigns'] = 'No draft or scheduled campaigns yet.';
 $string['col_name']                = 'Internal name';
 $string['col_created']             = 'Created';
 
@@ -484,3 +481,59 @@ $string['template_builder_block_position'] = 'Block {$a}';
 $string['template_builder_moved'] = 'Moved to position {$a}.';
 $string['col_completedat'] = 'Completed at';
 $string['delivery_legacyuncertain'] = 'This delivery was recorded before reliable email outcomes were available. It may already have been accepted and is not retried to avoid a duplicate email. Any earlier error is retained below.';
+
+// Recipient-controlled campaign email preferences.
+$string['subscription_title'] = 'Mail Whistle email preferences';
+$string['subscription_unsubscribe'] = 'Unsubscribe from campaign emails';
+$string['subscription_confirm'] = 'Stop receiving Mail Whistle campaign emails for {$a}? If this message was forwarded to you, this changes the original recipient’s preference.';
+$string['subscription_scope'] = 'This preference applies to all Mail Whistle campaigns on this site. Other Moodle notifications are unaffected. Allowing campaign emails still respects your notification settings and does not add you to an audience.';
+$string['subscription_stopped'] = 'You have opted out of Mail Whistle campaign emails.';
+$string['subscription_allowed'] = 'You have not opted out of Mail Whistle campaign emails.';
+$string['subscription_allow'] = 'Allow campaign emails';
+$string['subscription_manage'] = 'Sign in to manage your own email preferences';
+$string['subscription_preview'] = 'This is a preview unsubscribe link. No email preferences have been changed.';
+$string['subscription_invalid'] = 'This unsubscribe link is invalid or no longer available. Sign in to Moodle to manage your email preferences.';
+$string['subscription_busy'] = 'Your email preference is being updated. Please try again.';
+$string['subscription_filter'] = 'Campaign email preference';
+$string['subscription_optedout'] = 'Opted out';
+$string['subscription_notoptedout'] = 'Not opted out';
+$string['subscription_audiencehelp'] = 'People who opted out remain visible here but are excluded from campaign delivery. Adding a tag does not change their preference. Other account and notification settings are also checked before sending.';
+
+// Scheduled campaign delivery.
+$string['schedulecampaign'] = 'Schedule campaign';
+$string['viewschedule'] = 'View schedule';
+$string['scheduledfor'] = 'Scheduled for';
+$string['scheduletimezone'] = 'Time zone';
+$string['schedulefuture'] = 'Choose a date and time in the future.';
+$string['schedulehelp'] = 'Choose when sending should start. Moodle cron starts due campaigns, so delivery may begin later if cron or the mail queue is busy. Messages are never queued before the selected time.';
+$string['scheduleaudiencehelp'] = 'Recipients are selected from the campaign’s audience when sending starts. Tag membership may change before then. Current opt-outs and email preferences are still respected.';
+$string['scheduleconfirmed'] = 'Scheduled for {$a}.';
+$string['cancelschedule'] = 'Cancel schedule';
+$string['schedulecancelhelp'] = 'Cancel the schedule to return this campaign to Ready. You can then reschedule it, send it now, or return it to draft for editing. Cancellation is available only until sending starts.';
+$string['schedulecancelled'] = 'Schedule cancelled. The campaign is ready and can be edited or scheduled again.';
+$string['schedulechanged'] = 'The campaign has changed. Its current state no longer allows this action.';
+$string['schedulenotready'] = 'Only a complete, ready campaign can be scheduled. Review the campaign before scheduling it.';
+$string['schedulefailedhelp'] = 'This scheduled campaign could not start because it was no longer ready to send. No messages were queued. Review any issues below, then cancel the schedule to edit or schedule it again.';
+$string['status_schedulefailed'] = 'Schedule needs review';
+$string['task_dispatch_scheduled_campaigns'] = 'Start scheduled Mail Whistle campaigns';
+$string['backtocampaigns'] = 'Back to campaigns';
+
+// Test-copy recipients and delivery outcomes.
+$string['testmail_title'] = 'Send test email';
+$string['testmail_submit'] = 'Send test copies';
+$string['testmail_description'] = 'Send the saved subject, message and attachments with a [Test] subject prefix. All copies use your current user details as sample personalisation data. Tests do not add campaign recipients or record campaign opens and clicks.';
+$string['testmail_addresses'] = 'Email addresses';
+$string['testmail_addresses_help'] = 'Enter up to 5 email addresses, separated by commas, semicolons or new lines. Duplicate addresses receive one copy. You can attempt up to 20 test copies per hour across all campaigns. Moodle email settings and any site-wide email diversion still apply.';
+$string['testmail_invalidaddresses'] = 'Enter valid email addresses separated by commas, semicolons or new lines. No test copies have been sent.';
+$string['testmail_toomany'] = 'Enter no more than {$a} different email addresses.';
+$string['testmail_limit'] = 'You have reached the limit of {$a} test copies per hour. Try again after earlier attempts expire.';
+$string['testmail_busy'] = 'Another test email request is being processed for your account. Wait for it to finish and try again.';
+$string['testmail_preparationfailed'] = 'Not sent: the saved message or attachments could not be prepared. Check the campaign and its selected resources.';
+$string['testmail_accepted'] = 'Accepted by the email transport. Inbox delivery is not confirmed.';
+$string['testmail_uncertain'] = 'Acceptance could not be confirmed. This copy may have been sent; check the destination inbox before trying again.';
+$string['testmail_results'] = 'Test email results';
+$string['testmail_diverted'] = 'Site email settings redirected this copy to {$a}.';
+$string['testmail_requiresjavascript'] = 'Enable JavaScript to enter test email addresses.';
+$string['privacy:metadata:preference:testemail_attempts'] = 'Timestamps of recent test email attempts used to enforce the hourly sending limit. Destination addresses are not stored.';
+
+$string['campaignhassnapshot'] = 'This campaign already has a saved recipient snapshot. Its schedule cannot be changed and it cannot be reopened for editing.';
