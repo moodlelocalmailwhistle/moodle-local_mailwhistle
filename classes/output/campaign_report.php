@@ -124,11 +124,15 @@ class campaign_report implements renderable, templatable {
                 'label' => get_string('stat_uniqueopens', 'local_mailwhistle'),
                 'value' => number_format($stats->uniqueopens),
                 'detail' => get_string('stat_openrate', 'local_mailwhistle', $stats->openrate),
+                'note' => $stats->uncertainopens > 0
+                    ? get_string('stat_uncertainopens', 'local_mailwhistle', $stats->uncertainopens) : '',
             ],
             [
                 'label' => get_string('stat_uniqueclicks', 'local_mailwhistle'),
                 'value' => number_format($stats->uniqueclicks),
                 'detail' => get_string('stat_clickrate', 'local_mailwhistle', $stats->clickrate),
+                'note' => $stats->uncertainclicks > 0
+                    ? get_string('stat_uncertainclicks', 'local_mailwhistle', $stats->uncertainclicks) : '',
             ],
         ];
 
@@ -143,6 +147,8 @@ class campaign_report implements renderable, templatable {
             'statushtml' => $statushtml,
             'previewunavailable' => $previewunavailable,
             'stats' => $statcards,
+            'deliverystatus' => $campaign->status === campaign_manager::STATUS_SENDING
+                ? (new delivery_status($campaign))->export_for_template($output) : null,
             'metarows' => [
                 [
                     'label' => get_string('col_audience', 'local_mailwhistle'),

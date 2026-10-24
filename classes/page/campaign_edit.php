@@ -22,6 +22,7 @@ use local_mailwhistle\form\campaign_details_form;
 use local_mailwhistle\helper;
 use local_mailwhistle\manager\audience_manager;
 use local_mailwhistle\manager\campaign_manager;
+use local_mailwhistle\manager\recipient_manager;
 use local_mailwhistle\manager\tag_manager;
 use local_mailwhistle\manager\template_manager;
 use local_mailwhistle\output\resources;
@@ -75,7 +76,7 @@ class campaign_edit {
 
         $PAGE->set_context($context);
         $PAGE->set_url($stepurl);
-        $PAGE->set_pagelayout('standard');
+        $PAGE->set_pagelayout('admin');
         $PAGE->set_title(get_string('editcampaign', 'local_mailwhistle'));
         $PAGE->set_heading(get_string('pluginname', 'local_mailwhistle'));
         $PAGE->requires->css(new \moodle_url('/local/mailwhistle/styles.css'));
@@ -390,6 +391,7 @@ class campaign_edit {
             [get_string('senderemail', 'local_mailwhistle'), s($campaign->senderemail)],
             [get_string('audiencetags_label', 'local_mailwhistle'), implode(', ', $tagnames)],
             [get_string('campaigneligiblecount', 'local_mailwhistle'), $readiness['recipientcount']],
+            [get_string('campaignexcludedcount', 'local_mailwhistle'), $readiness['audience']['excluded']],
             [get_string('campaign_attachments', 'local_mailwhistle'), self::format_attachment_names($campaign)],
             [get_string('body', 'local_mailwhistle'), format_text(
                 (string) $campaign->bodyhtml,
@@ -398,6 +400,7 @@ class campaign_edit {
             )],
         ];
         echo \html_writer::table($summary);
+        self::render_audience_preview($campaignid, $baseurl, $readiness['audience']);
         if (!$iscomplete) {
             echo $OUTPUT->notification(
                 \html_writer::alist(array_map('s', $readiness['errors'])),
@@ -433,6 +436,48 @@ class campaign_edit {
         );
         echo \html_writer::end_div();
         echo $OUTPUT->footer();
+    }
+
+    /**
+     * Render the current audience and explain exclusions before completing a draft.
+     *
+     * @param int $campaignid Campaign id.
+     * @param \moodle_url $baseurl Wizard base URL.
+     * @param array $audience Current counts and exclusion reasons.
+     * @return void
+     */
+    private static function render_audience_preview(int $campaignid, \moodle_url $baseurl, array $audience): void {
+        global $OUTPUT;
+
+        echo $OUTPUT->heading(get_string('campaignaudiencepreview', 'local_mailwhistle'), 3);
+        echo \html_writer::tag('p', get_string('campaignaudiencepreview_help', 'local_mailwhistle'), ['class' => 'text-muted']);
+        if ($audience['reasons']) {
+            $reasons = [];
+            foreach ($audience['reasons'] as $reason => $count) {
+                $reasons[] = s($reason) . ' (' . $count . ')';
+            }
+            echo \html_writer::alist($reasons);
+        }
+        if ($audience['total'] === 0) {
+            return;
+        }
+
+        $pagesize = 25;
+        $page = max(0, min(optional_param('audiencepage', 0, PARAM_INT), (int) ceil($audience['total'] / $pagesize) - 1));
+        $table = new \html_table();
+        $table->attributes['class'] = 'generaltable table local-mailwhistle-audience-preview';
+        $table->head = [
+            get_string('col_user', 'local_mailwhistle'),
+            get_string('campaignrecipientdestination', 'local_mailwhistle'),
+            get_string('col_status', 'local_mailwhistle'),
+        ];
+        foreach (recipient_manager::get_audience_page($campaignid, $page, $pagesize) as $user) {
+            $status = $user->eligibilityreason === ''
+                ? get_string('campaignrecipienteligible', 'local_mailwhistle') : $user->eligibilityreason;
+            $table->data[] = [fullname($user), s($user->destination), s($status)];
+        }
+        echo \html_writer::div(\html_writer::table($table), 'table-responsive');
+        echo $OUTPUT->paging_bar($audience['total'], $page, $pagesize, self::step_url($baseurl, 'review'), 'audiencepage');
     }
 
     /**

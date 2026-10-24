@@ -49,7 +49,7 @@ Open it at **Site administration → Mail Whistle**, or `/local/mailwhistle/inde
 
 Drafts, scheduled campaigns and previously sent newsletters live on one tab. Create a campaign, walk through **Details → Content → Audience → Review**, send test copies, mark it ready, then choose **Send now** or **Schedule campaign**. Delivery runs as an ad-hoc task so large audiences can be batched.
 
-Review shows the number of eligible recipients and explains missing content or unavailable attachments. A ready campaign can be returned to draft until sending starts. Sending and completed campaigns cannot be edited.
+Review shows current eligible and excluded recipient counts, exclusion reasons, and a paginated recipient preview with effective delivery addresses. The counts use the same account, opt-out, notification and address checks as sending, which are checked again before delivery. Review also explains missing content or unavailable attachments. A ready campaign can be returned to draft until sending starts. Sending and completed campaigns cannot be edited.
 
 Use **Duplicate** in a campaign or report table to start a follow-up as a new draft. The copy keeps the subject, message, sender, attachment selections, template reference and audience rules, and opens for editing. It has no delivery history or scheduled send time. The original campaign stays unchanged. Recipients are selected again when the follow-up is sent, so current tag membership, opt-outs and notification preferences apply.
 
@@ -71,7 +71,7 @@ Tag users (for example `Newsletter` or `VIP`), then target a campaign at those t
 
 The campaign is sent to everyone tagged with **any** of the selected tags.
 
-The **Campaign email preference** column and filter identify explicit opt-outs. These people remain visible for audience management but are excluded from sends. Adding a tag cannot override a recipient's choice; other account and notification settings are checked separately.
+The **Campaign email preference** column and filter identify explicit opt-outs. These people remain visible for audience management but are excluded from sends. Suspended accounts also have a visible badge explaining that they will not receive mail. Adding a tag cannot override a recipient's choice; other account and notification settings are checked separately.
 
 ### Templates
 
@@ -108,7 +108,7 @@ Load a template into a campaign from the content step. Personalisation variables
 - The subject of a test copy is prefixed with `[Test]`.
 - Live sends rewrite `http(s)` links through `click.php` and append a 1×1 open pixel (`pixel.php`). Tokens are HMAC-signed; click tokens are bound to the target URL (no open redirect).
 - Every campaign includes an unsubscribe link in HTML and plain text, even if the author omits `{{unsubscribe}}`. Unsubscribe links are never click-tracked. Opening one shows a confirmation; only confirming stops future Mail Whistle campaign emails for the original recipient, including when the message was forwarded. No Moodle login is needed to unsubscribe. Users can allow campaign emails again in **Preferences → Mail Whistle email preferences**; other Moodle notification settings still apply.
-- Opens are stored once per recipient; clicks once per distinct link.
+- Opens are stored once per recipient; clicks once per distinct link. Concurrent tracking requests are deduplicated, and a recording failure does not block a verified click destination or the tracking pixel response.
 - Batch size is configurable (**Site administration → Mail Whistle → Settings**, default 50). A scheduled task resumes pending work after a stalled send. Interrupted or unconfirmed transport attempts are marked **Uncertain** and are not automatically sent again.
 
 ### Reports
@@ -116,6 +116,10 @@ Load a template into a campaign from the content step. Personalisation variables
 The Reports tab lists sent and in-progress campaigns with audience tags, the template that was loaded (when one was used), recipient count, unique opens, and unique clicks. Open a campaign to see the snapshotted roster: name, email, send status, whether that person opened or clicked, and any send error. Opens are stored once per recipient; clicks once per person (unique clickers). Campaigns sent before this version have no stored template id.
 
 **Sent** means the email transport accepted the message, rather than confirmation that it reached an inbox. **Skipped** means account or notification settings prevented sending; **Uncertain** means acceptance could not be confirmed. Campaigns finish as Sent, Completed with issues, or Failed according to their recipient outcomes. **Retry failed recipients** retries only known failures; it leaves sent, skipped and uncertain recipients untouched.
+
+Engagement counts and rates use confirmed sent recipients. Opens and clicks from uncertain deliveries appear separately, without changing their delivery status or inflating the rates.
+
+Sending reports show when delivery was queued, elapsed time, the latest recipient activity, and any recorded worker retry. Background task details show the dispatcher and recovery task status, last run and next run; administrators can open task settings and logs. These records help investigate a delay but do not prove that a worker is currently running. Refresh the page for updated information.
 
 A sent-campaign preview on the Campaigns tab links through to the same report.
 

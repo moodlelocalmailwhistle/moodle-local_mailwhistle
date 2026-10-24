@@ -170,4 +170,111 @@ final class recipient_manager_test extends \advanced_testcase {
         $batch = recipient_manager::get_pending_recipients($campaignid, 2);
         $this->assertCount(2, $batch);
     }
+
+    /**
+     * The preview matches sending policy, explains exclusions and leaves snapshots untouched.
+     */
+    public function test_audience_preview_uses_current_delivery_policy(): void {
+        global $CFG, $DB;
+        $this->resetAfterTest();
+        $CFG->noemailever = false;
+        $DB->set_field('message_processors', 'enabled', 1, ['name' => 'email']);
+        $this->redirectEmails();
+        $campaignid = $this->make_campaign();
+        $tags = [tag_manager::create_tag('First'), tag_manager::create_tag('Second')];
+        audience_manager::set_campaign_tags($campaignid, $tags);
+        $eligible = $this->getDataGenerator()->create_user(['email' => 'eligible@example.com']);
+        $suspended = $this->getDataGenerator()->create_user(['suspended' => 1]);
+        $nologin = $this->getDataGenerator()->create_user(['auth' => 'nologin']);
+        $optedout = $this->getDataGenerator()->create_user(['emailstop' => 1]);
+        $unsubscribed = $this->getDataGenerator()->create_user();
+        $invalid = $this->getDataGenerator()->create_user(['email' => 'reader@example.invalid']);
+        foreach ([$eligible, $suspended, $nologin, $optedout, $unsubscribed, $invalid] as $user) {
+            tag_manager::assign_tag($tags[0], $user->id);
+        }
+        tag_manager::assign_tag($tags[1], $eligible->id);
+        $DB->insert_record('local_mailwhistle_unsubscribes', (object) [
+            'userid' => $unsubscribed->id, 'email' => $unsubscribed->email,
+            'scope' => 'global', 'scopeid' => 0, 'timecreated' => time(),
+        ]);
+
+        $summary = recipient_manager::get_audience_summary($campaignid);
+        $this->assertSame(6, $summary['total']);
+        $this->assertSame(1, $summary['eligible']);
+        $this->assertSame(5, $summary['excluded']);
+        $this->assertSame(5, array_sum($summary['reasons']));
+        $preview = recipient_manager::get_audience_page($campaignid);
+        $this->assertSame('', $preview[$eligible->id]->eligibilityreason);
+        foreach ([$suspended, $nologin, $optedout, $unsubscribed, $invalid] as $user) {
+            $this->assertSame(
+                \local_mailwhistle\manager\send_manager::get_skip_reason($user),
+                $preview[$user->id]->eligibilityreason
+            );
+            $this->assertNotSame('', $preview[$user->id]->eligibilityreason);
+        }
+        $this->assertSame(1, \local_mailwhistle\manager\campaign_manager::get_readiness($campaignid)['recipientcount']);
+        $this->assertSame(0, $DB->count_records('local_mailwhistle_recipients'));
+
+        $CFG->noemailever = true;
+        $this->assertSame(0, recipient_manager::get_audience_summary($campaignid)['eligible']);
+        $this->assertContains(
+            get_string('campaignemptyaudience', 'local_mailwhistle'),
+            \local_mailwhistle\manager\campaign_manager::get_readiness($campaignid)['errors']
+        );
+    }
+
+    /**
+     * Notification preferences, administrator locks and effective addresses are respected.
+     */
+    public function test_audience_preview_respects_email_preferences_and_overrides(): void {
+        global $CFG, $DB;
+        $this->resetAfterTest();
+        $CFG->noemailever = false;
+        $CFG->messagingallowemailoverride = true;
+        $DB->set_field('message_processors', 'enabled', 1, ['name' => 'email']);
+        $this->redirectEmails();
+        $campaignid = $this->make_campaign();
+        $tag = tag_manager::create_tag('Newsletter');
+        audience_manager::set_campaign_tags($campaignid, [$tag]);
+        $user = $this->getDataGenerator()->create_user(['email' => 'reader@example.com']);
+        tag_manager::assign_tag($tag, $user->id);
+        set_user_preference('message_provider_local_mailwhistle_campaign_enabled', 'none', $user);
+        $this->assertSame(0, recipient_manager::get_audience_summary($campaignid)['eligible']);
+        set_config('email_provider_local_mailwhistle_campaign_locked', 1, 'message');
+        $this->assertSame(1, recipient_manager::get_audience_summary($campaignid)['eligible']);
+        set_user_preference('message_processor_email_email', 'override@example.invalid', $user);
+        $this->assertSame(0, recipient_manager::get_audience_summary($campaignid)['eligible']);
+        set_user_preference('message_processor_email_email', 'override@example.com', $user);
+        $preview = recipient_manager::get_audience_page($campaignid);
+        $this->assertSame('override@example.com', $preview[$user->id]->destination);
+        $this->assertSame('', $preview[$user->id]->eligibilityreason);
+        $DB->set_field('message_processors', 'enabled', 0, ['name' => 'email']);
+        $this->assertSame(0, recipient_manager::get_audience_summary($campaignid)['eligible']);
+    }
+
+    /**
+     * A multi-tag audience is deduplicated and paginated without exposing deleted users.
+     */
+    public function test_audience_preview_paginates_and_omits_deleted_accounts(): void {
+        $this->resetAfterTest();
+        $campaignid = $this->make_campaign();
+        $tags = [tag_manager::create_tag('First'), tag_manager::create_tag('Second')];
+        audience_manager::set_campaign_tags($campaignid, $tags);
+        for ($i = 0; $i < 27; $i++) {
+            $user = $this->getDataGenerator()->create_user();
+            foreach ($tags as $tag) {
+                tag_manager::assign_tag($tag, $user->id);
+            }
+        }
+        $deleted = $this->getDataGenerator()->create_user();
+        tag_manager::assign_tag($tags[0], $deleted->id);
+        delete_user($deleted);
+        $first = recipient_manager::get_audience_page($campaignid);
+        $second = recipient_manager::get_audience_page($campaignid, 1);
+        $this->assertCount(25, $first);
+        $this->assertCount(2, $second);
+        $this->assertSame([], array_intersect(array_keys($first), array_keys($second)));
+        $this->assertSame(27, recipient_manager::get_audience_summary($campaignid)['total']);
+        $this->assertArrayNotHasKey($deleted->id, $first + $second);
+    }
 }

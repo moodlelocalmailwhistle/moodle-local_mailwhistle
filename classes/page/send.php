@@ -21,6 +21,7 @@ use local_mailwhistle\manager\campaign_manager;
 use local_mailwhistle\manager\send_manager;
 use local_mailwhistle\output\campaign_preview;
 use local_mailwhistle\output\draft_campaigns;
+use local_mailwhistle\output\delivery_status;
 use local_mailwhistle\output\sent_campaigns;
 
 /**
@@ -86,7 +87,7 @@ class send {
      * @return string
      */
     public static function render(): string {
-        global $OUTPUT;
+        global $DB, $OUTPUT;
 
         $viewid = optional_param('view', 0, PARAM_INT);
         if ($viewid > 0) {
@@ -95,6 +96,13 @@ class send {
 
         $html = '';
         if (has_capability('local/mailwhistle:manage', \context_system::instance())) {
+            if (
+                $DB->record_exists_select('local_mailwhistle_campaigns', 'status IN (:sending, :scheduled)', [
+                'sending' => campaign_manager::STATUS_SENDING, 'scheduled' => campaign_manager::STATUS_SCHEDULED,
+                ])
+            ) {
+                $html .= $OUTPUT->render(new delivery_status());
+            }
             $html .= $OUTPUT->render(new draft_campaigns());
         }
         $html .= $OUTPUT->render(new sent_campaigns());

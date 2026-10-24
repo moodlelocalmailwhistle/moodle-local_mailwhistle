@@ -48,6 +48,7 @@ if ($verified === null) {
     throw new \moodle_exception('invalidrequest');
 }
 
+// Recording is best effort; a storage failure must not block a verified destination.
 \local_mailwhistle\manager\tracking_manager::record_click(
     $verified->campaignid,
     $verified->recipientid,

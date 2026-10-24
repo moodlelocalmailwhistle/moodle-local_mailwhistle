@@ -24,9 +24,10 @@
     * notfound - True when the campaign is missing or not reportable.
     * campaignname - Formatted campaign name.
     * statushtml - Rendered status badge.
-    * stats - Array of {label, value, detail}.
+    * stats - Array of {label, value, detail, note}.
     * metarows - Array of {label, value} where value is already escaped/HTML.
     * table - Rendered recipient table HTML.
+    * deliverystatus - Optional delivery_status partial context for sending campaigns.
     * retrybutton - Optional POST button for retrying known failures.
     * previewunavailable - True when a requested recipient cannot be previewed.
     * emailpreview - Subject, recipientlabel, hasrecipient, previewhtml, hasbody,
@@ -68,6 +69,9 @@
             <h2 class="h3 mb-0">{{{campaignname}}}</h2>
             <div>{{{statushtml}}}</div>
         </div>
+        {{#deliverystatus}}
+            {{> local_mailwhistle/delivery_status}}
+        {{/deliverystatus}}
         {{#retrybutton}}
             <div class="mb-3">
                 <p>{{#str}}retryfailed_help, local_mailwhistle{{/str}}</p>
@@ -83,10 +87,12 @@
                         {{#detail}}
                             <div class="local-mailwhistle-report-stat-detail">{{detail}}</div>
                         {{/detail}}
+                        {{#note}}<div class="local-mailwhistle-report-stat-detail">{{note}}</div>{{/note}}
                     </div>
                 </div>
             {{/stats}}
         </div>
+        <p class="small text-muted">{{#str}}reports_help_engagement_desc, local_mailwhistle{{/str}}</p>
         <div class="local-mailwhistle-report-layout mb-4">
             <section class="card local-mailwhistle-report-message" id="local-mailwhistle-report-email"
                      aria-labelledby="local-mailwhistle-report-email-heading">

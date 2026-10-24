@@ -123,10 +123,10 @@ class tracking_manager {
      *
      * @param int $campaignid The campaign.
      * @param int $recipientid The recipient row id.
-     * @return void
+     * @return bool Whether the event was recorded or already exists.
      */
-    public static function record_open(int $campaignid, int $recipientid): void {
-        self::record_event($campaignid, $recipientid, self::EVENT_OPEN, '');
+    public static function record_open(int $campaignid, int $recipientid): bool {
+        return self::record_event($campaignid, $recipientid, self::EVENT_OPEN, '');
     }
 
     /**
@@ -135,46 +135,60 @@ class tracking_manager {
      * @param int $campaignid The campaign.
      * @param int $recipientid The recipient row id.
      * @param string $target The clicked URL.
-     * @return void
+     * @return bool Whether the event was recorded or already exists.
      */
-    public static function record_click(int $campaignid, int $recipientid, string $target): void {
-        self::record_event($campaignid, $recipientid, self::EVENT_CLICK, $target);
+    public static function record_click(int $campaignid, int $recipientid, string $target): bool {
+        return self::record_event($campaignid, $recipientid, self::EVENT_CLICK, $target);
     }
 
     /**
-     * Insert a tracking event, ignoring duplicates via the UNIQUE index.
+     * Record an event without delaying or breaking the email client's request.
+     *
+     * A per-event lock serialises the existence check and insert, avoiding a
+     * duplicate-key error when first opens/clicks arrive together. A concurrent
+     * request can leave recording to the lock holder. The unique index remains
+     * a final safeguard. Recording is best effort: storage or lock failures must
+     * not prevent a verified click redirect or the pixel response.
      *
      * @param int $campaignid The campaign.
      * @param int $recipientid The recipient row id.
      * @param string $eventtype Open or click.
      * @param string $target The target URL (empty for opens).
-     * @return void
+     * @return bool Whether the event was recorded or already exists.
      */
-    private static function record_event(int $campaignid, int $recipientid, string $eventtype, string $target): void {
+    private static function record_event(int $campaignid, int $recipientid, string $eventtype, string $target): bool {
         global $DB;
 
         $targethash = $target === '' ? '' : sha1($target);
-
-        // The UNIQUE (campaignid,recipientid,eventtype,targethash) index enforces
-        // first-open / one-per-link; skip if already recorded.
-        $exists = $DB->record_exists('local_mailwhistle_tracking', [
+        $conditions = [
             'campaignid' => $campaignid,
             'recipientid' => $recipientid,
             'eventtype' => $eventtype,
             'targethash' => $targethash,
-        ]);
-        if ($exists) {
-            return;
+        ];
+        try {
+            $factory = \core\lock\lock_config::get_lock_factory('local_mailwhistle_tracking');
+            $lock = $factory->get_lock("$campaignid:$recipientid:$eventtype:$targethash", 0);
+            if (!$lock) {
+                return false;
+            }
+            try {
+                if (!$DB->record_exists('local_mailwhistle_tracking', $conditions)) {
+                    $DB->insert_record('local_mailwhistle_tracking', (object) ($conditions + [
+                        'targeturl' => $target === '' ? null : $target,
+                        'timecreated' => time(),
+                    ]));
+                }
+            } finally {
+                $lock->release();
+            }
+
+            return true;
+        } catch (\Throwable $exception) {
+            // Log no token, target URL, user details or database error text.
+            debugging('Mail Whistle tracking could not record an event (' . get_class($exception) . ').', DEBUG_DEVELOPER);
+            return false;
         }
-
-        $DB->insert_record('local_mailwhistle_tracking', (object) [
-            'campaignid' => $campaignid,
-            'recipientid' => $recipientid,
-            'eventtype' => $eventtype,
-            'targethash' => $targethash,
-            'targeturl' => $target === '' ? null : $target,
-            'timecreated' => time(),
-        ]);
     }
 
     /**

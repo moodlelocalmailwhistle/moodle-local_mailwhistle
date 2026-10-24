@@ -28,6 +28,7 @@ use core\lang_string;
 use core_reportbuilder\local\entities\base;
 use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
+use local_mailwhistle\manager\recipient_manager;
 use local_mailwhistle\manager\tracking_manager;
 use local_mailwhistle\reportbuilder\local\helper\campaign as campaignhelper;
 
@@ -156,8 +157,7 @@ class campaign extends base {
             ->add_joins($this->get_joins())
             ->set_type(column::TYPE_INTEGER)
             ->add_field(
-                "(SELECT COUNT(1) FROM {local_mailwhistle_tracking}
-                  WHERE campaignid = {$campaignsalias}.id AND eventtype = '{$open}')",
+                self::engagement_count_sql($campaignsalias, $open, recipient_manager::STATUS_SENT),
                 'uniqueopens'
             );
 
@@ -171,8 +171,7 @@ class campaign extends base {
             ->add_joins($this->get_joins())
             ->set_type(column::TYPE_INTEGER)
             ->add_field(
-                "(SELECT COUNT(DISTINCT recipientid) FROM {local_mailwhistle_tracking}
-                  WHERE campaignid = {$campaignsalias}.id AND eventtype = '{$click}')",
+                self::engagement_count_sql($campaignsalias, $click, recipient_manager::STATUS_SENT),
                 'uniqueclicks'
             );
 
@@ -245,8 +244,11 @@ class campaign extends base {
         ))
             ->add_joins($this->get_joins())
             ->set_type(column::TYPE_INTEGER)
-            ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_tracking}
-                          WHERE campaignid = {$campaignsalias}.id AND eventtype = '{$open}')", 'opencount')
+            ->add_field(self::engagement_count_sql($campaignsalias, $open, recipient_manager::STATUS_SENT), 'opencount')
+            ->add_field(
+                self::engagement_count_sql($campaignsalias, $open, recipient_manager::STATUS_UNCERTAIN),
+                'uncertainopencount'
+            )
             ->add_field($sentcount, 'sentcount')
             ->set_is_sortable(true, ['opencount'])
             ->add_attributes(['class' => 'local-mailwhistle-report-col-engagement'])
@@ -259,8 +261,11 @@ class campaign extends base {
         ))
             ->add_joins($this->get_joins())
             ->set_type(column::TYPE_INTEGER)
-            ->add_field("(SELECT COUNT(DISTINCT recipientid) FROM {local_mailwhistle_tracking}
-                          WHERE campaignid = {$campaignsalias}.id AND eventtype = '{$click}')", 'clickcount')
+            ->add_field(self::engagement_count_sql($campaignsalias, $click, recipient_manager::STATUS_SENT), 'clickcount')
+            ->add_field(
+                self::engagement_count_sql($campaignsalias, $click, recipient_manager::STATUS_UNCERTAIN),
+                'uncertainclickcount'
+            )
             ->add_field($sentcount, 'sentcount')
             ->set_is_sortable(true, ['clickcount'])
             ->add_attributes(['class' => 'local-mailwhistle-report-col-engagement'])
@@ -333,5 +338,20 @@ class campaign extends base {
             ->add_callback([campaignhelper::class, 'actions']);
 
         return $columns;
+    }
+
+    /**
+     * Count engagement for the same delivery population as its reported rate.
+     *
+     * @param string $campaignsalias Internal report table alias.
+     * @param string $eventtype Tracking event constant.
+     * @param string $status Recipient status constant.
+     * @return string Correlated scalar subquery.
+     */
+    private static function engagement_count_sql(string $campaignsalias, string $eventtype, string $status): string {
+        return "(SELECT COUNT(DISTINCT t.recipientid)
+                   FROM {local_mailwhistle_tracking} t
+                   JOIN {local_mailwhistle_recipients} r ON r.id = t.recipientid AND r.campaignid = t.campaignid
+                  WHERE t.campaignid = {$campaignsalias}.id AND t.eventtype = '{$eventtype}' AND r.status = '{$status}')";
     }
 }

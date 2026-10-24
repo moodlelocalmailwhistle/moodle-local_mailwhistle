@@ -143,4 +143,36 @@ final class campaign_reports_query_test extends \advanced_testcase {
         $this->assertCount(1, $secondpage->rows);
         $this->assertStringContainsString('Oldest', $secondpage->rows[0]['columns'][0]);
     }
+
+    /**
+     * Overview queries use the same sent-only rates and separate uncertain notes as details.
+     */
+    public function test_query_separates_uncertain_engagement(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $generator = $this->getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $campaign = $generator->create_campaign([
+            'status' => \local_mailwhistle\manager\campaign_manager::STATUS_COMPLETED_WITH_ERRORS,
+        ]);
+        foreach (['sent', 'uncertain'] as $index => $status) {
+            $recipient = $generator->create_recipient([
+                'campaignid' => $campaign->id, 'userid' => $index + 1, 'status' => $status,
+            ]);
+            tracking_manager::record_open($campaign->id, $recipient->id);
+            tracking_manager::record_click($campaign->id, $recipient->id, 'https://example.com');
+        }
+        $columns = $this->export_report()->rows[0]['columns'];
+        $this->assertStringContainsString('100.0% of sent', $columns[3]);
+        $this->assertStringContainsString('100.0% of sent', $columns[4]);
+        $this->assertStringContainsString(get_string('stat_uncertainopens', 'local_mailwhistle', 1), $columns[3]);
+        $this->assertStringContainsString(get_string('stat_uncertainclicks', 'local_mailwhistle', 1), $columns[4]);
+        $DB->set_field('local_mailwhistle_recipients', 'status', 'uncertain', ['status' => 'sent']);
+        $columns = $this->export_report()->rows[0]['columns'];
+        $this->assertStringContainsString('0.0% of sent', $columns[3]);
+        $this->assertStringContainsString('0.0% of sent', $columns[4]);
+        $this->assertStringContainsString(get_string('stat_uncertainopens', 'local_mailwhistle', 2), $columns[3]);
+        $this->assertStringContainsString(get_string('stat_uncertainclicks', 'local_mailwhistle', 2), $columns[4]);
+    }
 }

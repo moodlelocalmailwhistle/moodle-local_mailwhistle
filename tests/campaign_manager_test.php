@@ -33,6 +33,18 @@ use local_mailwhistle\manager\tag_manager;
  */
 final class campaign_manager_test extends \advanced_testcase {
     /**
+     * Enable the email policy checked by the readiness gate, with a local test sink.
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        global $CFG, $DB;
+        $CFG->noemailever = false;
+        $DB->set_field('message_processors', 'enabled', 1, ['name' => 'email']);
+        $this->redirectEmails();
+    }
+
+    /**
      * Insert a minimal draft campaign and return its id.
      *
      * @return int The new campaign id.
