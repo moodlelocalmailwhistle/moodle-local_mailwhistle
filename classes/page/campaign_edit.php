@@ -76,7 +76,7 @@ class campaign_edit {
 
         $PAGE->set_context($context);
         $PAGE->set_url($stepurl);
-        $PAGE->set_pagelayout('standard');
+        $PAGE->set_pagelayout('admin');
         $PAGE->set_title(get_string('editcampaign', 'local_mailwhistle'));
         $PAGE->set_heading(get_string('pluginname', 'local_mailwhistle'));
         $PAGE->requires->css(new \moodle_url('/local/mailwhistle/styles.css'));
