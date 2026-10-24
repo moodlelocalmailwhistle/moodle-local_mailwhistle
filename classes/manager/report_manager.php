@@ -45,12 +45,13 @@ class report_manager {
     /**
      * Aggregate recipient and tracking counts for a campaign.
      *
-     * Rates are unique opens/clicks divided by sent recipients, as a
-     * percentage with one decimal place. Zero sent yields 0% (no division).
+     * Counts and rates include only confirmed sent recipients. Engagement from
+     * uncertain deliveries is reported separately, without changing delivery
+     * status. Rates use one decimal place; zero sent yields 0% (no division).
      *
      * @param int $campaignid Campaign id.
      * @return \stdClass recipients, sent, failed, pending, uniqueopens,
-     *         uniqueclicks, openrate, clickrate.
+     *         uniqueclicks, uncertainopens, uncertainclicks, openrate, clickrate.
      */
     public static function get_campaign_stats(int $campaignid): \stdClass {
         global $DB;
@@ -64,16 +65,26 @@ class report_manager {
             'uncertain' => 0,
             'uniqueopens' => 0,
             'uniqueclicks' => 0,
+            'uncertainopens' => 0,
+            'uncertainclicks' => 0,
             'openrate' => 0.0,
             'clickrate' => 0.0,
         ];
 
+        // Use one statement so a delivery completing mid-report cannot change only the numerator.
         $counts = $DB->get_records_sql(
-            'SELECT status, COUNT(1) AS n
-               FROM {local_mailwhistle_recipients}
-              WHERE campaignid = :campaignid
-           GROUP BY status',
-            ['campaignid' => $campaignid]
+            'SELECT r.status, COUNT(DISTINCT r.id) AS n,
+                    COUNT(DISTINCT CASE WHEN t.eventtype = :openevent THEN r.id ELSE NULL END) AS opens,
+                    COUNT(DISTINCT CASE WHEN t.eventtype = :clickevent THEN r.id ELSE NULL END) AS clicks
+               FROM {local_mailwhistle_recipients} r
+          LEFT JOIN {local_mailwhistle_tracking} t ON t.recipientid = r.id AND t.campaignid = r.campaignid
+              WHERE r.campaignid = :campaignid
+           GROUP BY r.status',
+            [
+                'campaignid' => $campaignid,
+                'openevent' => tracking_manager::EVENT_OPEN,
+                'clickevent' => tracking_manager::EVENT_CLICK,
+            ]
         );
         foreach ($counts as $row) {
             $n = (int) $row->n;
@@ -81,6 +92,8 @@ class report_manager {
             switch ($row->status) {
                 case recipient_manager::STATUS_SENT:
                     $stats->sent = $n;
+                    $stats->uniqueopens = (int) $row->opens;
+                    $stats->uniqueclicks = (int) $row->clicks;
                     break;
                 case recipient_manager::STATUS_FAILED:
                     $stats->failed = $n;
@@ -94,26 +107,13 @@ class report_manager {
                     break;
                 case recipient_manager::STATUS_UNCERTAIN:
                     $stats->uncertain = $n;
+                    $stats->uncertainopens = (int) $row->opens;
+                    $stats->uncertainclicks = (int) $row->clicks;
                     break;
                 default:
                     break;
             }
         }
-
-        $stats->uniqueopens = (int) $DB->count_records('local_mailwhistle_tracking', [
-            'campaignid' => $campaignid,
-            'eventtype' => tracking_manager::EVENT_OPEN,
-        ]);
-        $stats->uniqueclicks = (int) $DB->count_records_sql(
-            'SELECT COUNT(DISTINCT recipientid)
-               FROM {local_mailwhistle_tracking}
-              WHERE campaignid = :campaignid
-                AND eventtype = :eventtype',
-            [
-                'campaignid' => $campaignid,
-                'eventtype' => tracking_manager::EVENT_CLICK,
-            ]
-        );
 
         if ($stats->sent > 0) {
             $stats->openrate = round(($stats->uniqueopens / $stats->sent) * 100, 1);

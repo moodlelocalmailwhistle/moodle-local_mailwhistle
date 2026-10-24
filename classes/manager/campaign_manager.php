@@ -525,14 +525,18 @@ class campaign_manager {
      * This method is read-only and may be called while holding the campaign lock.
      *
      * @param int $campaignid The campaign to check.
-     * @return array Readiness errors and recipientcount.
+     * @return array Readiness errors, eligible recipientcount and current audience summary.
      */
     public static function get_readiness(int $campaignid): array {
         global $DB;
 
         $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid]);
         if (!$campaign) {
-            return ['errors' => [get_string('campaignincomplete', 'local_mailwhistle')], 'recipientcount' => 0];
+            return [
+                'errors' => [get_string('campaignincomplete', 'local_mailwhistle')],
+                'recipientcount' => 0,
+                'audience' => ['total' => 0, 'eligible' => 0, 'excluded' => 0, 'reasons' => []],
+            ];
         }
         $errors = [];
         foreach (['name', 'subject'] as $field) {
@@ -543,12 +547,13 @@ class campaign_manager {
         if (!self::has_meaningful_body((string) $campaign->bodyhtml, (string) $campaign->bodytext)) {
             $errors[] = get_string('campaignemptybody', 'local_mailwhistle');
         }
-        $recipientcount = count(recipient_manager::resolve_recipients($campaignid));
+        $audience = recipient_manager::get_audience_summary($campaignid);
+        $recipientcount = $audience['eligible'];
         if ($recipientcount === 0) {
             $errors[] = get_string('campaignemptyaudience', 'local_mailwhistle');
         }
         $errors = array_merge($errors, resource_manager::get_attachment_errors($campaign));
-        return ['errors' => $errors, 'recipientcount' => $recipientcount];
+        return ['errors' => $errors, 'recipientcount' => $recipientcount, 'audience' => $audience];
     }
 
     /**

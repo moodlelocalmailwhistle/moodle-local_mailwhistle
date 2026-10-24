@@ -285,7 +285,7 @@ class campaign {
      * @return string Formatted engagement cell.
      */
     public static function reportopens($opencount, \stdClass $row): string {
-        return self::report_engagement((int) $opencount, (int) $row->sentcount, 'opens');
+        return self::report_engagement((int) $opencount, (int) $row->sentcount, 'opens', (int) ($row->uncertainopencount ?? 0));
     }
 
     /**
@@ -296,7 +296,7 @@ class campaign {
      * @return string Formatted engagement cell.
      */
     public static function reportclicks($clickcount, \stdClass $row): string {
-        return self::report_engagement((int) $clickcount, (int) $row->sentcount, 'clicks');
+        return self::report_engagement((int) $clickcount, (int) $row->sentcount, 'clicks', (int) ($row->uncertainclickcount ?? 0));
     }
 
     /**
@@ -305,15 +305,22 @@ class campaign {
      * @param int $count Unique engagement count.
      * @param int $sentcount Sent recipients.
      * @param string $metric CSS suffix for the metric.
+     * @param int $uncertaincount Engagement from uncertain deliveries, excluded from the rate.
      * @return string Metric markup.
      */
-    private static function report_engagement(int $count, int $sentcount, string $metric): string {
+    private static function report_engagement(int $count, int $sentcount, string $metric, int $uncertaincount): string {
         $rate = $sentcount > 0 ? round(($count / $sentcount) * 100, 1) : 0;
         $html = \html_writer::div(s(format_float($count, 0)), 'local-mailwhistle-report-count');
         $html .= \html_writer::div(
             s(get_string('reports_rate', 'local_mailwhistle', format_float($rate, 1))),
             'local-mailwhistle-report-metric-note'
         );
+        if ($uncertaincount > 0) {
+            $html .= \html_writer::div(
+                s(get_string('stat_uncertain' . $metric, 'local_mailwhistle', format_float($uncertaincount, 0))),
+                'local-mailwhistle-report-metric-note'
+            );
+        }
         return \html_writer::div($html, 'local-mailwhistle-report-' . $metric);
     }
 

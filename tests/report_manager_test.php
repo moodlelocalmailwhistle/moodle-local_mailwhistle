@@ -116,4 +116,44 @@ final class report_manager_test extends \advanced_testcase {
         $this->assertSame(0.0, $stats->openrate);
         $this->assertSame(0.0, $stats->clickrate);
     }
+
+    /**
+     * Uncertain engagement stays visible without inflating the confirmed-delivery rate.
+     */
+    public function test_uncertain_engagement_has_a_separate_population(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $generator = $this->getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $campaign = $generator->create_campaign([
+            'status' => \local_mailwhistle\manager\campaign_manager::STATUS_COMPLETED_WITH_ERRORS,
+        ]);
+        foreach (['sent', 'uncertain', 'failed', 'pending', 'skipped'] as $index => $status) {
+            $recipient = $generator->create_recipient([
+                'campaignid' => $campaign->id, 'userid' => $index + 1, 'status' => $status,
+            ]);
+            tracking_manager::record_open($campaign->id, $recipient->id);
+            tracking_manager::record_click($campaign->id, $recipient->id, 'https://example.com/one');
+            tracking_manager::record_click($campaign->id, $recipient->id, 'https://example.com/two');
+        }
+        $stats = report_manager::get_campaign_stats($campaign->id);
+        $this->assertSame(5, $stats->recipients);
+        $this->assertSame(1, $stats->uniqueopens);
+        $this->assertSame(1, $stats->uniqueclicks);
+        $this->assertSame(1, $stats->uncertainopens);
+        $this->assertSame(1, $stats->uncertainclicks);
+        $this->assertSame(100.0, $stats->openrate);
+        $this->assertSame(100.0, $stats->clickrate);
+        $this->assertSame(1, $DB->count_records('local_mailwhistle_recipients', ['status' => 'uncertain']));
+
+        $DB->set_field('local_mailwhistle_recipients', 'status', 'uncertain', ['status' => 'sent']);
+        $stats = report_manager::get_campaign_stats($campaign->id);
+        $this->assertSame(0, $stats->uniqueopens);
+        $this->assertSame(0, $stats->uniqueclicks);
+        $this->assertSame(2, $stats->uncertainopens);
+        $this->assertSame(2, $stats->uncertainclicks);
+        $this->assertSame(0.0, $stats->openrate);
+        $this->assertSame(0.0, $stats->clickrate);
+    }
 }

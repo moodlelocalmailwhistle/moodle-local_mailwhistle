@@ -135,7 +135,7 @@ class audience_table extends \table_sql {
         // Lead with u.id AS id (keys rawdata by userid), then email, then
         // all name parts from for_name().  $namefields->selects does not
         // start with a comma when leadingcomma=false, so we add one.
-        $fields = 'u.id AS id, u.email, ' . $namefields->selects;
+        $fields = 'u.id AS id, u.email, u.suspended, ' . $namefields->selects;
         $from   = '{user} u' . $namefields->joins;
         $params = $namefields->params ?? [];
 
@@ -302,7 +302,14 @@ class audience_table extends \table_sql {
      * @return string Formatted full name.
      */
     public function col_fullname($row) {
-        return fullname($row);
+        $name = fullname($row);
+        if (!empty($row->suspended)) {
+            $name .= \html_writer::div(\html_writer::span(
+                get_string('audience_suspendedbadge', 'local_mailwhistle'),
+                'badge badge-warning bg-warning text-dark'
+            ));
+        }
+        return $name;
     }
 
     /**

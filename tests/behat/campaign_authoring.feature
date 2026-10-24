@@ -5,7 +5,8 @@ Feature: Prepare and revise campaigns safely as a Manager
   I need access to Mail Whistle and clear checks before completing a campaign
 
   Background:
-    Given the following "users" exist:
+    Given campaign email delivery is enabled
+    And the following "users" exist:
       | username | firstname | lastname | email                | suspended |
       | manager1 | Campaign  | Manager  | manager@example.test | 0         |
       | alice    | Alice     | Learner  | alice@example.test   | 0         |

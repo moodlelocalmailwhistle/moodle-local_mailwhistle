@@ -86,6 +86,103 @@ class recipient_manager {
     }
 
     /**
+     * Build the deduplicated audience query without materialising tag/user id lists.
+     *
+     * Deleted accounts are omitted, as on the audience management page. Other
+     * exclusions stay visible so managers can understand why they will not send.
+     *
+     * @param int $campaignid Campaign whose current tag rules are inspected.
+     * @return array SQL and bound parameters.
+     */
+    private static function audience_query(int $campaignid): array {
+        $sql = "SELECT u.*
+                  FROM {user} u
+                 WHERE u.deleted = 0
+                   AND EXISTS (
+                       SELECT 1
+                         FROM {local_mailwhistle_tag_assign} ta
+                         JOIN {local_mailwhistle_audrules} ar ON ar.instanceid = ta.tagid
+                        WHERE ta.userid = u.id AND ar.campaignid = :campaignid AND ar.type = :ruletype
+                   )";
+        return [$sql, ['campaignid' => $campaignid, 'ruletype' => audience_manager::TYPE_TAG]];
+    }
+
+    /**
+     * Explain whether the current recipient would pass the sending checks.
+     *
+     * Sending rechecks the same policy and effective address immediately before
+     * transport; a preview is never used to bypass those final checks.
+     *
+     * @param \stdClass $user Full current user record.
+     * @return string Localised exclusion reason, or empty when eligible.
+     */
+    public static function get_eligibility_reason(\stdClass $user): string {
+        $reason = send_manager::get_skip_reason($user);
+        if ($reason === '' && !validate_email(send_manager::get_destination($user))) {
+            return get_string('invalidemail');
+        }
+        return $reason;
+    }
+
+    /**
+     * Count current delivery eligibility and exclusion reasons for the audience.
+     *
+     * A recordset keeps the count bounded in memory for large tag audiences.
+     * No recipient snapshot is created or changed by this read-only preview.
+     *
+     * @param int $campaignid Campaign id.
+     * @return array Total, eligible and excluded counts, plus reason counts.
+     */
+    public static function get_audience_summary(int $campaignid): array {
+        global $DB;
+
+        [$sql, $params] = self::audience_query($campaignid);
+        $users = $DB->get_recordset_sql($sql, $params);
+        $summary = ['total' => 0, 'eligible' => 0, 'excluded' => 0, 'reasons' => []];
+        try {
+            foreach ($users as $user) {
+                $summary['total']++;
+                $reason = self::get_eligibility_reason($user);
+                if ($reason === '') {
+                    $summary['eligible']++;
+                } else {
+                    $summary['excluded']++;
+                    $summary['reasons'][$reason] = ($summary['reasons'][$reason] ?? 0) + 1;
+                }
+            }
+        } finally {
+            $users->close();
+        }
+        return $summary;
+    }
+
+    /**
+     * Fetch one bounded page of current audience members with delivery reasons.
+     *
+     * @param int $campaignid Campaign id.
+     * @param int $page Zero-based page number.
+     * @param int $pagesize Requested page size, capped at 100.
+     * @return \stdClass[] Users with eligibilityreason and destination fields.
+     */
+    public static function get_audience_page(int $campaignid, int $page = 0, int $pagesize = 25): array {
+        global $DB;
+
+        $pagesize = max(1, min(100, $pagesize));
+        [$sql, $params] = self::audience_query($campaignid);
+        $users = $DB->get_records_sql(
+            $sql . ' ORDER BY u.lastname ASC, u.firstname ASC, u.id ASC',
+            $params,
+            max(0, $page) * $pagesize,
+            $pagesize
+        );
+        foreach ($users as $user) {
+            $user->eligibilityreason = self::get_eligibility_reason($user);
+            $user->destination = send_manager::get_destination($user);
+        }
+        return $users;
+    }
+
+    /**
      * Snapshot a campaign's resolved recipients into the recipients table.
      *
      * Idempotent: rows already present (by the UNIQUE campaignid,userid index)

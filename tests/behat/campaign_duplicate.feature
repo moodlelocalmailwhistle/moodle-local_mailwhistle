@@ -5,7 +5,8 @@ Feature: Reuse a campaign for a follow-up mailing
   I need a new editable draft without reusing the original delivery history
 
   Background:
-    Given the following "users" exist:
+    Given campaign email delivery is enabled
+    And the following "users" exist:
       | username | firstname | lastname | email              |
       | reader   | News      | Reader   | reader@example.com |
     And the following "local_mailwhistle > tags" exist:

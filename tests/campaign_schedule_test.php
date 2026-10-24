@@ -48,9 +48,12 @@ final class campaign_schedule_test extends \advanced_testcase {
      */
     protected function setUp(): void {
         parent::setUp();
-        global $CFG;
+        global $CFG, $DB;
         require_once($CFG->libdir . '/formslib.php');
         $this->resetAfterTest();
+        $CFG->noemailever = false;
+        $DB->set_field('message_processors', 'enabled', 1, ['name' => 'email']);
+        $this->redirectEmails();
         $this->preventResetByRollback();
         $this->setAdminUser();
     }
