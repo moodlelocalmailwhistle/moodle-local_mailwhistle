@@ -203,7 +203,7 @@ class campaign extends base {
 
         $columns[] = (new column(
             'reportsentat',
-            new lang_string('report:sentat', 'local_mailwhistle'),
+            new lang_string('col_completedat', 'local_mailwhistle'),
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
@@ -229,7 +229,11 @@ class campaign extends base {
             ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
                           WHERE campaignid = {$campaignsalias}.id AND status = 'failed')", 'failedcount')
             ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
-                          WHERE campaignid = {$campaignsalias}.id AND status = 'pending')", 'pendingcount')
+                          WHERE campaignid = {$campaignsalias}.id AND status IN ('pending', 'sending'))", 'pendingcount')
+            ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
+                          WHERE campaignid = {$campaignsalias}.id AND status = 'skipped')", 'skippedcount')
+            ->add_field("(SELECT COUNT(1) FROM {local_mailwhistle_recipients}
+                          WHERE campaignid = {$campaignsalias}.id AND status = 'uncertain')", 'uncertaincount')
             ->set_is_sortable(true, ['sentcount'])
             ->add_attributes(['class' => 'local-mailwhistle-report-col-delivery'])
             ->add_callback([campaignhelper::class, 'reportdelivery']);
@@ -271,16 +275,28 @@ class campaign extends base {
             ->add_joins($this->get_joins())
             ->add_field("$campaignsalias.sendername");
 
-        // Sent at.
+        // Campaign completion time.
         $columns[] = (new column(
             'sentat',
-            new lang_string('report:sentat', 'local_mailwhistle'),
+            new lang_string('col_completedat', 'local_mailwhistle'),
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
             ->add_field("$campaignsalias.timesent")
             ->set_type(column::TYPE_INTEGER)
             ->add_callback([format::class, 'userdate']);
+
+        // Planned delivery time is distinct from campaign completion.
+        $columns[] = (new column(
+            'timescheduled',
+            new lang_string('scheduledfor', 'local_mailwhistle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_field("$campaignsalias.timescheduled")
+            ->set_type(column::TYPE_INTEGER)
+            ->set_is_sortable(true)
+            ->add_callback([campaignhelper::class, 'timescheduled']);
 
         // Time created.
         $columns[] = (new column(
@@ -313,6 +329,7 @@ class campaign extends base {
             ->set_type(column::TYPE_INTEGER)
             ->add_field("$campaignsalias.id")
             ->add_field("$campaignsalias.status")
+            ->add_field("$campaignsalias.name")
             ->add_callback([campaignhelper::class, 'actions']);
 
         return $columns;

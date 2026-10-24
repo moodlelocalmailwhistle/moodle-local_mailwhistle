@@ -38,11 +38,15 @@ class draft_campaigns extends system_report {
         $this->set_main_table('local_mailwhistle_campaigns', 'campaigns');
         $draft = database::generate_param_name();
         $ready = database::generate_param_name();
+        $scheduled = database::generate_param_name();
+        $schedulefailed = database::generate_param_name();
         $this->add_base_condition_sql(
-            "campaigns.status IN (:$draft, :$ready)",
+            "campaigns.status IN (:$draft, :$ready, :$scheduled, :$schedulefailed)",
             [
                 $draft => \local_mailwhistle\manager\campaign_manager::STATUS_DRAFT,
                 $ready => \local_mailwhistle\manager\campaign_manager::STATUS_READY,
+                $scheduled => \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULED,
+                $schedulefailed => \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULE_FAILED,
             ]
         );
 
@@ -63,6 +67,7 @@ class draft_campaigns extends system_report {
         $this->add_column_from_entity('campaign:namelink');
         $this->add_column_from_entity('campaign:status');
         $this->add_column_from_entity('campaign:timecreated');
+        $this->add_column_from_entity('campaign:timescheduled');
         $this->add_column_from_entity('campaign:actions');
     }
 

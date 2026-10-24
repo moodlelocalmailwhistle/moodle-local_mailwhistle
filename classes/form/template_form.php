@@ -17,6 +17,7 @@
 namespace local_mailwhistle\form;
 
 use local_mailwhistle\output\resources;
+use local_mailwhistle\manager\template_manager;
 
 /**
  * Template create/edit form.
@@ -34,6 +35,8 @@ class template_form extends \moodleform {
     protected function definition(): void {
         $mform = $this->_form;
         $submitlabel = $this->_customdata['submitlabel'] ?? get_string('savechanges');
+        $template = $this->_customdata['template'] ?? null;
+        $savedmode = $template ? ($template->editormode ?? 'html') : '';
 
         $mform->addElement('text', 'name', get_string('template_name', 'local_mailwhistle'), ['size' => 60]);
         $mform->setType('name', PARAM_TEXT);
@@ -52,12 +55,22 @@ class template_form extends \moodleform {
         $mform->setType('background', PARAM_TEXT);
         $mform->setDefault('background', '#ffffff');
 
-        $mform->addElement('select', 'editormode', get_string('template_editormode', 'local_mailwhistle'), [
+        $modes = [
             'builder' => get_string('template_editormode_builder', 'local_mailwhistle'),
             'html' => get_string('template_editormode_html', 'local_mailwhistle'),
-        ]);
+        ];
+        $mform->addElement(
+            'select',
+            'editormode',
+            get_string('template_editormode', 'local_mailwhistle'),
+            $savedmode ? [$savedmode => $modes[$savedmode]] : $modes
+        );
         $mform->setType('editormode', PARAM_ALPHA);
-        $mform->setDefault('editormode', 'builder');
+        $mform->setDefault('editormode', $savedmode ?: 'builder');
+        $mform->addElement('static', 'editormodehelp', '', get_string(
+            $savedmode ? 'template_mode_locked_help' : 'template_mode_choose_help',
+            'local_mailwhistle'
+        ));
 
         $mform->addElement(
             'static',
@@ -84,6 +97,7 @@ class template_form extends \moodleform {
             'strings' => $this->_customdata['builderstrings'] ?? [],
             'resources' => $resourcelist,
             'resourcesurl' => (new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'resources']))->out(false),
+            'savedmode' => $savedmode,
         ];
         $configjson = json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         if ($configjson === false) {
@@ -119,7 +133,18 @@ class template_form extends \moodleform {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
-        $this->add_action_buttons(true, $submitlabel);
+        if ($savedmode === 'builder') {
+            $mform->addElement('static', 'htmlcopyhelp', '', get_string('template_html_copy_help', 'local_mailwhistle'));
+            $buttons = [
+                $mform->createElement('submit', 'submitbutton', $submitlabel),
+                $mform->createElement('submit', 'savehtmlcopy', get_string('template_html_copy', 'local_mailwhistle')),
+                $mform->createElement('cancel'),
+            ];
+            $mform->addGroup($buttons, 'buttonar', '', [' '], false);
+            $mform->closeHeaderBefore('buttonar');
+        } else {
+            $this->add_action_buttons(true, $submitlabel);
+        }
     }
 
     /**
@@ -144,6 +169,9 @@ class template_form extends \moodleform {
         $mode = $data['editormode'] ?? '';
         if (!in_array($mode, ['builder', 'html'], true)) {
             $errors['editormode'] = get_string('invaliddata');
+        }
+        if ($error = template_manager::validate_editor_content((object) $data, $this->_customdata['template'] ?? null)) {
+            $errors['editormode'] = get_string($error, 'local_mailwhistle');
         }
 
         if ($mode === 'builder') {

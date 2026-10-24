@@ -45,10 +45,12 @@ class campaign_details_form extends \moodleform {
 
         $mform->addElement('text', 'sendername', get_string('sendername', 'local_mailwhistle'), ['maxlength' => 255, 'size' => 50]);
         $mform->setType('sendername', PARAM_TEXT);
+        $mform->addHelpButton('sendername', 'sendername', 'local_mailwhistle');
 
         $emaillabel = get_string('senderemail', 'local_mailwhistle');
         $mform->addElement('text', 'senderemail', $emaillabel, ['maxlength' => 255, 'size' => 50]);
         $mform->setType('senderemail', PARAM_RAW_TRIMMED);
+        $mform->addHelpButton('senderemail', 'senderemail', 'local_mailwhistle');
 
         $this->add_action_buttons(true, get_string('wizard_savecontinue', 'local_mailwhistle'));
     }

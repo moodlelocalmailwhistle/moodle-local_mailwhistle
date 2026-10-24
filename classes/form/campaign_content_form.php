@@ -124,6 +124,9 @@ class campaign_content_form extends \moodleform {
         if (trim($data['subject'] ?? '') === '') {
             $errors['subject'] = get_string('required');
         }
+        if (!\local_mailwhistle\manager\campaign_manager::has_meaningful_body($data['body']['text'] ?? '')) {
+            $errors['body'] = get_string('campaignemptybody', 'local_mailwhistle');
+        }
 
         $posted = $data['attachments'] ?? [];
         if (!is_array($posted)) {

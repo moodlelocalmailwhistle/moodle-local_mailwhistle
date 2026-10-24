@@ -286,7 +286,8 @@
     border-radius: var(--mail-whistle-border-radius);
     background: var(--mail-whistle-bg-card);
     box-shadow: var(--mail-whistle-shadow);
-    overflow: hidden;
+    /* The actions dropdown must be able to extend beyond the card. */
+    overflow: visible;
 }
 
 .local-mailwhistle-template-preview {
@@ -297,6 +298,8 @@
     pointer-events: none;
     background: #e9edf2;
     border-bottom: 1px solid var(--mail-whistle-border-color);
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
 }
 
 .local-mailwhistle-template-preview-canvas {
@@ -419,6 +422,8 @@
     padding: 8px 14px;
     border-top: 1px solid #eef1f4;
     background: #fff;
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
 }
 
 .local-mailwhistle-template-actions-menu {

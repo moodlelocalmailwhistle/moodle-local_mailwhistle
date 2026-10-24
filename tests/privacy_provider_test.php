@@ -37,6 +37,21 @@ use local_mailwhistle\privacy\provider;
  */
 final class privacy_provider_test extends provider_testcase {
     /**
+     * The test-send allowance is included in the owner's privacy export without addresses.
+     */
+    public function test_export_test_email_attempt_preference(): void {
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user();
+        $key = \local_mailwhistle\manager\test_email_manager::RATE_PREFERENCE;
+        $value = json_encode([time(), time() - 60]);
+        set_user_preference($key, $value, $user->id);
+        provider::export_user_preferences($user->id);
+        $writer = \core_privacy\local\request\writer::with_context(\context_system::instance());
+        $preferences = $writer->get_user_preferences('local_mailwhistle');
+        $this->assertSame($value, $preferences->$key->value);
+    }
+
+    /**
      * Test: get_metadata declares both plugin tables (collection non-empty).
      */
     public function test_get_metadata_declares_both_tables(): void {

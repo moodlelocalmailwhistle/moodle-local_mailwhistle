@@ -95,11 +95,11 @@ $string['report_recipients']        = 'Who was sent this campaign';
 $string['reports_intro']           = 'Sent and sending campaigns appear here. Select a campaign name to preview its emails, see audience and template details, and check individual recipient results.';
 $string['reports_help_heading']    = 'How to read these figures';
 $string['reports_help_delivery']   = 'Sending results';
-$string['reports_help_delivery_desc'] = 'The total includes sent, failed and pending recipients. Sent means Moodle accepted the message; it does not confirm inbox delivery. Open a campaign to check individual results.';
+$string['reports_help_delivery_desc'] = 'The total includes sent, failed, skipped, uncertain and pending recipients. Sent means the email transport accepted the email; it does not confirm inbox delivery. Skipped recipients were excluded by email or account settings. Uncertain means acceptance could not be confirmed, so the email is not retried automatically.';
 $string['reports_help_engagement'] = 'Opens and clicks';
 $string['reports_help_engagement_desc'] = 'Each recipient counts once for opens and once for clicks, even if they open repeatedly or click several links. Percentages are calculated from the sent count.';
 $string['reports_help_status']     = 'Campaign status';
-$string['reports_help_status_desc'] = 'Sending means processing is in progress. Sent means processing has finished, but the campaign may still have failed recipients. Check the sending results for failures.';
+$string['reports_help_status_desc'] = 'Sending means processing is in progress. Sent means all recipients were accepted by the email transport. Completed with issues means some were accepted while others failed, were skipped or have an uncertain result. Failed means no email was confirmed as accepted. Open a campaign to review results and retry known failures.';
 $string['reports_help_tracking']   = 'Email apps may block images, preload them or scan links automatically, so opens and clicks are estimates rather than proof that someone read the email.';
 $string['reports_sort_hint']       = 'Select a column heading to sort the table.';
 $string['reports_column_campaign'] = 'Campaign';
@@ -157,7 +157,6 @@ $string['editcampaign_markcomplete'] = 'Mark campaign complete';
 $string['editcampaign_incomplete'] = 'Add a name, subject, body and at least one audience tag before this campaign can be completed.';
 $string['testmail_send']           = 'Send test email to me';
 $string['testmail_subjectprefix']  = '[Test]';
-$string['testmail_sent']           = 'A test email has been sent to {$a}.';
 $string['testmail_failed']         = 'The test email could not be sent. Please try again.';
 $string['campaignincomplete']      = 'The campaign is not complete yet.';
 $string['status_ready']            = 'Ready';
@@ -175,9 +174,7 @@ Recipient: {{firstname}}, {{lastname}}, {{fullname}}, {{email}}.
 Site: {{sitename}}, {{siteurl}}.
 
 {{university}} is an older name for {{sitename}}. Unknown variables are removed so they never appear in the inbox. These are Mail Whistle variables, not Moodle text filters.';
-$string['placeholders_cheatsheet'] = 'Use {{firstname}}, {{lastname}}, {{fullname}}, {{email}}, {{sitename}}, {{siteurl}} — replaced when the campaign is sent.';
-$string['sendername']              = 'Sender name';
-$string['senderemail']             = 'Sender email';
+$string['placeholders_cheatsheet'] = 'Use {{firstname}}, {{lastname}}, {{fullname}}, {{email}}, {{sitename}}, {{siteurl}} and {{unsubscribe}}. Values are replaced when the campaign is sent. Unsubscribe links in previews and test copies are inactive.';
 
 // Sending.
 $string['col_actions']             = 'Actions';
@@ -189,8 +186,8 @@ $string['sendbatchsize_desc']      = 'How many recipients each send task run del
 $string['task_requeue_stuck_sends'] = 'Resume stalled campaign sends';
 
 // Draft campaigns section (Option D2).
-$string['draftcampaigns_heading']  = 'Draft campaigns';
-$string['nodraftcampaigns']        = 'No draft campaigns yet.';
+$string['draftcampaigns_heading'] = 'Draft and scheduled campaigns';
+$string['nodraftcampaigns'] = 'No draft or scheduled campaigns yet.';
 $string['col_name']                = 'Internal name';
 $string['col_created']             = 'Created';
 
@@ -432,3 +429,128 @@ $string['campaign_template_replacehint'] = 'Loading a template replaces the emai
 $string['campaign_template_loaded'] = 'Template loaded into the email body.';
 $string['campaign_template_requiresjs'] = 'Enable JavaScript to preview and load a template.';
 $string['campaign_template_editorloading'] = 'The email editor is still loading. Please try again.';
+
+// Shared resources and attachment readiness.
+$string['attachments_disabled'] = 'Email attachments are disabled in this Moodle site. Remove the selected attachments or ask an administrator to enable them.';
+$string['attachments_missing'] = 'These selected attachments are missing: {$a}. Restore them or update the campaign before sending.';
+$string['attachments_unavailable'] = 'The campaign attachments are unavailable. {$a}';
+$string['resource_campaign'] = 'Campaign: {$a}';
+$string['resource_template'] = 'Template: {$a}';
+$string['resources_inuse_error'] = 'These files are used by saved campaigns or templates and cannot be removed or replaced: {$a}. Keep them unchanged and upload a new version with a different filename.';
+$string['resources_inuse_help'] = 'Files used by saved campaigns or templates are protected from deletion and replacement, including images in emails already sent. Upload a new version with a different filename. Remove references from unsent drafts and templates before deleting an unused file.';
+
+$string['campaignreturntodraft'] = 'Return to draft';
+$string['campaignreopened'] = 'Campaign returned to draft. Review your changes before marking it complete again.';
+$string['campaigncannotreopen'] = 'Only a campaign that is ready and has not started sending can return to draft.';
+$string['campaignnoteditable'] = 'This campaign is no longer a draft. Reopen a ready campaign before editing it.';
+$string['campaignmissingname'] = 'Enter an internal campaign name in Details.';
+$string['campaignmissingsubject'] = 'Enter an email subject in Content.';
+$string['campaignemptybody'] = 'Add text or an image to the email body in Content.';
+$string['campaignemptyaudience'] = 'Choose audience groups containing at least one eligible person. Deleted, suspended and unsubscribed people are excluded.';
+$string['campaigneligiblecount'] = 'Eligible recipients';
+$string['campaignbusy'] = 'This campaign is being updated or sent. Please try again shortly.';
+$string['sendnoeligible'] = 'There are no eligible recipients to send to.';
+$string['delivery_inactive'] = 'Email skipped because the recipient account is unavailable or inactive.';
+$string['delivery_unsubscribed'] = 'Email skipped because the recipient has opted out.';
+$string['delivery_disabled'] = 'Email skipped because campaign email delivery is disabled in the site settings.';
+$string['delivery_optedout'] = 'Email skipped because the recipient’s notification settings do not permit campaign email.';
+$string['delivery_invaliddomain'] = 'Email skipped because the destination uses the reserved .invalid domain.';
+$string['delivery_uncertain'] = 'The email transport did not confirm whether this message was accepted. This recipient is not retried to avoid a duplicate email.';
+$string['delivery_zipfailed'] = 'The selected attachments could not be packaged. No email was sent.';
+$string['status_completedwitherrors'] = 'Completed with issues';
+$string['status_skipped'] = 'Skipped';
+$string['status_uncertain'] = 'Uncertain';
+$string['stat_skippedcount'] = '{$a} skipped';
+$string['stat_uncertaincount'] = '{$a} uncertain';
+$string['retryfailed'] = 'Retry failed recipients';
+$string['retryfailed_help'] = 'Retry only failures recorded before email transport began. Sent, skipped and uncertain recipients are not sent again. Current email preferences are checked before every attempt.';
+$string['sendername'] = 'Sender display name';
+$string['sendername_help'] = 'The name shown on campaign emails. Moodle controls the From address and may add the site name according to its outgoing email settings.';
+$string['senderemail'] = 'Reply-to email address';
+$string['senderemail_help'] = 'Replies go to this address. The outgoing From address remains controlled by Moodle’s site email configuration. Leave this blank to use the site’s default reply address.';
+$string['testmail_sent'] = 'The email transport accepted a test email for {$a}.';
+$string['template_mode_locked'] = 'Keep this template in its saved editor mode to protect its content.';
+$string['template_mode_locked_help'] = 'The editor mode is fixed after saving so existing content cannot be replaced by a different editor.';
+$string['template_mode_choose_help'] = 'Choose an editor before adding content. Save a Builder template first to create an editable HTML copy later.';
+$string['template_mode_unsaved'] = 'Your content is still in the current editor. Save it before changing modes. Builder templates can then be copied to HTML; HTML content cannot be converted to Builder blocks.';
+$string['template_html_copy'] = 'Save as HTML copy';
+$string['template_html_copy_help'] = 'Create an HTML template from the current blocks, including unsaved changes. The original Builder template stays unchanged. Edit the copy in HTML mode.';
+$string['template_html_copy_name'] = 'HTML copy of {$a}';
+$string['template_html_copy_created'] = 'HTML copy created. Your original Builder template is unchanged.';
+$string['template_builder_block_position'] = 'Block {$a}';
+$string['template_builder_moved'] = 'Moved to position {$a}.';
+$string['col_completedat'] = 'Completed at';
+$string['delivery_legacyuncertain'] = 'This delivery was recorded before reliable email outcomes were available. It may already have been accepted and is not retried to avoid a duplicate email. Any earlier error is retained below.';
+
+// Recipient-controlled campaign email preferences.
+$string['subscription_title'] = 'Mail Whistle email preferences';
+$string['subscription_unsubscribe'] = 'Unsubscribe from campaign emails';
+$string['subscription_confirm'] = 'Stop receiving Mail Whistle campaign emails for {$a}? If this message was forwarded to you, this changes the original recipient’s preference.';
+$string['subscription_scope'] = 'This preference applies to all Mail Whistle campaigns on this site. Other Moodle notifications are unaffected. Allowing campaign emails still respects your notification settings and does not add you to an audience.';
+$string['subscription_stopped'] = 'You have opted out of Mail Whistle campaign emails.';
+$string['subscription_allowed'] = 'You have not opted out of Mail Whistle campaign emails.';
+$string['subscription_allow'] = 'Allow campaign emails';
+$string['subscription_manage'] = 'Sign in to manage your own email preferences';
+$string['subscription_preview'] = 'This is a preview unsubscribe link. No email preferences have been changed.';
+$string['subscription_invalid'] = 'This unsubscribe link is invalid or no longer available. Sign in to Moodle to manage your email preferences.';
+$string['subscription_busy'] = 'Your email preference is being updated. Please try again.';
+$string['subscription_filter'] = 'Campaign email preference';
+$string['subscription_optedout'] = 'Opted out';
+$string['subscription_notoptedout'] = 'Not opted out';
+$string['subscription_audiencehelp'] = 'People who opted out remain visible here but are excluded from campaign delivery. Adding a tag does not change their preference. Other account and notification settings are also checked before sending.';
+
+// Scheduled campaign delivery.
+$string['schedulecampaign'] = 'Schedule campaign';
+$string['viewschedule'] = 'View schedule';
+$string['scheduledfor'] = 'Scheduled for';
+$string['scheduletimezone'] = 'Time zone';
+$string['schedulefuture'] = 'Choose a date and time in the future.';
+$string['schedulehelp'] = 'Choose when sending should start. Moodle cron starts due campaigns, so delivery may begin later if cron or the mail queue is busy. Messages are never queued before the selected time.';
+$string['scheduleaudiencehelp'] = 'Recipients are selected from the campaign’s audience when sending starts. Tag membership may change before then. Current opt-outs and email preferences are still respected.';
+$string['scheduleconfirmed'] = 'Scheduled for {$a}.';
+$string['cancelschedule'] = 'Cancel schedule';
+$string['schedulecancelhelp'] = 'Cancel the schedule to return this campaign to Ready. You can then reschedule it, send it now, or return it to draft for editing. Cancellation is available only until sending starts.';
+$string['schedulecancelled'] = 'Schedule cancelled. The campaign is ready and can be edited or scheduled again.';
+$string['schedulechanged'] = 'The campaign has changed. Its current state no longer allows this action.';
+$string['schedulenotready'] = 'Only a complete, ready campaign can be scheduled. Review the campaign before scheduling it.';
+$string['schedulefailedhelp'] = 'This scheduled campaign could not start because it was no longer ready to send. No messages were queued. Review any issues below, then cancel the schedule to edit or schedule it again.';
+$string['status_schedulefailed'] = 'Schedule needs review';
+$string['task_dispatch_scheduled_campaigns'] = 'Start scheduled Mail Whistle campaigns';
+$string['backtocampaigns'] = 'Back to campaigns';
+
+// Test-copy recipients and delivery outcomes.
+$string['testmail_title'] = 'Send test email';
+$string['testmail_submit'] = 'Send test copies';
+$string['testmail_description'] = 'Send the saved subject, message and attachments with a [Test] subject prefix. All copies use your current user details as sample personalisation data. Tests do not add campaign recipients or record campaign opens and clicks.';
+$string['testmail_addresses'] = 'Email addresses';
+$string['testmail_addresses_help'] = 'Enter up to 5 email addresses, separated by commas, semicolons or new lines. Duplicate addresses receive one copy. You can attempt up to 20 test copies per hour across all campaigns. Moodle email settings and any site-wide email diversion still apply.';
+$string['testmail_invalidaddresses'] = 'Enter valid email addresses separated by commas, semicolons or new lines. No test copies have been sent.';
+$string['testmail_toomany'] = 'Enter no more than {$a} different email addresses.';
+$string['testmail_limit'] = 'You have reached the limit of {$a} test copies per hour. Try again after earlier attempts expire.';
+$string['testmail_busy'] = 'Another test email request is being processed for your account. Wait for it to finish and try again.';
+$string['testmail_preparationfailed'] = 'Not sent: the saved message or attachments could not be prepared. Check the campaign and its selected resources.';
+$string['testmail_accepted'] = 'Accepted by the email transport. Inbox delivery is not confirmed.';
+$string['testmail_uncertain'] = 'Acceptance could not be confirmed. This copy may have been sent; check the destination inbox before trying again.';
+$string['testmail_results'] = 'Test email results';
+$string['testmail_diverted'] = 'Site email settings redirected this copy to {$a}.';
+$string['testmail_requiresjavascript'] = 'Enable JavaScript to enter test email addresses.';
+$string['privacy:metadata:preference:testemail_attempts'] = 'Timestamps of recent test email attempts used to enforce the hourly sending limit. Destination addresses are not stored.';
+
+$string['campaignhassnapshot'] = 'This campaign already has a saved recipient snapshot. Its schedule cannot be changed and it cannot be reopened for editing.';
+
+// Template reuse and JSON uploads.
+$string['template_duplicate'] = 'Duplicate';
+$string['template_copy_name'] = 'Copy of {$a}';
+$string['template_duplicated'] = 'Template duplicated. You can edit this copy without changing the original.';
+$string['template_import'] = 'Import template';
+$string['template_import_file'] = 'Template JSON file';
+$string['template_import_help'] = 'Upload a JSON file created by Export JSON in Mail Whistle (up to 2 MB). A new template is created; existing templates are never overwritten. If the name is already used, the copy gets a new name. HTML or Builder mode is preserved. Images and other linked files are not included in the JSON: their existing links are kept. For a different site, upload the files there and update those links after importing.';
+$string['template_import_invalid'] = 'Choose a valid Mail Whistle template JSON export (up to 2 MB). The file must contain a template name, content and valid editor settings.';
+$string['template_import_version'] = 'This template export version is not supported. Import a version 1 Mail Whistle template export.';
+$string['template_imported'] = 'Template imported as a new copy. Review its content and file links before using it.';
+
+// Follow-up campaign drafts.
+$string['campaigncopyname'] = 'Copy of {$a}';
+$string['campaignduplicated'] = 'Campaign duplicated as a new draft. It uses the same audience selection. Current members and opt-outs are applied when sending starts; delivery history is not copied.';
+$string['duplicatecampaign'] = 'Duplicate';
+$string['duplicatecampaignlabel'] = 'Duplicate campaign: {$a}';

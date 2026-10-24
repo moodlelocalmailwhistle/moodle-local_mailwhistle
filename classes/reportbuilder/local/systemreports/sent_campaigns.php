@@ -34,10 +34,14 @@ class sent_campaigns extends system_report {
     #[\Override]
     protected function initialise(): void {
         $this->set_main_table('local_mailwhistle_campaigns', 'campaigns');
-        $this->add_base_condition_simple(
-            'campaigns.status',
-            \local_mailwhistle\manager\campaign_manager::STATUS_SENT
-        );
+        $sent = \core_reportbuilder\local\helpers\database::generate_param_name();
+        $issues = \core_reportbuilder\local\helpers\database::generate_param_name();
+        $failed = \core_reportbuilder\local\helpers\database::generate_param_name();
+        $this->add_base_condition_sql("campaigns.status IN (:$sent, :$issues, :$failed)", [
+            $sent => \local_mailwhistle\manager\campaign_manager::STATUS_SENT,
+            $issues => \local_mailwhistle\manager\campaign_manager::STATUS_COMPLETED_WITH_ERRORS,
+            $failed => \local_mailwhistle\manager\campaign_manager::STATUS_FAILED,
+        ]);
 
         $entitycampaign = (new campaign())->set_table_alias('local_mailwhistle_campaigns', 'campaigns');
         $this->add_entity($entitycampaign);
@@ -60,6 +64,9 @@ class sent_campaigns extends system_report {
         $this->add_column_from_entity('campaign:sentby');
         $this->add_column_from_entity('campaign:sentat');
         $this->add_column_from_entity('campaign:status');
+        if (has_capability('local/mailwhistle:manage', \context_system::instance())) {
+            $this->add_column_from_entity('campaign:actions');
+        }
     }
 
     #[\Override]

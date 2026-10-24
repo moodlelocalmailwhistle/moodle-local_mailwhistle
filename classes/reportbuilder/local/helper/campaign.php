@@ -61,8 +61,22 @@ class campaign {
             )
         ) {
             $url = new \moodle_url('/local/mailwhistle/campaign_edit.php', ['campaignid' => $row->id]);
+        } else if (
+            in_array($row->status, [
+            \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULED,
+            \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULE_FAILED,
+            ], true)
+        ) {
+            $url = new \moodle_url('/local/mailwhistle/campaign_schedule.php', ['campaignid' => $row->id]);
         } else if ($row->status === \local_mailwhistle\manager\campaign_manager::STATUS_SENT) {
             $url = new \moodle_url('/local/mailwhistle/index.php', ['view' => $row->id, 'tab' => 'send']);
+        } else if (
+            in_array($row->status, [
+            \local_mailwhistle\manager\campaign_manager::STATUS_COMPLETED_WITH_ERRORS,
+            \local_mailwhistle\manager\campaign_manager::STATUS_FAILED,
+            ], true)
+        ) {
+            $url = new \moodle_url('/local/mailwhistle/index.php', ['campaignid' => $row->id, 'tab' => 'reports']);
         }
         if (trim((string) $name) === '') {
             $name = get_string('untitledcampaign', 'local_mailwhistle');
@@ -84,16 +98,62 @@ class campaign {
     public static function actions(?int $id, \stdClass $row): string {
         global $OUTPUT;
 
-        if ($row->status !== \local_mailwhistle\manager\campaign_manager::STATUS_READY) {
+        if (!has_capability('local/mailwhistle:manage', \context_system::instance())) {
             return '';
         }
 
-        $sendurl = new \moodle_url('/local/mailwhistle/index.php', [
+        $actions = '';
+        $scheduleurl = new \moodle_url('/local/mailwhistle/campaign_schedule.php', ['campaignid' => $id]);
+        if (
+            in_array($row->status, [
+            \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULED,
+            \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULE_FAILED,
+            ], true)
+        ) {
+            $actions .= \html_writer::link(
+                $scheduleurl,
+                get_string('viewschedule', 'local_mailwhistle'),
+                ['class' => 'btn btn-secondary']
+            );
+        }
+        if ($row->status === \local_mailwhistle\manager\campaign_manager::STATUS_READY) {
+            $sendurl = new \moodle_url('/local/mailwhistle/index.php', [
+                'tab' => 'send',
+                'action' => 'sendnow',
+                'campaignid' => $id,
+            ]);
+            $actions .= $OUTPUT->single_button($sendurl, get_string('sendnow', 'local_mailwhistle'), 'post') .
+                \html_writer::link(
+                    $scheduleurl,
+                    get_string('schedulecampaign', 'local_mailwhistle'),
+                    ['class' => 'btn btn-secondary']
+                );
+        }
+
+        $copyurl = new \moodle_url('/local/mailwhistle/index.php', [
             'tab' => 'send',
-            'action' => 'sendnow',
+            'action' => 'duplicatecampaign',
             'campaignid' => $id,
         ]);
-        return $OUTPUT->single_button($sendurl, get_string('sendnow', 'local_mailwhistle'), 'post');
+        $name = trim((string) ($row->name ?? '')) !== '' ? $row->name : get_string('untitledcampaign', 'local_mailwhistle');
+        $actions .= $OUTPUT->single_button($copyurl, get_string('duplicatecampaign', 'local_mailwhistle'), 'post', [
+            'aria-label' => get_string('duplicatecampaignlabel', 'local_mailwhistle', clean_param($name, PARAM_TEXT)),
+        ]);
+        return \html_writer::div(
+            $actions,
+            'd-flex flex-wrap align-items-center gap-2'
+        );
+    }
+
+    /**
+     * Display a planned time with its timezone, leaving unscheduled rows empty.
+     *
+     * @param int|string|null $timestamp Stored scheduled time.
+     * @param \stdClass $row Report row.
+     * @return string Escaped scheduled time.
+     */
+    public static function timescheduled($timestamp, \stdClass $row): string {
+        return (int) $timestamp > 0 ? s(\local_mailwhistle\page\campaign_schedule::format_time((int) $timestamp)) : '';
     }
 
     /**
@@ -204,6 +264,15 @@ class campaign {
                 s(get_string('stat_pendingcount', 'local_mailwhistle', $row->pendingcount)),
                 'local-mailwhistle-report-metric-note'
             );
+        }
+        foreach (['skipped', 'uncertain'] as $status) {
+            $count = (int) ($row->{$status . 'count'} ?? 0);
+            if ($count > 0) {
+                $html .= \html_writer::div(
+                    s(get_string('stat_' . $status . 'count', 'local_mailwhistle', $count)),
+                    'local-mailwhistle-report-metric-note'
+                );
+            }
         }
         return \html_writer::div($html, 'local-mailwhistle-report-delivery');
     }

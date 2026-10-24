@@ -26,6 +26,7 @@ use core_privacy\local\request\contextlist;
 use core_privacy\local\request\core_userlist_provider;
 use core_privacy\local\request\plugin\provider as request_provider;
 use core_privacy\local\request\transform;
+use core_privacy\local\request\user_preference_provider;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
@@ -53,7 +54,7 @@ use core_privacy\local\request\writer;
  * @copyright 2026 onwards MoodleDach project
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider implements core_userlist_provider, metadata_provider, request_provider {
+class provider implements core_userlist_provider, metadata_provider, request_provider, user_preference_provider {
     /**
      * Describe the personal data stored by this plugin.
      *
@@ -61,6 +62,10 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
      * @return collection The updated collection.
      */
     public static function get_metadata(collection $collection): collection {
+        $collection->add_user_preference(
+            \local_mailwhistle\manager\test_email_manager::RATE_PREFERENCE,
+            'privacy:metadata:preference:testemail_attempts'
+        );
         $collection->add_database_table(
             'local_mailwhistle_recipients',
             [
@@ -141,6 +146,25 @@ class provider implements core_userlist_provider, metadata_provider, request_pro
         );
 
         return $collection;
+    }
+
+    /**
+     * Export recent test-copy attempt times used for the sending allowance.
+     *
+     * @param int $userid User whose preference is exported.
+     * @return void
+     */
+    public static function export_user_preferences(int $userid): void {
+        $key = \local_mailwhistle\manager\test_email_manager::RATE_PREFERENCE;
+        $value = get_user_preferences($key, null, $userid);
+        if ($value !== null) {
+            writer::export_user_preference(
+                'local_mailwhistle',
+                $key,
+                $value,
+                get_string('privacy:metadata:preference:testemail_attempts', 'local_mailwhistle')
+            );
+        }
     }
 
     /**

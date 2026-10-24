@@ -19,14 +19,11 @@ namespace local_mailwhistle\manager;
 use local_mailwhistle\output\resources;
 
 /**
- * Send manager for Mail Whistle campaigns.
+ * Email delivery, recovery, and explicit retry for campaign recipient snapshots.
  *
- * Delivers a campaign to its snapshotted recipients in bounded batches. Each
- * recipient is sent via Moodle's messaging (message_send) using the plugin's
- * 'campaign' message provider; its per-recipient status is updated and a
- * sendlog row is written. When no pending recipients remain the campaign is
- * marked sent. The whole thing is idempotent: only recipients with status
- * 'pending' are ever processed, so re-running never double-sends.
+ * The campaign lock serialises workers and state changes. SMTP cannot be made
+ * atomic with database writes: an interrupted in-flight recipient is therefore
+ * marked uncertain rather than automatically sending a possible duplicate.
  *
  * @package   local_mailwhistle
  * @copyright 2026 onwards MoodleDach project
@@ -34,44 +31,240 @@ use local_mailwhistle\output\resources;
  */
 class send_manager {
     /**
-     * Process one batch of a campaign's pending recipients.
+     * Queue one successor, ignoring only the currently executing task.
      *
-     * Sends up to $batchsize pending recipients. If none remain pending after
-     * the batch, the campaign is finalised as sent. Returns the number of
-     * recipients still pending afterwards (0 means the campaign is complete),
-     * so a task can decide whether to re-queue itself.
+     * The caller must hold the campaign lock. Inspecting decoded custom data
+     * keeps this portable across databases with different text column types.
      *
-     * @param int $campaignid The campaign to process.
-     * @param int $batchsize Maximum recipients to send this run.
-     * @return int Recipients still pending after this batch.
+     * @param int $campaignid Campaign id.
+     * @param int $currenttaskid Running task id, or zero outside a worker.
+     * @return void
      */
-    public static function process_campaign(int $campaignid, int $batchsize): int {
+    public static function queue_campaign(int $campaignid, int $currenttaskid = 0): void {
         global $DB;
 
-        $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
-
-        $batch = recipient_manager::get_pending_recipients($campaignid, $batchsize);
-        foreach ($batch as $recipient) {
-            self::send_to_recipient($campaign, $recipient);
+        $classname = '\\' . \local_mailwhistle\task\send_campaign::class;
+        $tasks = $DB->get_records('task_adhoc', ['classname' => $classname], '', 'id, customdata');
+        foreach ($tasks as $task) {
+            $data = json_decode($task->customdata);
+            if ((int) $task->id !== $currenttaskid && (int) ($data->campaignid ?? 0) === $campaignid) {
+                return;
+            }
         }
-
-        $pending = recipient_manager::count_pending($campaignid);
-        if ($pending === 0 && $campaign->status === campaign_manager::STATUS_SENDING) {
-            campaign_manager::mark_sent($campaignid);
-        }
-
-        return $pending;
+        $task = new \local_mailwhistle\task\send_campaign();
+        $task->set_custom_data(['campaignid' => $campaignid]);
+        \core\task\manager::queue_adhoc_task($task);
     }
 
     /**
-     * Send a single campaign message to one recipient and record the outcome.
+     * Process one bounded batch, under the same lock as starting and retrying.
      *
-     * Delivery goes through Moodle's messaging (message_send) via the plugin's
-     * 'campaign' message provider, so it respects the recipient's notification
-     * output preferences and appears in their message area.
+     * @param int $campaignid Campaign id.
+     * @param int $batchsize Maximum recipients to process.
+     * @param int $currenttaskid Running task id; zero for direct invocations.
+     * @return int Number of recipients still pending.
+     */
+    public static function process_campaign(int $campaignid, int $batchsize, int $currenttaskid = 0): int {
+        global $DB;
+
+        $lock = \core\lock\lock_config::get_lock_factory('local_mailwhistle')->get_lock('campaign:' . $campaignid, 10);
+        if (!$lock) {
+            throw new \moodle_exception('campaignbusy', 'local_mailwhistle');
+        }
+        try {
+            $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid]);
+            if (!$campaign || $campaign->status !== campaign_manager::STATUS_SENDING) {
+                return 0;
+            }
+            recipient_manager::recover_interrupted($campaignid);
+            foreach (recipient_manager::get_pending_recipients($campaignid, max(1, $batchsize)) as $recipient) {
+                self::send_to_recipient($campaign, $recipient);
+            }
+            $pending = recipient_manager::count_pending($campaignid);
+            if ($pending === 0) {
+                campaign_manager::mark_sent($campaignid);
+            } else if ($currenttaskid > 0) {
+                self::queue_campaign($campaignid, $currenttaskid);
+            }
+            return $pending;
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * Recover missing workers and finalise sending campaigns with no work left.
      *
-     * @param \stdClass $campaign The campaign record.
-     * @param \stdClass $recipient The recipient record (snapshotted email/name).
+     * @param int $campaignid Campaign id.
+     * @return void
+     */
+    public static function resume_campaign(int $campaignid): void {
+        global $DB;
+
+        $lock = \core\lock\lock_config::get_lock_factory('local_mailwhistle')->get_lock('campaign:' . $campaignid, 0);
+        if (!$lock) {
+            return;
+        }
+        try {
+            if (
+                $DB->get_field('local_mailwhistle_campaigns', 'status', ['id' => $campaignid])
+                    !== campaign_manager::STATUS_SENDING
+            ) {
+                return;
+            }
+            recipient_manager::recover_interrupted($campaignid);
+            if (recipient_manager::count_pending($campaignid) > 0) {
+                self::queue_campaign($campaignid);
+            } else {
+                campaign_manager::mark_sent($campaignid);
+            }
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * Explicitly retry only known failed recipients of a completed campaign.
+     *
+     * Sent, skipped, and uncertain recipients are never reset. The queue and
+     * status change commit together; current eligibility is checked per email.
+     *
+     * @param int $campaignid Campaign id.
+     * @return bool Whether any failed recipients were queued.
+     */
+    public static function retry_failed(int $campaignid): bool {
+        global $DB;
+
+        $lock = \core\lock\lock_config::get_lock_factory('local_mailwhistle')->get_lock('campaign:' . $campaignid, 10);
+        if (!$lock) {
+            throw new \moodle_exception('campaignbusy', 'local_mailwhistle');
+        }
+        try {
+            $transaction = $DB->start_delegated_transaction();
+            $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
+            if (
+                !in_array($campaign->status, [campaign_manager::STATUS_FAILED,
+                    campaign_manager::STATUS_COMPLETED_WITH_ERRORS, campaign_manager::STATUS_SENT], true)
+                    || !$DB->record_exists('local_mailwhistle_recipients', [
+                        'campaignid' => $campaignid, 'status' => recipient_manager::STATUS_FAILED,
+                    ])
+            ) {
+                $transaction->allow_commit();
+                return false;
+            }
+            resource_manager::assert_attachments_available($campaign);
+            $DB->set_field('local_mailwhistle_recipients', 'status', recipient_manager::STATUS_PENDING, [
+                'campaignid' => $campaignid, 'status' => recipient_manager::STATUS_FAILED,
+            ]);
+            $DB->update_record('local_mailwhistle_campaigns', (object) [
+                'id' => $campaignid,
+                'status' => campaign_manager::STATUS_SENDING,
+                'timemodified' => time(),
+            ]);
+            self::queue_campaign($campaignid);
+            $transaction->allow_commit();
+            return true;
+        } catch (\Throwable $e) {
+            if (isset($transaction) && !$transaction->is_disposed()) {
+                $transaction->rollback($e);
+            }
+            throw $e;
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * Return why Moodle would not send this user's campaign email.
+     *
+     * Mirrors message_send's email provider/locked/default/user preferences.
+     * It also rechecks opt-outs and account changes made after the snapshot.
+     *
+     * @param \stdClass $user Full current user record.
+     * @return string Localised reason, or empty when email is permitted.
+     */
+    public static function get_skip_reason(\stdClass $user): string {
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot . '/message/lib.php');
+        if (!empty($user->deleted) || !empty($user->suspended) || $user->auth === 'nologin') {
+            return get_string('delivery_inactive', 'local_mailwhistle');
+        }
+        if ($DB->record_exists('local_mailwhistle_unsubscribes', ['userid' => $user->id, 'scope' => 'global'])) {
+            return get_string('delivery_unsubscribed', 'local_mailwhistle');
+        }
+        if (!empty($CFG->noemailever)) {
+            return get_string('delivery_disabled', 'local_mailwhistle');
+        }
+        $defaults = get_message_output_default_preferences();
+        if (!empty($defaults->local_mailwhistle_campaign_disable)) {
+            return get_string('delivery_disabled', 'local_mailwhistle');
+        }
+        $providerallowed = false;
+        foreach (message_get_providers_for_user($user->id) as $provider) {
+            if ($provider->component === 'local_mailwhistle' && $provider->name === 'campaign') {
+                $providerallowed = true;
+                break;
+            }
+        }
+        if (!$providerallowed || (!\core_user::is_real_user($user->id) && !empty($user->emailstop))) {
+            return get_string('delivery_disabled', 'local_mailwhistle');
+        }
+        if (!$DB->get_field('message_processors', 'enabled', ['name' => 'email'])) {
+            return get_string('delivery_disabled', 'local_mailwhistle');
+        }
+        $processor = get_message_processor('email');
+        if (!$processor->is_system_configured() || !$processor->is_user_configured($user)) {
+            return get_string('delivery_disabled', 'local_mailwhistle');
+        }
+        $preference = 'message_provider_local_mailwhistle_campaign_enabled';
+        $locked = !empty($defaults->email_provider_local_mailwhistle_campaign_locked);
+        $enabled = (string) ($defaults->$preference ?? '');
+        if (!$locked) {
+            if (!empty($user->emailstop)) {
+                return get_string('delivery_optedout', 'local_mailwhistle');
+            }
+            $userpreference = get_user_preferences($preference, null, $user);
+            if ($userpreference) {
+                $enabled = $userpreference;
+            }
+        }
+        if (!in_array('email', explode(',', $enabled), true)) {
+            return get_string('delivery_optedout', 'local_mailwhistle');
+        }
+        if (str_ends_with(strtolower(self::get_destination($user)), '.invalid')) {
+            return get_string('delivery_invaliddomain', 'local_mailwhistle');
+        }
+        return '';
+    }
+
+    /**
+     * Resolve the email processor's effective address, including site diversion.
+     *
+     * @param \stdClass $user Current user record.
+     * @return string Effective destination address.
+     */
+    public static function get_destination(\stdClass $user): string {
+        global $CFG;
+
+        $email = $user->email;
+        if (!empty($CFG->messagingallowemailoverride)) {
+            $override = clean_param(get_user_preferences('message_processor_email_email', '', $user), PARAM_EMAIL);
+            if ($override !== '') {
+                $email = $override;
+            }
+        }
+        if (email_should_be_diverted($email)) {
+            $email = $CFG->divertallemailsto;
+        }
+        return $email;
+    }
+
+    /**
+     * Send one email and persist its outcome without involving other processors.
+     *
+     * @param \stdClass $campaign Campaign record.
+     * @param \stdClass $recipient Recipient snapshot.
      * @return void
      */
     private static function send_to_recipient(\stdClass $campaign, \stdClass $recipient): void {
@@ -79,122 +272,221 @@ class send_manager {
 
         $to = $DB->get_record('user', ['id' => $recipient->userid]);
         if (!$to) {
-            recipient_manager::mark_failed($recipient->id, 'recipient user not found');
-            \local_mailwhistle\helper::log_send($campaign->id, $recipient->id, 'error', 'recipient user not found');
+            recipient_manager::mark_skipped($recipient->id, get_string('delivery_inactive', 'local_mailwhistle'));
+            return;
+        }
+        $reason = self::get_skip_reason($to);
+        if ($reason !== '') {
+            recipient_manager::mark_skipped($recipient->id, $reason);
+            return;
+        }
+        try {
+            resource_manager::assert_attachments_available($campaign);
+            $recipient->email = self::get_destination($to);
+            if (!validate_email($recipient->email)) {
+                throw new \moodle_exception('invalidemail');
+            }
+            $DB->set_field('local_mailwhistle_recipients', 'email', $recipient->email, ['id' => $recipient->id]);
+            $message = self::make_message($campaign, $to, $recipient, false);
+        } catch (\Throwable $e) {
+            recipient_manager::mark_failed($recipient->id, $e->getMessage());
+            \local_mailwhistle\helper::log_send($campaign->id, $recipient->id, 'error', $e->getMessage());
             return;
         }
 
-        // Fill {{firstname}} etc. with this recipient's snapshot data, then
-        // rewrite links and inject the open pixel for this specific recipient.
-        $personalisedhtml = placeholder_manager::apply((string) $campaign->bodyhtml, $recipient, true);
-        $bodyhtml = tracking_manager::prepare_body(
-            $personalisedhtml,
-            (int) $campaign->id,
-            (int) $recipient->id
-        );
-
-        $message = new \core\message\message();
-        $message->component = 'local_mailwhistle';
-        $message->name = 'campaign';
-        $message->userfrom = self::get_from_user($campaign);
-        $message->userto = $to;
-        $message->subject = format_string(placeholder_manager::apply((string) $campaign->subject, $recipient, false));
-        $message->fullmessage = placeholder_manager::apply((string) $campaign->bodytext, $recipient, false);
-        $message->fullmessageformat = FORMAT_HTML;
-        $message->fullmessagehtml = $bodyhtml;
-        $message->smallmessage = '';
-        $message->notification = 1;
-        self::apply_attachments($message, $campaign);
-
+        // Persist before entering transport; a crash afterwards has an unknown outcome.
+        recipient_manager::mark_sending($recipient->id);
         try {
-            $messageid = message_send($message);
+            $accepted = static::deliver_message($message);
         } catch (\Throwable $e) {
-            $messageid = false;
-            $error = $e->getMessage();
+            recipient_manager::mark_uncertain($recipient->id, get_string('delivery_uncertain', 'local_mailwhistle'));
+            \local_mailwhistle\helper::log_send($campaign->id, $recipient->id, 'error', $e->getMessage());
+            return;
         }
-
-        if (!empty($messageid)) {
+        if ($accepted) {
             recipient_manager::mark_sent($recipient->id);
-            \local_mailwhistle\helper::log_send(
-                $campaign->id,
-                $recipient->id,
-                'info',
-                'sent',
-                ['messageid' => $messageid]
-            );
+            \local_mailwhistle\helper::log_send($campaign->id, $recipient->id, 'info', 'email accepted');
         } else {
-            $error = $error ?? 'message_send returned false';
-            recipient_manager::mark_failed($recipient->id, $error);
+            // A false result can mean the SMTP server's final acknowledgement
+            // was lost after accepting DATA. Retrying could send a duplicate.
+            $error = get_string('delivery_uncertain', 'local_mailwhistle');
+            recipient_manager::mark_uncertain($recipient->id, $error);
             \local_mailwhistle\helper::log_send($campaign->id, $recipient->id, 'error', $error);
         }
     }
 
     /**
-     * Send a one-off test copy of a campaign to a single user.
+     * Ask Moodle's email processor to deliver a prepared message.
      *
-     * Unlike a real send this creates no recipient row, writes no sendlog and
-     * injects no open/click tracking, so it never touches campaign statistics.
-     * Placeholders are filled from the reviewer's profile so the copy shows
-     * how the newsletter will look. The subject is prefixed so a test copy is
-     * obvious in the inbox. Delivery still goes through Moodle messaging so it
-     * honours the recipient's output preferences exactly like a live send would.
+     * A false result does not establish rejection: an SMTP acknowledgement
+     * may have been lost after acceptance. Callers must treat it as uncertain.
      *
-     * @param int $campaignid The draft campaign to preview.
-     * @param \stdClass $to The user record to send the test copy to.
-     * @return bool True when message_send accepted the message.
+     * @param \core\message\message $message Prepared campaign message.
+     * @return bool Whether acceptance was confirmed by the email processor.
      */
-    public static function send_test(int $campaignid, \stdClass $to): bool {
-        global $DB;
+    protected static function deliver_message(\core\message\message $message): bool {
+        return (bool) get_message_processor('email')->send_message($message->get_eventobject_for_processor('email'));
+    }
 
-        $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
-
-        $subject = get_string('testmail_subjectprefix', 'local_mailwhistle') . ' ' . format_string(
-            placeholder_manager::apply((string) $campaign->subject, $to, false)
-        );
-
+    /**
+     * Build a personalised message using the site sender and explicit Reply-To.
+     *
+     * @param \stdClass $campaign Campaign record.
+     * @param \stdClass $to Current recipient user.
+     * @param \stdClass $values Personalisation data, including effective email.
+     * @param bool $test Whether this is an untracked test copy.
+     * @return \core\message\message Message for the email processor.
+     */
+    private static function make_message(\stdClass $campaign, \stdClass $to, \stdClass $values, bool $test): \core\message\message {
+        resource_manager::assert_attachments_available($campaign);
+        $values = clone $values;
+        $values->unsubscribeurl = ($test ? subscription_manager::preview_url()
+            : subscription_manager::unsubscribe_url($values))->out(false);
         $message = new \core\message\message();
         $message->component = 'local_mailwhistle';
         $message->name = 'campaign';
         $message->userfrom = self::get_from_user($campaign);
         $message->userto = $to;
-        $message->subject = $subject;
-        $message->fullmessage = placeholder_manager::apply((string) $campaign->bodytext, $to, false);
+        $message->subject = format_string(placeholder_manager::apply((string) $campaign->subject, $values, false));
+        if ($test) {
+            $message->subject = get_string('testmail_subjectprefix', 'local_mailwhistle') . ' ' . $message->subject;
+        }
+        $text = placeholder_manager::apply((string) $campaign->bodytext, $values, false);
+        $html = placeholder_manager::apply((string) $campaign->bodyhtml, $values, true);
+        $html = subscription_manager::replace_unsubscribe_links($html, $values->unsubscribeurl, true);
+        if ($text === '' && $html !== '') {
+            $text = html_to_text($html);
+        }
+        $text = subscription_manager::replace_unsubscribe_links($text, $values->unsubscribeurl, false);
+        $message->fullmessage = subscription_manager::add_footer($text, $values->unsubscribeurl, false);
         $message->fullmessageformat = FORMAT_HTML;
-        $message->fullmessagehtml = placeholder_manager::apply((string) $campaign->bodyhtml, $to, true);
+        $message->fullmessagehtml = '';
+        if ($html !== '') {
+            $html = subscription_manager::add_footer($html, $values->unsubscribeurl, true);
+            $message->fullmessagehtml = $test ? $html
+                : tracking_manager::prepare_body($html, (int) $campaign->id, (int) $values->id);
+        }
         $message->smallmessage = '';
         $message->notification = 1;
-        self::apply_attachments($message, $campaign);
-
-        try {
-            $messageid = message_send($message);
-        } catch (\Throwable $e) {
-            return false;
+        if (trim((string) $campaign->senderemail) !== '') {
+            if (!validate_email($campaign->senderemail)) {
+                throw new \moodle_exception('invalidemail');
+            }
+            $message->replyto = $campaign->senderemail;
+            $message->replytoname = $campaign->sendername;
         }
-
-        return !empty($messageid);
+        self::apply_attachments($message, $campaign);
+        return $message;
     }
 
     /**
-     * Resolve the "from" user for a campaign message.
+     * Send an untracked test copy, respecting the same email policy as a campaign.
      *
-     * Uses the campaign creator when available, else the site support user, so
-     * message_send always has a valid sender. The campaign's own sender name/
-     * email is display metadata carried in the body/subject; Moodle messaging
-     * controls the actual transport from-address.
-     *
-     * @param \stdClass $campaign The campaign record.
-     * @return \stdClass A user record suitable as userfrom.
+     * @param int $campaignid Campaign id.
+     * @param \stdClass $to Reviewer user record.
+     * @return bool Whether the email transport accepted the test copy.
      */
-    private static function get_from_user(\stdClass $campaign): \stdClass {
+    public static function send_test(int $campaignid, \stdClass $to): bool {
         global $DB;
 
-        if (!empty($campaign->createdby)) {
-            $creator = $DB->get_record('user', ['id' => $campaign->createdby, 'deleted' => 0]);
-            if ($creator) {
-                return $creator;
-            }
+        $lock = \core\lock\lock_config::get_lock_factory('local_mailwhistle')->get_lock('campaign:' . $campaignid, 10);
+        if (!$lock) {
+            return false;
         }
-        return \core_user::get_support_user();
+        try {
+            $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $campaignid], '*', MUST_EXIST);
+            $to = $DB->get_record('user', ['id' => $to->id], '*', MUST_EXIST);
+            if (self::get_skip_reason($to) !== '') {
+                return false;
+            }
+            $values = clone $to;
+            $values->email = self::get_destination($to);
+            if (!validate_email($values->email)) {
+                return false;
+            }
+            $message = self::make_message($campaign, $to, $values, true);
+            return static::deliver_message($message);
+        } catch (\Throwable $e) {
+            return false;
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * Send one untracked copy to an explicitly entered address with reviewer sample data.
+     *
+     * The authorised caller holds the campaign lock and reserves rate-limit allowance.
+     * A synthetic destination avoids silently substituting a user's notification address.
+     * Site-wide email diversion still applies and is reported as the effective destination.
+     *
+     * @param \stdClass $campaign Locked saved campaign record.
+     * @param \stdClass $reviewer Current full reviewer record used for sample placeholders and email policy.
+     * @param string $address Explicit destination address.
+     * @return array Requested and effective address, outcome, and plain-text explanation.
+     */
+    public static function send_test_to_address(\stdClass $campaign, \stdClass $reviewer, string $address): array {
+        global $CFG;
+
+        $result = ['address' => $address, 'destination' => $address, 'diverted' => false, 'status' => 'failed'];
+        $reason = self::get_skip_reason($reviewer);
+        if ($reason !== '') {
+            return $result + ['message' => $reason];
+        }
+        if (!validate_email($address)) {
+            return $result + ['message' => get_string('testmail_invalidaddresses', 'local_mailwhistle')];
+        }
+        $destination = email_should_be_diverted($address) ? $CFG->divertallemailsto : $address;
+        $result['destination'] = $destination;
+        $result['diverted'] = $destination !== $address;
+        if (!validate_email($destination) || str_ends_with(strtolower($destination), '.invalid')) {
+            return $result + ['message' => get_string('delivery_invaliddomain', 'local_mailwhistle')];
+        }
+
+        try {
+            $to = clone $reviewer;
+            $to->id = \core_user::NOREPLY_USER;
+            $to->email = $address;
+            $to->emailstop = 0;
+            $to->mailformat = 1;
+            $to->auth = 'manual';
+            $to->mnethostid = $CFG->mnet_localhost_id;
+            unset($to->preference);
+            $values = clone $reviewer;
+            $values->email = self::get_destination($reviewer);
+            $message = self::make_message($campaign, $to, $values, true);
+        } catch (\Throwable $exception) {
+            return $result + ['message' => get_string('testmail_preparationfailed', 'local_mailwhistle')];
+        }
+
+        try {
+            $accepted = static::deliver_message($message);
+        } catch (\Throwable $exception) {
+            $accepted = false;
+        }
+        $result['status'] = $accepted ? 'accepted' : 'uncertain';
+        $result['message'] = get_string($accepted ? 'testmail_accepted' : 'testmail_uncertain', 'local_mailwhistle');
+        return $result;
+    }
+
+    /**
+     * Use Moodle's no-reply address with the campaign's requested display name.
+     *
+     * @param \stdClass $campaign Campaign record.
+     * @return \stdClass Sender identity; SMTP policy remains controlled by Moodle.
+     */
+    private static function get_from_user(\stdClass $campaign): \stdClass {
+        $sender = clone \core_user::get_noreply_user();
+        if (trim((string) $campaign->sendername) !== '') {
+            $sender->firstname = $campaign->sendername;
+            $sender->lastname = '';
+            $sender->firstnamephonetic = '';
+            $sender->lastnamephonetic = '';
+            $sender->middlename = '';
+            $sender->alternatename = '';
+        }
+        $sender->maildisplay = 0;
+        return $sender;
     }
 
     /**
@@ -208,11 +500,7 @@ class send_manager {
      * @return void
      */
     private static function apply_attachments(\core\message\message $message, \stdClass $campaign): void {
-        global $CFG;
-
-        if (empty($CFG->allowattachments)) {
-            return;
-        }
+        resource_manager::assert_attachments_available($campaign);
 
         $files = resources::get_files_by_filenames(
             campaign_manager::decode_attachments($campaign->attachmentsjson ?? '')
@@ -235,9 +523,7 @@ class send_manager {
             return;
         }
 
-        $file = reset($files);
-        $message->attachment = $file;
-        $message->attachname = $file->get_filename();
+        throw new \moodle_exception('delivery_zipfailed', 'local_mailwhistle');
     }
 
     /**

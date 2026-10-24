@@ -22,6 +22,7 @@
     Context variables required for this template:
     * name - format_string() template name.
     * listurl, canmanage, editurl, exporturl
+    * id, actionurl, sesskey - POST action for duplicating the template.
     * haspreviewtext, previewtext
     * hasbody, bodyhtml - bodyhtml is sanitised by format_text().
     * background - Safe hex colour.
@@ -33,6 +34,9 @@
         "canmanage": true,
         "editurl": "#",
         "exporturl": "#",
+        "id": 1,
+        "actionurl": "/local/mailwhistle/index.php",
+        "sesskey": "abc",
         "haspreviewtext": false,
         "previewtext": "",
         "hasbody": true,
@@ -45,6 +49,13 @@
         <a href="{{listurl}}" class="btn btn-secondary me-1">{{#str}}backtotemplates, local_mailwhistle{{/str}}</a>
         {{#canmanage}}
             <a href="{{editurl}}" class="btn btn-primary me-1">{{#str}}template_edit, local_mailwhistle{{/str}}</a>
+            <form method="post" action="{{actionurl}}" class="d-inline-block m-0 me-1">
+                <input type="hidden" name="tab" value="templates">
+                <input type="hidden" name="action" value="duplicate">
+                <input type="hidden" name="id" value="{{id}}">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <button type="submit" class="btn btn-secondary">{{#str}}template_duplicate, local_mailwhistle{{/str}}</button>
+            </form>
             <a href="{{exporturl}}" class="btn btn-secondary">{{#str}}template_export, local_mailwhistle{{/str}}</a>
         {{/canmanage}}
     </div>

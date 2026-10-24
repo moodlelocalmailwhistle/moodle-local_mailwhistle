@@ -34,11 +34,13 @@ final class send_campaign_task_test extends \advanced_testcase {
      * Each running batch queues a successor that survives the current task's completion.
      */
     public function test_running_task_continues_until_all_recipients_are_sent(): void {
-        global $DB;
+        global $DB, $CFG;
 
         $this->resetAfterTest();
         $this->preventResetByRollback();
         $this->setAdminUser();
+        $CFG->noemailever = false;
+        $DB->set_field('message_processors', 'enabled', 1, ['name' => 'email']);
         set_config('sendbatchsize', 1, 'local_mailwhistle');
 
         $generator = $this->getDataGenerator()->get_plugin_generator('local_mailwhistle');
@@ -47,10 +49,10 @@ final class send_campaign_task_test extends \advanced_testcase {
             'bodyhtml' => '<p>Your newsletter</p>',
             'status' => campaign_manager::STATUS_SENDING,
         ]);
-        $userids = [];
+        $emails = [];
         for ($i = 0; $i < 3; $i++) {
             $user = $this->getDataGenerator()->create_user();
-            $userids[] = (int) $user->id;
+            $emails[] = $user->email;
             $generator->create_recipient([
                 'campaignid' => $campaign->id,
                 'userid' => $user->id,
@@ -64,7 +66,7 @@ final class send_campaign_task_test extends \advanced_testcase {
         $task = new send_campaign();
         $task->set_custom_data(['campaignid' => (int) $campaign->id]);
         task_manager::queue_adhoc_task($task, true);
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
 
         for ($batch = 1; $batch <= 3; $batch++) {
             $task = task_manager::get_next_adhoc_task(time(), false, send_campaign::class);
@@ -86,7 +88,7 @@ final class send_campaign_task_test extends \advanced_testcase {
 
         $messages = $sink->get_messages();
         $sink->close();
-        $this->assertEqualsCanonicalizing($userids, array_column($messages, 'useridto'));
+        $this->assertEqualsCanonicalizing($emails, array_column($messages, 'to'));
         $this->assertSame(campaign_manager::STATUS_SENT, $DB->get_field(
             'local_mailwhistle_campaigns',
             'status',

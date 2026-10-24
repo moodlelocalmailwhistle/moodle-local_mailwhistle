@@ -37,6 +37,8 @@ class report_manager {
         return in_array($status, [
             campaign_manager::STATUS_SENT,
             campaign_manager::STATUS_SENDING,
+            campaign_manager::STATUS_COMPLETED_WITH_ERRORS,
+            campaign_manager::STATUS_FAILED,
         ], true);
     }
 
@@ -58,6 +60,8 @@ class report_manager {
             'sent' => 0,
             'failed' => 0,
             'pending' => 0,
+            'skipped' => 0,
+            'uncertain' => 0,
             'uniqueopens' => 0,
             'uniqueclicks' => 0,
             'openrate' => 0.0,
@@ -82,7 +86,14 @@ class report_manager {
                     $stats->failed = $n;
                     break;
                 case recipient_manager::STATUS_PENDING:
-                    $stats->pending = $n;
+                case recipient_manager::STATUS_SENDING:
+                    $stats->pending += $n;
+                    break;
+                case recipient_manager::STATUS_SKIPPED:
+                    $stats->skipped = $n;
+                    break;
+                case recipient_manager::STATUS_UNCERTAIN:
+                    $stats->uncertain = $n;
                     break;
                 default:
                     break;

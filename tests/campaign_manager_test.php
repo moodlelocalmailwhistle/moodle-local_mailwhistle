@@ -184,6 +184,8 @@ final class campaign_manager_test extends \advanced_testcase {
 
         $tag = tag_manager::create_tag('Alpha');
         audience_manager::set_campaign_tags($id, [$tag]);
+        $user = $this->getDataGenerator()->create_user();
+        tag_manager::assign_tag($tag, $user->id);
         $this->assertTrue(campaign_manager::is_complete($id));
     }
 
@@ -199,6 +201,8 @@ final class campaign_manager_test extends \advanced_testcase {
         $tag = tag_manager::create_tag('Alpha');
         audience_manager::set_campaign_tags($id, [$tag]);
 
+        $user = $this->getDataGenerator()->create_user();
+        tag_manager::assign_tag($tag, $user->id);
         campaign_manager::mark_complete($id);
 
         $row = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id], '*', MUST_EXIST);
@@ -232,5 +236,155 @@ final class campaign_manager_test extends \advanced_testcase {
         campaign_manager::set_templateid($id, 0);
         $row = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id], '*', MUST_EXIST);
         $this->assertEmpty($row->templateid);
+    }
+
+    /**
+     * Empty rich-text markup cannot satisfy readiness, while image-only mail can.
+     *
+     * @dataProvider body_content_provider
+     * @param string $html HTML body.
+     * @param string $text Plain body.
+     * @param bool $expected Whether useful content exists.
+     */
+    public function test_meaningful_body(string $html, string $text, bool $expected): void {
+        $this->assertSame($expected, campaign_manager::has_meaningful_body($html, $text));
+    }
+
+    /**
+     * Meaningful and empty message representations.
+     *
+     * @return array
+     */
+    public static function body_content_provider(): array {
+        return [
+            'empty' => ['', '', false],
+            'editor paragraph' => ['<p><br></p>', '', false],
+            'nonbreaking spaces' => ['<p>&nbsp; &#160; &#8203;</p>', '', false],
+            'document shell' => ['<html><head><style>body {color:red}</style></head><body></body></html>', '', false],
+            'script only' => ['<script>alert(1)</script>', '', false],
+            'image without source' => ['<img alt="">', '', false],
+            'image only' => ['<p><img src="https://example.test/news.png" alt="News"></p>', '', true],
+            'ordinary text' => ['<p>Hello</p>', '', true],
+            'zero text' => ['<p>0</p>', '', true],
+            'plain text' => ['', "Hello\nEveryone", true],
+        ];
+    }
+
+    /**
+     * Readiness counts each eligible person once and excludes unavailable recipients.
+     */
+    public function test_readiness_requires_eligible_recipients(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $id = $this->create_campaign();
+        campaign_manager::update_fields($id, ['subject' => 'News', 'bodyhtml' => '<p>Hello</p>']);
+        $first = tag_manager::create_tag('First');
+        $second = tag_manager::create_tag('Second');
+        audience_manager::set_campaign_tags($id, [$first, $second]);
+        $suspended = $this->getDataGenerator()->create_user(['suspended' => 1]);
+        $deleted = $this->getDataGenerator()->create_user();
+        $unsubscribed = $this->getDataGenerator()->create_user();
+        foreach ([$suspended, $deleted, $unsubscribed] as $user) {
+            tag_manager::assign_tag($first, $user->id);
+        }
+        delete_user($deleted);
+        $DB->insert_record('local_mailwhistle_unsubscribes', (object) [
+            'userid' => $unsubscribed->id,
+            'email' => $unsubscribed->email,
+            'scope' => 'global',
+            'scopeid' => 0,
+            'timecreated' => time(),
+        ]);
+        $readiness = campaign_manager::get_readiness($id);
+        $this->assertSame(0, $readiness['recipientcount']);
+        $this->assertContains(get_string('campaignemptyaudience', 'local_mailwhistle'), $readiness['errors']);
+        $this->assertFalse(campaign_manager::is_complete($id));
+        try {
+            campaign_manager::mark_complete($id);
+            $this->fail('An empty eligible audience must not become ready.');
+        } catch (\moodle_exception $exception) {
+            $this->assertSame('campaignincomplete', $exception->errorcode);
+        }
+        $active = $this->getDataGenerator()->create_user();
+        tag_manager::assign_tag($first, $active->id);
+        tag_manager::assign_tag($second, $active->id);
+        $readiness = campaign_manager::get_readiness($id);
+        $this->assertSame(1, $readiness['recipientcount']);
+        $this->assertSame([], $readiness['errors']);
+    }
+
+    /**
+     * Stale forms cannot write fields, template identity or audience after a state change.
+     *
+     * @dataProvider nondraft_status_provider
+     * @param string $status Current state.
+     */
+    public function test_nondraft_writes_are_rejected(string $status): void {
+        global $DB;
+        $this->resetAfterTest();
+        $id = $this->create_campaign();
+        $tag = tag_manager::create_tag('Original');
+        audience_manager::set_campaign_tags($id, [$tag]);
+        $DB->set_field('local_mailwhistle_campaigns', 'status', $status, ['id' => $id]);
+        $before = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id]);
+        $writes = [
+            static fn() => campaign_manager::update_fields($id, ['subject' => 'Stale body'], 42),
+            static fn() => campaign_manager::set_templateid($id, 42),
+            static fn() => campaign_manager::with_draft_lock($id, static function () use ($id): void {
+                audience_manager::set_campaign_tags($id, []);
+            }),
+            static fn() => campaign_manager::mark_complete($id),
+        ];
+        foreach ($writes as $write) {
+            try {
+                $write();
+                $this->fail('A non-draft campaign must be immutable.');
+            } catch (\moodle_exception $exception) {
+                $this->assertSame('campaignnoteditable', $exception->errorcode);
+            }
+            $this->assertEquals($before, $DB->get_record('local_mailwhistle_campaigns', ['id' => $id]));
+            $this->assertSame([$tag], audience_manager::get_campaign_tagids($id));
+        }
+    }
+
+    /**
+     * States whose delivery content must stay immutable.
+     *
+     * @return array
+     */
+    public static function nondraft_status_provider(): array {
+        return [
+            'ready' => ['ready'],
+            'sending' => ['sending'],
+            'sent' => ['sent'],
+            'mixed outcome' => ['completedwitherrors'],
+            'failed' => ['failed'],
+        ];
+    }
+
+    /**
+     * Reopening is available for ready campaigns only and preserves saved content.
+     */
+    public function test_return_to_draft_only_allows_ready(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $id = $this->create_campaign();
+        campaign_manager::update_fields($id, ['subject' => 'Saved subject', 'bodyhtml' => '<p>Saved body</p>']);
+        $DB->set_field('local_mailwhistle_campaigns', 'status', 'ready', ['id' => $id]);
+        campaign_manager::return_to_draft($id);
+        $campaign = $DB->get_record('local_mailwhistle_campaigns', ['id' => $id]);
+        $this->assertSame('draft', $campaign->status);
+        $this->assertSame('Saved subject', $campaign->subject);
+        $this->assertSame('<p>Saved body</p>', $campaign->bodyhtml);
+        foreach (['draft', 'sending', 'sent', 'completedwitherrors', 'failed'] as $status) {
+            $DB->set_field('local_mailwhistle_campaigns', 'status', $status, ['id' => $id]);
+            try {
+                campaign_manager::return_to_draft($id);
+                $this->fail('Only ready campaigns can be reopened.');
+            } catch (\moodle_exception $exception) {
+                $this->assertSame('campaigncannotreopen', $exception->errorcode);
+            }
+            $this->assertSame($status, $DB->get_field('local_mailwhistle_campaigns', 'status', ['id' => $id]));
+        }
     }
 }

@@ -42,6 +42,7 @@ class placeholder_manager {
             'email',
             'sitename',
             'siteurl',
+            'unsubscribe',
         ];
     }
 
@@ -80,6 +81,7 @@ class placeholder_manager {
             'sitename'  => $sitename,
             'siteurl'   => $siteurl,
             'university' => $sitename,
+            'unsubscribe' => $recipient->unsubscribeurl ?? subscription_manager::preview_url()->out(false),
         ];
     }
 

@@ -190,10 +190,14 @@ class tracking_manager {
      */
     public static function prepare_body(string $html, int $campaignid, int $recipientid): string {
         $rewritten = preg_replace_callback(
-            '/href="(https?:\/\/[^"]+)"/i',
+            '/\bhref\s*=\s*([\'"])(https?:\/\/.*?)\1/is',
             static function (array $m) use ($campaignid, $recipientid): string {
-                $url = self::click_url($campaignid, $recipientid, $m[1]);
-                return 'href="' . $url . '"';
+                $target = html_entity_decode($m[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if (subscription_manager::is_unsubscribe_url($target)) {
+                    return $m[0];
+                }
+                $url = self::click_url($campaignid, $recipientid, $target);
+                return 'href="' . s($url) . '"';
             },
             $html
         );

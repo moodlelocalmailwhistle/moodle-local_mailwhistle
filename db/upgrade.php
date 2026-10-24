@@ -223,5 +223,66 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026091100, 'local', 'mailwhistle');
     }
 
+    if ($oldversion < 2026102300) {
+        // Legacy message_send() combined all notification processor outcomes.
+        // A failed result may therefore follow a successful email. Likewise, an
+        // interrupted old worker could leave an accepted email marked pending.
+        // Quarantine both cases instead of making them eligible for replay.
+        $legacyreason = get_string('delivery_legacyuncertain', 'local_mailwhistle');
+        $recipients = $DB->get_recordset_sql(
+            "SELECT r.id, r.error
+               FROM {local_mailwhistle_recipients} r
+              WHERE r.status = :failed
+                 OR (r.status = :pending AND EXISTS (
+                     SELECT 1 FROM {local_mailwhistle_campaigns} c
+                      WHERE c.id = r.campaignid AND c.status = :sending
+                 ))",
+            ['failed' => 'failed', 'pending' => 'pending', 'sending' => 'sending']
+        );
+        foreach ($recipients as $recipient) {
+            $originalerror = (string) $recipient->error;
+            $DB->update_record('local_mailwhistle_recipients', (object) [
+                'id' => $recipient->id,
+                'status' => 'uncertain',
+                'error' => $legacyreason . ($originalerror !== '' ? "\n" . $originalerror : ''),
+            ]);
+        }
+        $recipients->close();
+
+        // Stop legacy queued workers and report known outcomes without changing
+        // historical timestamps, recipient counts, or any confirmed sent rows.
+        $campaigns = $DB->get_recordset_sql(
+            "SELECT c.id, c.status,
+                    (SELECT COUNT(1) FROM {local_mailwhistle_recipients} r
+                      WHERE r.campaignid = c.id AND r.status = :recipientsent) AS sentcount,
+                    (SELECT COUNT(1) FROM {local_mailwhistle_recipients} r
+                      WHERE r.campaignid = c.id AND r.status = :uncertain) AS uncertaincount
+               FROM {local_mailwhistle_campaigns} c
+              WHERE c.status IN (:campaignsent, :sending)",
+            ['recipientsent' => 'sent', 'uncertain' => 'uncertain', 'campaignsent' => 'sent', 'sending' => 'sending']
+        );
+        foreach ($campaigns as $campaign) {
+            if ($campaign->status === 'sent' && (int) $campaign->uncertaincount === 0) {
+                continue;
+            }
+            $status = 'sent';
+            if ((int) $campaign->sentcount === 0) {
+                $status = 'failed';
+            } else if ((int) $campaign->uncertaincount > 0) {
+                $status = 'completedwitherrors';
+            }
+            $DB->set_field('local_mailwhistle_campaigns', 'status', $status, ['id' => $campaign->id]);
+        }
+        $campaigns->close();
+
+        upgrade_plugin_savepoint(true, 2026102300, 'local', 'mailwhistle');
+    }
+
+    if ($oldversion < 2026102301) {
+        // Register the scheduled campaign dispatcher and refresh plugin metadata.
+        // Scheduling and subscriptions use fields and tables already installed.
+        upgrade_plugin_savepoint(true, 2026102301, 'local', 'mailwhistle');
+    }
+
     return true;
 }

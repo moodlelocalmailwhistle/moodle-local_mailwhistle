@@ -49,21 +49,14 @@ class requeue_stuck_sends extends \core\task\scheduled_task {
     public function execute(): void {
         global $DB;
 
-        // Sending campaigns that still have pending recipients.
-        $sql = "SELECT DISTINCT c.id
-                  FROM {local_mailwhistle_campaigns} c
-                  JOIN {local_mailwhistle_recipients} r ON r.campaignid = c.id
-                 WHERE c.status = :sending
-                   AND r.status = :pending";
+        // Include empty and interrupted snapshots, which also need finalising.
+        $sql = "SELECT id FROM {local_mailwhistle_campaigns} WHERE status = :sending";
         $ids = $DB->get_fieldset_sql($sql, [
             'sending' => campaign_manager::STATUS_SENDING,
-            'pending' => \local_mailwhistle\manager\recipient_manager::STATUS_PENDING,
         ]);
 
         foreach ($ids as $campaignid) {
-            $task = new send_campaign();
-            $task->set_custom_data(['campaignid' => (int) $campaignid]);
-            \core\task\manager::queue_adhoc_task($task, true);
+            \local_mailwhistle\manager\send_manager::resume_campaign((int) $campaignid);
         }
     }
 }

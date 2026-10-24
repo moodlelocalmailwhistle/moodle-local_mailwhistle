@@ -24,12 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// Only define settings if we're in the site administration context.
-if (!$hassiteconfig) {
-    return;
-}
-
-// Category to hold all settings.
+// Register navigation for Managers too; each page checks its own plugin capability.
 $ADMIN->add('root', new admin_category('local_mailwhistle', get_string('pluginname', 'local_mailwhistle')));
 
 // Create the main settings page for this plugin.

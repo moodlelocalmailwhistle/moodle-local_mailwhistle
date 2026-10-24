@@ -95,6 +95,13 @@
                 </button>
                 <div class="dropdown-menu dropdown-menu-right">
                     <a href="{{editurl}}" class="dropdown-item">{{#str}}template_edit, local_mailwhistle{{/str}}</a>
+                    <form method="post" action="{{actionurl}}" class="m-0">
+                        <input type="hidden" name="tab" value="templates">
+                        <input type="hidden" name="action" value="duplicate">
+                        <input type="hidden" name="id" value="{{id}}">
+                        <input type="hidden" name="sesskey" value="{{sesskey}}">
+                        <button type="submit" class="dropdown-item">{{#str}}template_duplicate, local_mailwhistle{{/str}}</button>
+                    </form>
                     <a href="{{exporturl}}" class="dropdown-item">{{#str}}template_export, local_mailwhistle{{/str}}</a>
                     {{^archived}}
                         <form method="post" action="{{actionurl}}" class="m-0">

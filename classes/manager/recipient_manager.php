@@ -38,6 +38,15 @@ class recipient_manager {
     /** @var string Recipient send failed. */
     public const STATUS_FAILED = 'failed';
 
+    /** @var string Email transport is in progress. */
+    public const STATUS_SENDING = 'sending';
+
+    /** @var string Email deliberately skipped by account or notification policy. */
+    public const STATUS_SKIPPED = 'skipped';
+
+    /** @var string Transport was interrupted; acceptance cannot be established. */
+    public const STATUS_UNCERTAIN = 'uncertain';
+
     /**
      * Resolve the users a campaign should be sent to.
      *
@@ -196,9 +205,81 @@ class recipient_manager {
         $DB->update_record('local_mailwhistle_recipients', (object) [
             'id' => $recipientid,
             'status' => self::STATUS_FAILED,
-            'attempts' => (int) $recipient->attempts + 1,
+            'attempts' => (int) $recipient->attempts + ($recipient->status === self::STATUS_SENDING ? 0 : 1),
+            'timesent' => 0,
             'timemodified' => $now,
             'error' => $error,
+        ]);
+    }
+
+    /**
+     * Record entry into transport before an external system can accept email.
+     *
+     * @param int $recipientid Recipient row id.
+     * @return void
+     */
+    public static function mark_sending(int $recipientid): void {
+        global $DB;
+
+        $recipient = $DB->get_record('local_mailwhistle_recipients', ['id' => $recipientid], '*', MUST_EXIST);
+        $DB->update_record('local_mailwhistle_recipients', (object) [
+            'id' => $recipientid,
+            'status' => self::STATUS_SENDING,
+            'attempts' => (int) $recipient->attempts + 1,
+            'timemodified' => time(),
+            'error' => null,
+        ]);
+    }
+
+    /**
+     * Record a deliberate skip without counting it as a transport attempt.
+     *
+     * @param int $recipientid Recipient row id.
+     * @param string $reason Localised explanation.
+     * @return void
+     */
+    public static function mark_skipped(int $recipientid, string $reason): void {
+        global $DB;
+
+        $DB->update_record('local_mailwhistle_recipients', (object) [
+            'id' => $recipientid, 'status' => self::STATUS_SKIPPED,
+            'timesent' => 0, 'timemodified' => time(), 'error' => $reason,
+        ]);
+    }
+
+    /**
+     * Record an unknown transport outcome which must never be retried blindly.
+     *
+     * @param int $recipientid Recipient row id.
+     * @param string $reason Localised explanation.
+     * @return void
+     */
+    public static function mark_uncertain(int $recipientid, string $reason): void {
+        global $DB;
+
+        $DB->update_record('local_mailwhistle_recipients', (object) [
+            'id' => $recipientid, 'status' => self::STATUS_UNCERTAIN,
+            'timesent' => 0, 'timemodified' => time(), 'error' => $reason,
+        ]);
+    }
+
+    /**
+     * Recover recipients left in transport by a previous, interrupted worker.
+     *
+     * The caller holds the campaign lock, so no live worker owns these rows.
+     *
+     * @param int $campaignid Campaign id.
+     * @return void
+     */
+    public static function recover_interrupted(int $campaignid): void {
+        global $DB;
+
+        $DB->execute('UPDATE {local_mailwhistle_recipients}
+                        SET status = :uncertain, error = :error, timemodified = :now
+                      WHERE campaignid = :campaignid AND status = :sending', [
+            'uncertain' => self::STATUS_UNCERTAIN,
+            'error' => get_string('delivery_uncertain', 'local_mailwhistle'),
+            'now' => time(), 'campaignid' => $campaignid, 'sending' => self::STATUS_SENDING,
         ]);
     }
 }

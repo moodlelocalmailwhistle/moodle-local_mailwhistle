@@ -232,7 +232,7 @@ final class campaign_report_test extends \advanced_testcase {
         $this->assertStringContainsString('Hello {{firstname}}', $data['emailpreview']['previewhtml']);
         $this->assertSame(get_string('untitledcampaign', 'local_mailwhistle'), $data['campaignname']);
         $metadata = array_column($data['metarows'], 'value', 'label');
-        $this->assertSame('', $metadata[get_string('col_sentat', 'local_mailwhistle')]);
+        $this->assertSame('', $metadata[get_string('col_completedat', 'local_mailwhistle')]);
         $this->assertSame('News team', $metadata[get_string('sendername', 'local_mailwhistle')]);
         $this->assertSame(get_string('stat_pendingcount', 'local_mailwhistle', 1), $data['stats'][0]['detail']);
     }

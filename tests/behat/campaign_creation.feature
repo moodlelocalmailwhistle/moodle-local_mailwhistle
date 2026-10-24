@@ -14,7 +14,7 @@ Feature: Campaign creation requires a valid name
     And "2. Content" "link" should not exist
     And there should be 0 Mail Whistle campaigns
     When I press "Cancel"
-    Then I should see "No draft campaigns yet."
+    Then I should see "No draft or scheduled campaigns yet."
     And there should be 0 Mail Whistle campaigns
 
   Scenario: Empty and whitespace-only names do not create a campaign
@@ -34,8 +34,8 @@ Feature: Campaign creation requires a valid name
     When I am on the Mail Whistle "send" tab
     And I press "Create a campaign"
     And I set the field "Internal email name" to "Spring digest"
-    And I set the field "Sender name" to "Campus News"
-    And I set the field "Sender email" to "news@example.com"
+    And I set the field "Sender display name" to "Campus News"
+    And I set the field "Reply-to email address" to "news@example.com"
     And I press "Save and continue"
     Then "Subject" "field" should exist
     And there should be 1 Mail Whistle campaigns
@@ -43,8 +43,8 @@ Feature: Campaign creation requires a valid name
     When I press "Cancel"
     And I follow "Spring digest"
     Then the field "Internal email name" matches value "Spring digest"
-    And the field "Sender name" matches value "Campus News"
-    And the field "Sender email" matches value "news@example.com"
+    And the field "Sender display name" matches value "Campus News"
+    And the field "Reply-to email address" matches value "news@example.com"
     And "2. Content" "link" should exist
     And there should be 1 Mail Whistle campaigns
 

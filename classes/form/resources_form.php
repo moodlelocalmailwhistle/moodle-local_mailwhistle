@@ -42,6 +42,22 @@ class resources_form extends \moodleform {
     }
 
     /**
+     * Protect resources which are used by saved campaigns or templates.
+     *
+     * @param array $data Submitted fields.
+     * @param array $files Submitted files.
+     * @return array Validation errors.
+     */
+    public function validation($data, $files): array {
+        $errors = parent::validation($data, $files);
+        $changed = \local_mailwhistle\manager\resource_manager::get_protected_changes((int) ($data['resources'] ?? 0));
+        if ($changed) {
+            $errors['resources'] = get_string('resources_inuse_error', 'local_mailwhistle', s(implode(', ', $changed)));
+        }
+        return $errors;
+    }
+
+    /**
      * Save any submitted files.
      *
      * @return bool true if we should reload the page.
@@ -56,6 +72,9 @@ class resources_form extends \moodleform {
                 0
             );
             return true;
+        }
+        if ($this->is_submitted()) {
+            return false;
         }
         $draftid = file_get_submitted_draft_itemid('resources');
         file_prepare_draft_area(
