@@ -117,7 +117,7 @@ class html_renderer {
      * @return string
      */
     private static function render_text(array $block): string {
-        $content = nl2br(s(format_string($block['content'] ?? '')));
+        $content = nl2br(format_string($block['content'] ?? ''));
         $padding = schema::bounded_int($block, 'padding', 24, 8, 48);
         $fontsize = schema::bounded_int($block, 'fontsize', 16, 11, 28);
         $align = schema::align($block);
@@ -235,7 +235,7 @@ class html_renderer {
         $fontsize = schema::bounded_int($block, 'fontsize', 16, 12, 24);
         $fontfamily = schema::font_family($block);
         $title = format_string($block['title'] ?? '');
-        $content = nl2br(s(format_string($block['content'] ?? '')));
+        $content = nl2br(format_string($block['content'] ?? ''));
         $inner = '';
         if ($title !== '') {
             $inner .= \html_writer::tag('strong', $title, [
@@ -303,10 +303,10 @@ class html_renderer {
             . 'px;line-height:1.5;color:' . $color . ';vertical-align:top;';
         $left = \html_writer::tag('strong', format_string($block['lefttitle'] ?? ''), [
             'style' => 'display:block;margin-bottom:6px;',
-        ]) . nl2br(s(format_string($block['leftcontent'] ?? '')));
+        ]) . nl2br(format_string($block['leftcontent'] ?? ''));
         $right = \html_writer::tag('strong', format_string($block['righttitle'] ?? ''), [
             'style' => 'display:block;margin-bottom:6px;',
-        ]) . nl2br(s(format_string($block['rightcontent'] ?? '')));
+        ]) . nl2br(format_string($block['rightcontent'] ?? ''));
         $row = \html_writer::tag(
             'tr',
             \html_writer::tag('td', $left, ['width' => '50%', 'style' => $cellstyle])
@@ -340,7 +340,7 @@ class html_renderer {
      * @return string
      */
     private static function render_footer(array $block): string {
-        $content = nl2br(s(format_string($block['content'] ?? '')));
+        $content = nl2br(format_string($block['content'] ?? ''));
         $padding = schema::bounded_int($block, 'padding', 22, 8, 48);
         $fontsize = schema::bounded_int($block, 'fontsize', 13, 10, 18);
         $align = schema::align($block, 'center');

@@ -36,15 +36,16 @@ final class tracking_manager_test extends \advanced_testcase {
      * @return array{0:int,1:int}
      */
     private function make_recipient(): array {
-        global $DB, $USER;
+        global $DB;
+        $user = $this->getDataGenerator()->create_user();
         $now = time();
         $campaignid = (int) $DB->insert_record('local_mailwhistle_campaigns', (object) [
             'name' => 'C', 'subject' => 'S', 'bodyhtml' => '<p>b</p>',
-            'status' => 'sending', 'createdby' => (int) $USER->id,
+            'status' => 'sending', 'createdby' => (int) $user->id,
             'timecreated' => $now, 'timemodified' => $now,
         ]);
         $recipientid = (int) $DB->insert_record('local_mailwhistle_recipients', (object) [
-            'campaignid' => $campaignid, 'userid' => (int) $USER->id,
+            'campaignid' => $campaignid, 'userid' => (int) $user->id,
             'email' => 'r@t.co', 'status' => 'sent',
             'attempts' => 1, 'timesent' => $now, 'timemodified' => $now,
         ]);
@@ -179,6 +180,12 @@ final class tracking_manager_test extends \advanced_testcase {
         [$campaignid, $recipientid] = $this->make_recipient();
         $database = $DB;
         $mock = $this->createMock(\moodle_database::class);
+        $transaction = $this->createMock(\moodle_transaction::class);
+        $transaction->method('rollback')->willReturnCallback(static function (\Throwable $exception): void {
+            throw $exception;
+        });
+        $mock->method('start_delegated_transaction')->willReturn($transaction);
+        $mock->method('record_exists_sql')->willReturn(true);
         $mock->method('record_exists')->willReturn(false);
         $mock->method('insert_record')->willThrowException(new \RuntimeException('Private storage failure'));
         $DB = $mock;

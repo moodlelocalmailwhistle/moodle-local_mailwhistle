@@ -284,5 +284,23 @@ function xmldb_local_mailwhistle_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026102301, 'local', 'mailwhistle');
     }
 
+    if ($oldversion < 2026102400) {
+        // Old signed links could recreate events after their recipient was erased.
+        // Remove historical orphans, retaining only events for a live matching subject.
+        $DB->delete_records_select(
+            'local_mailwhistle_tracking',
+            'NOT EXISTS (
+                SELECT 1
+                  FROM {local_mailwhistle_recipients} r
+                  JOIN {local_mailwhistle_campaigns} c ON c.id = r.campaignid
+                  JOIN {user} u ON u.id = r.userid AND u.deleted = 0
+                 WHERE r.id = {local_mailwhistle_tracking}.recipientid
+                   AND r.campaignid = {local_mailwhistle_tracking}.campaignid
+            )'
+        );
+
+        upgrade_plugin_savepoint(true, 2026102400, 'local', 'mailwhistle');
+    }
+
     return true;
 }

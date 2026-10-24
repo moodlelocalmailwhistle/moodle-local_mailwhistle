@@ -32,5 +32,7 @@ $observers = [
     [
         'eventname' => '\core\event\user_deleted',
         'callback'  => '\local_mailwhistle\observer::user_deleted',
+        // Erasure locks must not be released before an enclosing deletion transaction commits.
+        'internal'  => false,
     ],
 ];

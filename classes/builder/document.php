@@ -158,12 +158,37 @@ class document {
             return true;
         }
 
-        if (str_starts_with($url, '{{') && str_ends_with($url, '}}')) {
+        if (self::is_url_placeholder($url)) {
             return true;
         }
 
         $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
         return in_array($scheme, ['http', 'https'], true);
+    }
+
+    /**
+     * Normalise a URL without removing supported URL placeholders.
+     *
+     * @param string $url Submitted URL value.
+     * @return string Safe URL value, or an empty string when invalid.
+     */
+    private static function normalise_url(string $url): string {
+        $url = trim($url);
+        if ($url === '#' || self::is_url_placeholder($url)) {
+            return $url;
+        }
+
+        return self::is_valid_url($url) ? clean_param($url, PARAM_URL) : '';
+    }
+
+    /**
+     * Identify placeholders whose replacement values are URLs.
+     *
+     * @param string $url URL value.
+     * @return bool Whether the value is a supported URL placeholder.
+     */
+    private static function is_url_placeholder(string $url): bool {
+        return (bool) preg_match('/^\{\{\s*(?:siteurl|unsubscribe)\s*\}\}$/iD', $url);
     }
 
     /**
@@ -193,7 +218,7 @@ class document {
 
         foreach (['url', 'url1', 'url2', 'url3'] as $field) {
             if (isset($block[$field])) {
-                $normalised[$field] = clean_param((string) $block[$field], PARAM_URL);
+                $normalised[$field] = self::normalise_url((string) $block[$field]);
             }
         }
 

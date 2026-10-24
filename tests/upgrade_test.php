@@ -89,7 +89,7 @@ final class upgrade_test extends \advanced_testcase {
         $draft = $generator->create_campaign(['status' => 'draft']);
 
         $this->assertTrue(\xmldb_local_mailwhistle_upgrade(2026091101));
-        $this->assertSame(2026102301, (int) get_config('local_mailwhistle', 'version'));
+        $this->assertSame(2026102400, (int) get_config('local_mailwhistle', 'version'));
         $reason = get_string('delivery_legacyuncertain', 'local_mailwhistle');
         foreach ([$failed, $nullerror, $pending] as $original) {
             $updated = $DB->get_record('local_mailwhistle_recipients', ['id' => $original->id], '*', MUST_EXIST);
@@ -129,6 +129,55 @@ final class upgrade_test extends \advanced_testcase {
         $this->assertTrue(\xmldb_local_mailwhistle_upgrade(2026091101));
         $this->assertEquals($recipients, $DB->get_records('local_mailwhistle_recipients'));
         $this->assertEquals($campaigns, $DB->get_records('local_mailwhistle_campaigns'));
+    }
+
+    /**
+     * Historical orphan tracking is removed without changing valid engagement.
+     */
+    public function test_upgrade_removes_only_orphan_tracking_events(): void {
+        global $DB;
+
+        $generator = $this->getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $campaign = $generator->create_campaign(['status' => 'sending']);
+        $valid = $this->recipient($campaign->id, 'uncertain');
+        $missingrecipient = $this->recipient($campaign->id, 'sent');
+        $missinguser = $this->recipient($campaign->id, 'sent');
+        $deleteduser = $this->recipient($campaign->id, 'sent');
+        $othercampaign = $generator->create_campaign();
+        $missingcampaign = $this->recipient($othercampaign->id, 'sent');
+        $mismatchcampaign = $generator->create_campaign();
+        foreach ([$valid, $missingrecipient, $missinguser, $deleteduser, $missingcampaign] as $recipient) {
+            $DB->insert_record('local_mailwhistle_tracking', (object) [
+                'campaignid' => $recipient->campaignid,
+                'recipientid' => $recipient->id,
+                'eventtype' => 'click',
+                'targethash' => sha1($recipient->email),
+                'targeturl' => 'https://example.com/?email=' . $recipient->email,
+                'timecreated' => 1700000000,
+            ]);
+        }
+        $DB->insert_record('local_mailwhistle_tracking', (object) [
+            'campaignid' => $mismatchcampaign->id,
+            'recipientid' => $valid->id,
+            'eventtype' => 'open',
+            'targethash' => '',
+            'timecreated' => 1700000000,
+        ]);
+        $DB->delete_records('local_mailwhistle_recipients', ['id' => $missingrecipient->id]);
+        $DB->delete_records('user', ['id' => $missinguser->userid]);
+        $DB->set_field('user', 'deleted', 1, ['id' => $deleteduser->userid]);
+        $DB->delete_records('local_mailwhistle_campaigns', ['id' => $othercampaign->id]);
+        $expected = $DB->get_records('local_mailwhistle_tracking', [
+            'campaignid' => $campaign->id, 'recipientid' => $valid->id,
+        ]);
+
+        set_config('version', 2026102301, 'local_mailwhistle');
+        $this->assertTrue(\xmldb_local_mailwhistle_upgrade(2026102301));
+        $this->assertEquals($expected, $DB->get_records('local_mailwhistle_tracking'));
+        $this->assertSame(2026102400, (int) get_config('local_mailwhistle', 'version'));
+        set_config('version', 2026102301, 'local_mailwhistle');
+        $this->assertTrue(\xmldb_local_mailwhistle_upgrade(2026102301));
+        $this->assertEquals($expected, $DB->get_records('local_mailwhistle_tracking'));
     }
 
     /**

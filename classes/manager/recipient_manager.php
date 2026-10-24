@@ -48,6 +48,53 @@ class recipient_manager {
     public const STATUS_UNCERTAIN = 'uncertain';
 
     /**
+     * Erase selected recipient snapshots and their dependent personal data.
+     *
+     * Each recipient is removed under the same lock used by tracking writes.
+     * Erasure waits for an in-flight writer; later writers see no recipient.
+     * A failed deletion rolls back its child rows and remains retryable.
+     * Callers must not hold a tracking event or recipient lock.
+     *
+     * @param string $select Trusted recipient selection SQL, with bound parameters.
+     * @param array $params Selection parameters.
+     * @return void
+     */
+    public static function delete_snapshots(string $select, array $params = []): void {
+        global $DB;
+
+        // Read the primary so a lagging replica cannot omit newly created snapshots.
+        // End this transaction before taking locks; each erasure must commit before unlocking.
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            $recipientids = $DB->get_fieldset_select('local_mailwhistle_recipients', 'id', $select, $params);
+            $transaction->allow_commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollback($exception);
+        }
+
+        $factory = \core\lock\lock_config::get_lock_factory('local_mailwhistle_tracking');
+        foreach ($recipientids as $recipientid) {
+            $lock = $factory->get_lock('recipient:' . $recipientid, 10);
+            if (!$lock) {
+                throw new \moodle_exception('locktimeout');
+            }
+            try {
+                $transaction = $DB->start_delegated_transaction();
+                try {
+                    $DB->delete_records('local_mailwhistle_tracking', ['recipientid' => $recipientid]);
+                    $DB->delete_records('local_mailwhistle_sendlogs', ['recipientid' => $recipientid]);
+                    $DB->delete_records('local_mailwhistle_recipients', ['id' => $recipientid]);
+                    $transaction->allow_commit();
+                } catch (\Throwable $exception) {
+                    $transaction->rollback($exception);
+                }
+            } finally {
+                $lock->release();
+            }
+        }
+    }
+
+    /**
      * Resolve the users a campaign should be sent to.
      *
      * Starts from the users in the campaign's audience tags, then removes
