@@ -46,17 +46,25 @@
 }}
 <div class="local-mailwhistle-template-fullpreview">
     <div class="local-mailwhistle-preview-toolbar">
-        <a href="{{listurl}}" class="btn btn-secondary me-1">{{#str}}backtotemplates, local_mailwhistle{{/str}}</a>
+        <a href="{{listurl}}" class="btn btn-secondary me-1">
+            {{#pix}}i/return, core{{/pix}} {{#str}}backtotemplates, local_mailwhistle{{/str}}
+        </a>
         {{#canmanage}}
-            <a href="{{editurl}}" class="btn btn-primary me-1">{{#str}}template_edit, local_mailwhistle{{/str}}</a>
+            <a href="{{editurl}}" class="btn btn-primary me-1">
+                {{#pix}}t/edit, core{{/pix}} {{#str}}template_edit, local_mailwhistle{{/str}}
+            </a>
             <form method="post" action="{{actionurl}}" class="d-inline-block m-0 me-1">
                 <input type="hidden" name="tab" value="templates">
                 <input type="hidden" name="action" value="duplicate">
                 <input type="hidden" name="id" value="{{id}}">
                 <input type="hidden" name="sesskey" value="{{sesskey}}">
-                <button type="submit" class="btn btn-secondary">{{#str}}template_duplicate, local_mailwhistle{{/str}}</button>
+                <button type="submit" class="btn btn-secondary">
+                    {{#pix}}t/copy, core{{/pix}} {{#str}}template_duplicate, local_mailwhistle{{/str}}
+                </button>
             </form>
-            <a href="{{exporturl}}" class="btn btn-secondary">{{#str}}template_export, local_mailwhistle{{/str}}</a>
+            <a href="{{exporturl}}" class="btn btn-secondary">
+                {{#pix}}t/download, core{{/pix}} {{#str}}template_export, local_mailwhistle{{/str}}
+            </a>
         {{/canmanage}}
     </div>
     <h3>{{{name}}}</h3>

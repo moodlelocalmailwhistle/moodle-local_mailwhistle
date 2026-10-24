@@ -36,6 +36,7 @@ $token = optional_param('t', '', PARAM_RAW);
 
 $verified = \local_mailwhistle\manager\tracking_manager::verify_open_token($token);
 if ($verified !== null) {
+    // Recording is best effort so an analytics failure still returns the pixel below.
     \local_mailwhistle\manager\tracking_manager::record_open(
         $verified->campaignid,
         $verified->recipientid

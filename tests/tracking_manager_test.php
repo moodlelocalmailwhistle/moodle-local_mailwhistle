@@ -144,4 +144,54 @@ final class tracking_manager_test extends \advanced_testcase {
         // Exactly one tracking pixel injected.
         $this->assertSame(1, substr_count($out, 'pixel.php'));
     }
+
+    /**
+     * A simultaneous request leaves recording to the current event lock holder.
+     */
+    public function test_recording_does_not_wait_for_another_request(): void {
+        global $CFG, $DB;
+
+        $this->resetAfterTest();
+        $CFG->lock_factory = \core\lock\file_lock_factory::class;
+        [$campaignid, $recipientid] = $this->make_recipient();
+        $factory = \core\lock\lock_config::get_lock_factory('local_mailwhistle_tracking');
+        $lock = $factory->get_lock("$campaignid:$recipientid:open:", 0);
+        $this->assertNotFalse($lock);
+        try {
+            $this->assertFalse(tracking_manager::record_open($campaignid, $recipientid));
+            $this->assertSame(0, $DB->count_records('local_mailwhistle_tracking'));
+        } finally {
+            $lock->release();
+        }
+        $this->assertTrue(tracking_manager::record_open($campaignid, $recipientid));
+        $this->assertTrue(tracking_manager::record_open($campaignid, $recipientid));
+        $this->assertSame(1, $DB->count_records('local_mailwhistle_tracking'));
+    }
+
+    /**
+     * Analytics storage failures return normally and do not leak private errors.
+     */
+    public function test_recording_survives_storage_failure_and_releases_lock(): void {
+        global $CFG, $DB;
+
+        $this->resetAfterTest();
+        $CFG->lock_factory = \core\lock\file_lock_factory::class;
+        [$campaignid, $recipientid] = $this->make_recipient();
+        $database = $DB;
+        $mock = $this->createMock(\moodle_database::class);
+        $mock->method('record_exists')->willReturn(false);
+        $mock->method('insert_record')->willThrowException(new \RuntimeException('Private storage failure'));
+        $DB = $mock;
+        try {
+            $this->assertFalse(tracking_manager::record_click($campaignid, $recipientid, 'https://example.com'));
+            $this->assertDebuggingCalled('Mail Whistle tracking could not record an event (RuntimeException).');
+            $this->assertFalse(tracking_manager::record_open($campaignid, $recipientid));
+            $this->assertDebuggingCalled('Mail Whistle tracking could not record an event (RuntimeException).');
+        } finally {
+            $DB = $database;
+        }
+        $this->assertTrue(tracking_manager::record_click($campaignid, $recipientid, 'https://example.com'));
+        $this->assertTrue(tracking_manager::record_open($campaignid, $recipientid));
+        $this->assertSame(2, $DB->count_records('local_mailwhistle_tracking'));
+    }
 }

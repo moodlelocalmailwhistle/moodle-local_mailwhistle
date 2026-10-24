@@ -5,7 +5,8 @@ Feature: Mark a draft campaign as complete
   I need to mark a fully-prepared draft campaign as ready
 
   Background:
-    Given the following "users" exist:
+    Given campaign email delivery is enabled
+    And the following "users" exist:
       | username | firstname | lastname | email             |
       | manager1 | Man       | Ager     | manager1@test.com |
     And the following "local_mailwhistle > tags" exist:

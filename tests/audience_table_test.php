@@ -233,4 +233,20 @@ final class audience_table_test extends \advanced_testcase {
         $map = audience_table::fetch_tagmap([]);
         $this->assertSame([], $map);
     }
+
+    /**
+     * Suspended accounts remain selectable but are clearly marked as unable to receive mail.
+     */
+    public function test_suspended_account_badge(): void {
+        global $CFG;
+        require_once($CFG->libdir . '/tablelib.php');
+        $this->resetAfterTest();
+        $table = new audience_table('suspended-badge', new \moodle_url('/local/mailwhistle/index.php'), [], true);
+        $active = $this->getDataGenerator()->create_user();
+        $suspended = $this->getDataGenerator()->create_user(['suspended' => 1]);
+        $label = get_string('audience_suspendedbadge', 'local_mailwhistle');
+        $this->assertStringContainsString($label, $table->col_fullname($suspended));
+        $this->assertStringNotContainsString($label, $table->col_fullname($active));
+        $this->assertStringContainsString('type="checkbox"', $table->col_select($suspended));
+    }
 }

@@ -310,4 +310,25 @@ final class campaign_report_test extends \advanced_testcase {
         $this->assertSame(0, $outer->getElementsByTagName('script')->length);
         $this->assertSame(0, $DB->count_records('local_mailwhistle_tracking'));
     }
+
+    /**
+     * Detail cards separate uncertain activity and show diagnostics only while sending.
+     */
+    public function test_detail_separates_uncertain_activity_and_shows_sending_progress(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $generator = $this->getDataGenerator()->get_plugin_generator('local_mailwhistle');
+        $campaign = $generator->create_campaign(['status' => 'sending']);
+        foreach (['sent', 'uncertain'] as $status) {
+            $recipient = $this->make_recipient($campaign->id, ['status' => $status]);
+            \local_mailwhistle\manager\tracking_manager::record_open($campaign->id, $recipient->id);
+            \local_mailwhistle\manager\tracking_manager::record_click($campaign->id, $recipient->id, 'https://example.com');
+        }
+        $html = $this->render_report($campaign->id);
+        $this->assertStringContainsString('100% open rate', $html);
+        $this->assertStringContainsString(get_string('stat_uncertainopens', 'local_mailwhistle', 1), $html);
+        $this->assertStringContainsString(get_string('stat_uncertainclicks', 'local_mailwhistle', 1), $html);
+        $this->assertStringContainsString(get_string('delivery_status', 'local_mailwhistle'), $html);
+        $this->assertStringContainsString(get_string('delivery_state_missing', 'local_mailwhistle'), $html);
+    }
 }

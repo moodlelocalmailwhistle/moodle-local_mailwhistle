@@ -43,6 +43,10 @@ final class campaign_duplicate_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
+        global $CFG, $DB;
+        $CFG->noemailever = false;
+        $DB->set_field('message_processors', 'enabled', 1, ['name' => 'email']);
+        $this->redirectEmails();
         $this->preventResetByRollback();
         $this->setAdminUser();
     }

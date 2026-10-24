@@ -94,7 +94,7 @@ class index {
         }
 
         $PAGE->set_url(new \moodle_url('/local/mailwhistle/index.php', $params));
-        $PAGE->set_pagelayout('standard');
+        $PAGE->set_pagelayout('admin');
         $PAGE->set_title(get_string('pluginname', 'local_mailwhistle'));
         $PAGE->set_heading(get_string('pluginname', 'local_mailwhistle'));
         $PAGE->requires->css(new \moodle_url('/local/mailwhistle/styles.css'));

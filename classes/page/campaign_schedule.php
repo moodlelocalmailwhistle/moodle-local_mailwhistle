@@ -45,7 +45,7 @@ class campaign_schedule {
         $returnurl = new \moodle_url('/local/mailwhistle/index.php', ['tab' => 'send']);
         $PAGE->set_context($context);
         $PAGE->set_url($url);
-        $PAGE->set_pagelayout('standard');
+        $PAGE->set_pagelayout('admin');
         $PAGE->set_title(get_string('schedulecampaign', 'local_mailwhistle'));
         $PAGE->set_heading(get_string('pluginname', 'local_mailwhistle'));
         $PAGE->navbar->add(get_string('campaigns', 'local_mailwhistle'), $returnurl);

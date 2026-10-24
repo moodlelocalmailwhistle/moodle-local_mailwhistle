@@ -1,0 +1,95 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_mailwhistle/delivery_status
+
+    Recorded delivery activity and background task status.
+
+    Context variables required for this template:
+    * campaign - Whether campaign-specific activity is available.
+    * summary - Description of the campaign queue state.
+    * warning - Whether the campaign may need attention.
+    * activity - Label and value pairs describing campaign activity.
+    * taskwarning - Whether any background task needs attention.
+    * tasks - Task names, state, warning, lastrun and nextrun.
+    * taskurl - Task administration URL, only for site administrators.
+    * logurl - Task log URL, only for site administrators.
+
+    Example context (json):
+    {
+        "campaign": true,
+        "summary": "Waiting for a background worker.",
+        "warning": false,
+        "activity": [{"label": "Queued at", "value": "24 October 2026, 10:00"}],
+        "tasks": [{"name": "Dispatch scheduled campaigns", "state": "Scheduled", "warning": false,
+            "lastrun": "24 October 2026, 10:00", "nextrun": "24 October 2026, 10:01"}],
+        "taskurl": "/admin/tool/task/scheduledtasks.php",
+        "logurl": "/admin/tasklogs.php"
+    }
+}}
+<section class="card mb-4 local-mailwhistle-delivery-status" aria-label="{{#str}}delivery_status, local_mailwhistle{{/str}}">
+    <div class="card-body">
+        <h3 class="h5">{{#str}}delivery_status, local_mailwhistle{{/str}}</h3>
+        {{#campaign}}
+            <p class="{{#warning}}alert alert-warning{{/warning}}">{{summary}}</p>
+            <dl class="row mb-2">
+                {{#activity}}
+                    <dt class="col-sm-4">{{label}}</dt>
+                    <dd class="col-sm-8">{{value}}</dd>
+                {{/activity}}
+            </dl>
+        {{/campaign}}
+        {{#taskwarning}}
+            <p class="alert alert-warning">{{#str}}delivery_tasks_warning, local_mailwhistle{{/str}}</p>
+        {{/taskwarning}}
+        <details>
+            <summary>{{#str}}delivery_tasks, local_mailwhistle{{/str}}</summary>
+            <div class="table-responsive mt-2">
+                <table class="table">
+                    <caption class="accesshide">{{#str}}delivery_tasks, local_mailwhistle{{/str}}</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">{{#str}}delivery_taskname, local_mailwhistle{{/str}}</th>
+                            <th scope="col">{{#str}}col_status, local_mailwhistle{{/str}}</th>
+                            <th scope="col">{{#str}}delivery_lastrun, local_mailwhistle{{/str}}</th>
+                            <th scope="col">{{#str}}delivery_nextrun, local_mailwhistle{{/str}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#tasks}}
+                            <tr>
+                                <th scope="row">{{name}}</th>
+                                <td><span class="badge {{#warning}}bg-warning text-dark{{/warning}}{{^warning}}bg-light text-dark{{/warning}}">{{state}}</span></td>
+                                <td>{{lastrun}}</td>
+                                <td>{{nextrun}}</td>
+                            </tr>
+                        {{/tasks}}
+                    </tbody>
+                </table>
+            </div>
+            <p class="small">{{#str}}delivery_tasks_help, local_mailwhistle{{/str}}</p>
+            {{#taskurl}}
+                <a class="btn btn-secondary btn-sm" href="{{taskurl}}">{{#str}}delivery_managetasks, local_mailwhistle{{/str}}</a>
+                <a class="btn btn-secondary btn-sm" href="{{logurl}}">{{#str}}delivery_tasklogs, local_mailwhistle{{/str}}</a>
+            {{/taskurl}}
+            {{^taskurl}}
+                <p class="small mb-0">{{#str}}delivery_contactadmin, local_mailwhistle{{/str}}</p>
+            {{/taskurl}}
+        </details>
+        <p class="small text-muted mt-2 mb-0">{{#str}}delivery_refresh_help, local_mailwhistle{{/str}}</p>
+    </div>
+</section>

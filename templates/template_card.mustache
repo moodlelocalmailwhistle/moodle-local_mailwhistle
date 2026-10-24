@@ -85,7 +85,9 @@
         </div>
     </div>
     <div class="local-mailwhistle-template-actions">
-        <a href="{{previewurl}}" class="btn btn-primary">{{#str}}template_preview, local_mailwhistle{{/str}}</a>
+        <a href="{{previewurl}}" class="btn btn-primary">
+            {{#pix}}t/preview, core{{/pix}} {{#str}}template_preview, local_mailwhistle{{/str}}
+        </a>
         {{#canmanage}}
             <div class="dropdown local-mailwhistle-template-actions-menu">
                 <button class="btn btn-secondary dropdown-toggle" type="button"
@@ -94,22 +96,30 @@
                     {{#str}}template_actions, local_mailwhistle{{/str}}
                 </button>
                 <div class="dropdown-menu dropdown-menu-right">
-                    <a href="{{editurl}}" class="dropdown-item">{{#str}}template_edit, local_mailwhistle{{/str}}</a>
+                    <a href="{{editurl}}" class="dropdown-item">
+                        {{#pix}}t/edit, core{{/pix}} {{#str}}template_edit, local_mailwhistle{{/str}}
+                    </a>
                     <form method="post" action="{{actionurl}}" class="m-0">
                         <input type="hidden" name="tab" value="templates">
                         <input type="hidden" name="action" value="duplicate">
                         <input type="hidden" name="id" value="{{id}}">
                         <input type="hidden" name="sesskey" value="{{sesskey}}">
-                        <button type="submit" class="dropdown-item">{{#str}}template_duplicate, local_mailwhistle{{/str}}</button>
+                        <button type="submit" class="dropdown-item">
+                            {{#pix}}t/copy, core{{/pix}} {{#str}}template_duplicate, local_mailwhistle{{/str}}
+                        </button>
                     </form>
-                    <a href="{{exporturl}}" class="dropdown-item">{{#str}}template_export, local_mailwhistle{{/str}}</a>
+                    <a href="{{exporturl}}" class="dropdown-item">
+                        {{#pix}}t/download, core{{/pix}} {{#str}}template_export, local_mailwhistle{{/str}}
+                    </a>
                     {{^archived}}
                         <form method="post" action="{{actionurl}}" class="m-0">
                             <input type="hidden" name="tab" value="templates">
                             <input type="hidden" name="action" value="archive">
                             <input type="hidden" name="id" value="{{id}}">
                             <input type="hidden" name="sesskey" value="{{sesskey}}">
-                            <button type="submit" class="dropdown-item">{{#str}}template_archive, local_mailwhistle{{/str}}</button>
+                            <button type="submit" class="dropdown-item">
+                                {{#pix}}i/hide, core{{/pix}} {{#str}}template_archive, local_mailwhistle{{/str}}
+                            </button>
                         </form>
                     {{/archived}}
                     {{#archived}}
@@ -118,11 +128,15 @@
                             <input type="hidden" name="action" value="restore">
                             <input type="hidden" name="id" value="{{id}}">
                             <input type="hidden" name="sesskey" value="{{sesskey}}">
-                            <button type="submit" class="dropdown-item">{{#str}}template_restore, local_mailwhistle{{/str}}</button>
+                            <button type="submit" class="dropdown-item">
+                                {{#pix}}t/restore, core{{/pix}} {{#str}}template_restore, local_mailwhistle{{/str}}
+                            </button>
                         </form>
                     {{/archived}}
                     {{#candelete}}
-                        <a href="{{deleteurl}}" class="dropdown-item text-danger">{{#str}}delete, core{{/str}}</a>
+                        <a href="{{deleteurl}}" class="dropdown-item text-danger">
+                            {{#pix}}t/delete, core{{/pix}} {{#str}}delete, core{{/str}}
+                        </a>
                     {{/candelete}}
                 </div>
             </div>
