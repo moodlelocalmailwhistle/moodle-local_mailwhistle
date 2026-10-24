@@ -306,7 +306,7 @@ class audience_table extends \table_sql {
         if (!empty($row->suspended)) {
             $name .= \html_writer::div(\html_writer::span(
                 get_string('audience_suspendedbadge', 'local_mailwhistle'),
-                'badge badge-warning bg-warning text-dark'
+                'badge bg-warning text-dark'
             ));
         }
         return $name;
