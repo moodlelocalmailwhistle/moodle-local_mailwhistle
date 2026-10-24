@@ -82,7 +82,7 @@ class delivery_status implements renderable, templatable {
         }
         if (has_capability('moodle/site:config', \context_system::instance())) {
             $data['taskurl'] = (new \moodle_url('/admin/tool/task/scheduledtasks.php'))->out(false);
-            $data['logurl'] = (new \moodle_url('/admin/tool/task/log.php'))->out(false);
+            $data['logurl'] = (new \moodle_url('/admin/tasklogs.php'))->out(false);
         }
         return $data;
     }

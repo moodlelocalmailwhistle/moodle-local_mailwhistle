@@ -58,3 +58,5 @@ Feature: Understand recipient eligibility and delivery progress
     Then I should see "Last run"
     And I should see "Manage scheduled tasks"
     And I should see "View task logs"
+    When I follow "View task logs"
+    Then I should see "Task logs"
