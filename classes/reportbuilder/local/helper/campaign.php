@@ -102,47 +102,23 @@ class campaign {
             return '';
         }
 
-        $actions = '';
         $scheduleurl = new \moodle_url('/local/mailwhistle/campaign_schedule.php', ['campaignid' => $id]);
-        if (
-            in_array($row->status, [
+        $viewschedule = in_array($row->status, [
             \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULED,
             \local_mailwhistle\manager\campaign_manager::STATUS_SCHEDULE_FAILED,
-            ], true)
-        ) {
-            $actions .= \html_writer::link(
-                $scheduleurl,
-                get_string('viewschedule', 'local_mailwhistle'),
-                ['class' => 'btn btn-secondary']
-            );
-        }
-        if ($row->status === \local_mailwhistle\manager\campaign_manager::STATUS_READY) {
-            $sendurl = new \moodle_url('/local/mailwhistle/index.php', [
-                'tab' => 'send',
-                'action' => 'sendnow',
-                'campaignid' => $id,
-            ]);
-            $actions .= $OUTPUT->single_button($sendurl, get_string('sendnow', 'local_mailwhistle'), 'post') .
-                \html_writer::link(
-                    $scheduleurl,
-                    get_string('schedulecampaign', 'local_mailwhistle'),
-                    ['class' => 'btn btn-secondary']
-                );
-        }
-
-        $copyurl = new \moodle_url('/local/mailwhistle/index.php', [
-            'tab' => 'send',
-            'action' => 'duplicatecampaign',
-            'campaignid' => $id,
-        ]);
+        ], true);
+        $cansend = $row->status === \local_mailwhistle\manager\campaign_manager::STATUS_READY;
         $name = trim((string) ($row->name ?? '')) !== '' ? $row->name : get_string('untitledcampaign', 'local_mailwhistle');
-        $actions .= $OUTPUT->single_button($copyurl, get_string('duplicatecampaign', 'local_mailwhistle'), 'post', [
-            'aria-label' => get_string('duplicatecampaignlabel', 'local_mailwhistle', clean_param($name, PARAM_TEXT)),
+        return $OUTPUT->render_from_template('local_mailwhistle/campaign_actions', [
+            'actionurl' => (new \moodle_url('/local/mailwhistle/index.php'))->out(false),
+            'campaignid' => $id,
+            'sesskey' => sesskey(),
+            'cansend' => $cansend,
+            'hasschedule' => $viewschedule || $cansend,
+            'scheduleurl' => $scheduleurl->out(false),
+            'schedulelabel' => get_string($viewschedule ? 'viewschedule' : 'schedulecampaign', 'local_mailwhistle'),
+            'duplicatelabel' => get_string('duplicatecampaignlabel', 'local_mailwhistle', clean_param($name, PARAM_TEXT)),
         ]);
-        return \html_writer::div(
-            $actions,
-            'd-flex flex-wrap align-items-center gap-2'
-        );
     }
 
     /**
