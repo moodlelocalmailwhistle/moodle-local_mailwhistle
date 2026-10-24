@@ -140,7 +140,14 @@ class campaign_schedule {
                 );
             }
         }
-        echo \html_writer::div(\html_writer::link($returnurl, get_string('backtocampaigns', 'local_mailwhistle')), 'mt-3');
+        echo \html_writer::div(
+            \html_writer::link(
+                $returnurl,
+                get_string('backtocampaigns', 'local_mailwhistle'),
+                ['class' => 'btn btn-secondary']
+            ),
+            'mt-3'
+        );
         echo $OUTPUT->footer();
     }
 
