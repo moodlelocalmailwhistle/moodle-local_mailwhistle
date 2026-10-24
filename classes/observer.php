@@ -16,6 +16,8 @@
 
 namespace local_mailwhistle;
 
+use local_mailwhistle\manager\recipient_manager;
+
 /**
  * Event observer for the local_mailwhistle plugin.
  *
@@ -40,17 +42,7 @@ class observer {
 
         $userid = (int) $event->objectid;
 
-        $DB->delete_records_select(
-            'local_mailwhistle_tracking',
-            'recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid = :userid)',
-            ['userid' => $userid]
-        );
-        $DB->delete_records_select(
-            'local_mailwhistle_sendlogs',
-            'recipientid IN (SELECT id FROM {local_mailwhistle_recipients} WHERE userid = :userid)',
-            ['userid' => $userid]
-        );
-        $DB->delete_records('local_mailwhistle_recipients', ['userid' => $userid]);
+        recipient_manager::delete_snapshots('userid = :userid', ['userid' => $userid]);
         $DB->delete_records('local_mailwhistle_unsubscribes', ['userid' => $userid]);
         $DB->delete_records('local_mailwhistle_tag_assign', ['userid' => $userid]);
         $DB->set_field('local_mailwhistle_tag_assign', 'usermodified', 0, ['usermodified' => $userid]);

@@ -17,6 +17,7 @@
 namespace local_mailwhistle;
 
 use local_mailwhistle\manager\campaign_manager;
+use local_mailwhistle\manager\placeholder_manager;
 use local_mailwhistle\manager\template_manager;
 use local_mailwhistle\builder\document;
 use local_mailwhistle\builder\html_renderer;
@@ -230,6 +231,44 @@ final class template_manager_test extends \advanced_testcase {
         $this->assertNotNull($template);
         $this->assertStringContainsString('hero.jpg', (string) $template->bodyhtml);
         $this->assertStringContainsString('local_mailwhistle/resources', (string) $template->bodyhtml);
+    }
+
+    /**
+     * URL placeholders survive create/update and resolve in the stored email HTML.
+     */
+    public function test_builder_url_placeholders_survive_save_and_personalisation(): void {
+        global $CFG;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $id = template_manager::create((object) [
+            'name' => 'Personalised links',
+            'editormode' => 'builder',
+            'builderjson' => json_encode(['blocks' => [
+                ['type' => 'button', 'url' => '{{unsubscribe}}'],
+                ['type' => 'social', 'url1' => '{{siteurl}}', 'url2' => 'https://example.com/?a=1&b=2', 'url3' => '#'],
+                ['type' => 'text', 'content' => "Research & Development\nSecond line"],
+            ]]),
+        ]);
+        $template = template_manager::get($id);
+        $this->assertStringContainsString('href="{{unsubscribe}}"', $template->bodyhtml);
+        $this->assertStringContainsString('href="{{siteurl}}"', $template->bodyhtml);
+        $this->assertStringContainsString('Research &amp; Development<br', $template->bodyhtml);
+
+        template_manager::update($id, $template);
+        $updated = template_manager::get($id);
+        $this->assertSame($template->builderjson, $updated->builderjson);
+        $this->assertSame($template->bodyhtml, $updated->bodyhtml);
+        $blocks = json_decode($updated->builderjson, true)['blocks'];
+        $this->assertSame('{{unsubscribe}}', $blocks[0]['url']);
+        $this->assertSame('{{siteurl}}', $blocks[1]['url1']);
+
+        $recipient = (object) ['unsubscribeurl' => 'https://example.com/unsubscribe.php?token=sample'];
+        $html = placeholder_manager::apply($updated->bodyhtml, $recipient);
+        $this->assertStringContainsString('href="' . s($recipient->unsubscribeurl) . '"', $html);
+        $this->assertStringContainsString('href="' . s(rtrim($CFG->wwwroot, '/')) . '"', $html);
+        $this->assertStringContainsString('href="https://example.com/?a=1&amp;b=2"', $html);
+        $this->assertStringContainsString('href="#"', $html);
+        $this->assertStringNotContainsString('{{', $html);
     }
 
     /**

@@ -141,6 +141,8 @@ The plugin adds a **Mail Whistle** category under site administration, with Camp
 
 When upgrading from a version before 1.5.0, finish any ongoing campaign sends and stop old cron workers before replacing the code. The upgrade marks historical failed deliveries, and any remaining recipients of an unfinished send, as Uncertain because the old sender could not establish whether email had already been accepted. It preserves the original error details and prevents those recipients from being sent again by recovery or retry. Draft and ready campaigns are unchanged.
 
+Version 1.5.1 removes orphaned tracking events whose recipient, campaign or user no longer exists, including events recreated after a privacy deletion. Valid historical engagement is preserved. Links in previously sent emails still redirect after erasure, but no longer record engagement for the erased recipient.
+
 ## Capabilities
 
 All capabilities are system-context. Default archetype: **manager**.

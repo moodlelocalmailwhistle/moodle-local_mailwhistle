@@ -31,6 +31,15 @@ use local_mailwhistle\manager\tag_manager;
  */
 final class observer_test extends \advanced_testcase {
     /**
+     * External observers run after the actual database commit.
+     */
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        $this->preventResetByRollback();
+    }
+
+    /**
      * Test: deleting a user via delete_user() triggers the user_deleted event,
      * which the observer catches to remove that user's tag-assign rows.
      */

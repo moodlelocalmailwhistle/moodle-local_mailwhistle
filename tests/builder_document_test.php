@@ -57,6 +57,88 @@ final class builder_document_test extends \advanced_testcase {
     }
 
     /**
+     * Valid URL values survive every builder URL field and repeated normalisation.
+     *
+     * @dataProvider valid_url_provider
+     * @param string $url Submitted URL.
+     * @param string $expected Normalised URL.
+     */
+    public function test_normalise_preserves_valid_urls(string $url, string $expected): void {
+        $this->resetAfterTest();
+        $json = json_encode(['blocks' => [
+            ['type' => 'button', 'url' => $url],
+            ['type' => 'social', 'url1' => $url, 'url2' => $url, 'url3' => $url],
+        ]]);
+
+        $this->assertEmpty(document::validate_json($json));
+        $normalised = document::normalise_json($json);
+        $blocks = json_decode($normalised, true)['blocks'];
+        $this->assertSame($expected, $blocks[0]['url']);
+        foreach (['url1', 'url2', 'url3'] as $field) {
+            $this->assertSame($expected, $blocks[1][$field]);
+        }
+        $this->assertSame($normalised, document::normalise_json($normalised));
+    }
+
+    /**
+     * URL values accepted by the builder.
+     *
+     * @return array
+     */
+    public static function valid_url_provider(): array {
+        return [
+            'site placeholder' => ['{{siteurl}}', '{{siteurl}}'],
+            'unsubscribe placeholder' => ['{{unsubscribe}}', '{{unsubscribe}}'],
+            'placeholder spacing and case' => [' {{ SITEURL }} ', '{{ SITEURL }}'],
+            'http' => ['http://example.com/news', 'http://example.com/news'],
+            'https query' => ['https://example.com/?a=1&b=2', 'https://example.com/?a=1&b=2'],
+            'trimmed https' => [' https://example.com/news ', 'https://example.com/news'],
+            'hash' => ['#', '#'],
+            'empty' => ['', ''],
+        ];
+    }
+
+    /**
+     * Normalisation cannot introduce unsafe URLs or non-URL placeholder values.
+     *
+     * @dataProvider invalid_url_provider
+     * @param string $url Rejected URL.
+     */
+    public function test_unsafe_urls_are_rejected_and_removed(string $url): void {
+        $this->resetAfterTest();
+        $json = json_encode(['blocks' => [
+            ['type' => 'button', 'url' => $url],
+            ['type' => 'social', 'url1' => $url, 'url2' => $url, 'url3' => $url],
+        ]]);
+
+        $this->assertFalse(document::is_valid_url($url));
+        $this->assertNotEmpty(document::validate_json($json));
+        $blocks = json_decode(document::normalise_json($json), true)['blocks'];
+        $this->assertSame('', $blocks[0]['url']);
+        foreach (['url1', 'url2', 'url3'] as $field) {
+            $this->assertSame('', $blocks[1][$field]);
+        }
+    }
+
+    /**
+     * Unsafe schemes and values which cannot produce supported URL placeholders.
+     *
+     * @return array
+     */
+    public static function invalid_url_provider(): array {
+        return [
+            'javascript' => ['javascript:alert(1)'],
+            'data' => ['data:text/html,<script>alert(1)</script>'],
+            'ftp' => ['ftp://example.com'],
+            'protocol relative' => ['//example.com'],
+            'recipient text' => ['{{firstname}}'],
+            'unknown token' => ['{{unknown}}'],
+            'malformed token' => ['{{siteurl" onmouseover="alert(1)}}'],
+            'multiple tokens' => ['{{siteurl}}{{unsubscribe}}'],
+        ];
+    }
+
+    /**
      * Invalid JSON is replaced with an empty document; valid blocks are kept.
      */
     public function test_normalise_and_validate_json(): void {
@@ -128,6 +210,93 @@ final class builder_document_test extends \advanced_testcase {
         $this->assertStringContainsString('hero.jpg', $html);
         $this->assertStringContainsString('local_mailwhistle/resources', $html);
         $this->assertStringContainsString('alt="Hero"', $html);
+    }
+
+    /**
+     * Multiline blocks render text and existing entities once without activating encoded HTML.
+     *
+     * @dataProvider multiline_block_provider
+     * @param string $type Block type.
+     * @param string $field Text field.
+     */
+    public function test_multiline_text_is_escaped_once(string $type, string $field): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $content = "Research & Development\nPartners &amp; friends\n"
+            . '&lt;strong&gt;Plain &quot;quoted&quot; text&lt;/strong&gt;';
+        $json = json_encode(['blocks' => [['type' => $type, $field => $content]]]);
+        $html = html_renderer::render(document::normalise_json($json));
+
+        $this->assertStringContainsString('Research &amp; Development<br', $html);
+        $this->assertStringNotContainsString('&amp;amp;', $html);
+        $document = new \DOMDocument();
+        $document->loadHTML($html);
+        $this->assertStringContainsString(
+            "Research & Development\nPartners & friends\n<strong>Plain \"quoted\" text</strong>",
+            $document->textContent
+        );
+        $xpath = new \DOMXPath($document);
+        $this->assertSame(0, $xpath->query('//strong[contains(., "Plain")]')->length);
+        $this->assertSame(2, $document->getElementsByTagName('br')->length);
+    }
+
+    /**
+     * Submitted HTML cannot become active markup in multiline block text.
+     *
+     * @dataProvider multiline_block_provider
+     * @param string $type Block type.
+     * @param string $field Text field.
+     */
+    public function test_multiline_text_removes_submitted_html(string $type, string $field): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $content = '<img src="x" onerror="alert(1)"><script>alert(1)</script><strong>Safe text</strong>';
+        $json = json_encode(['blocks' => [['type' => $type, $field => $content]]]);
+        $html = html_renderer::render(document::normalise_json($json));
+
+        $this->assertStringContainsString('Safe text', $html);
+        $this->assertStringNotContainsString('<img', $html);
+        $this->assertStringNotContainsString('<script', $html);
+        $this->assertStringNotContainsString('<strong>Safe text', $html);
+    }
+
+    /**
+     * Multiline fields still apply Moodle string filters before rendering.
+     *
+     * @dataProvider multiline_block_provider
+     * @param string $type Block type.
+     * @param string $field Text field.
+     */
+    public function test_multiline_text_keeps_multilang_filtering(string $type, string $field): void {
+        global $CFG;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $CFG->filterall = true;
+        $CFG->stringfilters = 'multilang';
+        filter_set_global_state('multilang', TEXTFILTER_ON);
+        $content = '<span lang="en" class="multilang">English & research</span>'
+            . '<span lang="fr" class="multilang">French text</span>';
+        $json = json_encode(['blocks' => [['type' => $type, $field => $content]]]);
+        $html = html_renderer::render(document::normalise_json($json));
+
+        $this->assertStringContainsString('English &amp; research', $html);
+        $this->assertStringNotContainsString('French text', $html);
+        $this->assertStringNotContainsString('&amp;amp;', $html);
+    }
+
+    /**
+     * Every multiline content field in the visual builder.
+     *
+     * @return array
+     */
+    public static function multiline_block_provider(): array {
+        return [
+            'text' => ['text', 'content'],
+            'highlight' => ['highlight', 'content'],
+            'left column' => ['columns', 'leftcontent'],
+            'right column' => ['columns', 'rightcontent'],
+            'footer' => ['footer', 'content'],
+        ];
     }
 
     /**

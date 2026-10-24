@@ -142,12 +142,13 @@ class tracking_manager {
     }
 
     /**
-     * Record an event without delaying or breaking the email client's request.
+     * Record an event without breaking the email client's request.
      *
      * A per-event lock serialises the existence check and insert, avoiding a
      * duplicate-key error when first opens/clicks arrive together. A concurrent
      * request can leave recording to the lock holder. The unique index remains
-     * a final safeguard. Recording is best effort: storage or lock failures must
+     * a final safeguard. The recipient lock also serialises recording with
+     * privacy erasure. Recording is best effort: storage or lock failures must
      * not prevent a verified click redirect or the pixel response.
      *
      * @param int $campaignid The campaign.
@@ -173,17 +174,38 @@ class tracking_manager {
                 return false;
             }
             try {
-                if (!$DB->record_exists('local_mailwhistle_tracking', $conditions)) {
-                    $DB->insert_record('local_mailwhistle_tracking', (object) ($conditions + [
-                        'targeturl' => $target === '' ? null : $target,
-                        'timecreated' => time(),
-                    ]));
+                $recipientlock = $factory->get_lock('recipient:' . $recipientid, 1);
+                if (!$recipientlock) {
+                    return false;
+                }
+                try {
+                    // A transaction pins these checks to the primary, even with read replicas configured.
+                    $transaction = $DB->start_delegated_transaction();
+                    try {
+                        // An authentic old link may still redirect, but must not recreate erased data.
+                        $sql = "SELECT r.id
+                                  FROM {local_mailwhistle_recipients} r
+                                  JOIN {local_mailwhistle_campaigns} c ON c.id = r.campaignid
+                                  JOIN {user} u ON u.id = r.userid AND u.deleted = 0
+                                 WHERE r.id = :recipientid AND r.campaignid = :campaignid";
+                        $live = $DB->record_exists_sql($sql, ['recipientid' => $recipientid, 'campaignid' => $campaignid]);
+                        if ($live && !$DB->record_exists('local_mailwhistle_tracking', $conditions)) {
+                            $DB->insert_record('local_mailwhistle_tracking', (object) ($conditions + [
+                                'targeturl' => $target === '' ? null : $target,
+                                'timecreated' => time(),
+                            ]));
+                        }
+                        $transaction->allow_commit();
+                        return $live;
+                    } catch (\Throwable $exception) {
+                        $transaction->rollback($exception);
+                    }
+                } finally {
+                    $recipientlock->release();
                 }
             } finally {
                 $lock->release();
             }
-
-            return true;
         } catch (\Throwable $exception) {
             // Log no token, target URL, user details or database error text.
             debugging('Mail Whistle tracking could not record an event (' . get_class($exception) . ').', DEBUG_DEVELOPER);
