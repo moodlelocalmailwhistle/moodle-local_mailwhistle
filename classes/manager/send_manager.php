@@ -346,6 +346,15 @@ class send_manager {
         $message->component = 'local_mailwhistle';
         $message->name = 'campaign';
         $message->userfrom = self::get_from_user($campaign);
+        // Advertise the recipient's unsubscribe destination as a List-Unsubscribe
+        // header (RFC 2369) so mail clients expose a native unsubscribe control.
+        // email_to_user() reads customheaders from the sender object; the URL is
+        // wrapped in angle brackets and its ampersands left unescaped as headers
+        // require. The target still asks for confirmation, so automatic scanners
+        // cannot opt anyone out.
+        $message->userfrom->customheaders = [
+            'List-Unsubscribe: <' . $values->unsubscribeurl . '>',
+        ];
         $message->userto = $to;
         $message->subject = format_string(placeholder_manager::apply((string) $campaign->subject, $values, false));
         if ($test) {

@@ -116,6 +116,29 @@ final class send_manager_test extends \advanced_testcase {
     }
 
     /**
+     * Test: delivered campaign emails carry a populated List-Unsubscribe header.
+     */
+    public function test_process_sets_list_unsubscribe_header(): void {
+        $this->resetAfterTest();
+
+        $this->preventResetByRollback();
+        $sink = $this->redirectEmails();
+        [$campaignid] = $this->make_ready_campaign_with_recipient();
+
+        campaign_manager::begin_sending($campaignid);
+        send_manager::process_campaign($campaignid, 50);
+
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $this->assertCount(1, $messages);
+        $this->assertMatchesRegularExpression(
+            '~List-Unsubscribe:\s*<https?://[^>]*local/mailwhistle/unsubscribe\.php\?t=[^>]+>~',
+            $messages[0]->header
+        );
+    }
+
+    /**
      * Test: re-processing does not re-send an already-sent recipient.
      */
     public function test_process_idempotent(): void {
